@@ -1,30 +1,27 @@
-# Mystery Chatbot Lab — 투명 WebP 화면 전환
+# Mystery Chatbot Lab — Animated WebP Portal
 
-AI 추리형 챗봇의 화면 전환을 검증하는 공개 HTML/WebP 데모입니다.
-
-## 페이지
-- [메인 데모](https://leejwoo.github.io/mystery-chatbot-lab/)
-- [고정 오버레이 및 클릭 통과 테스트](https://leejwoo.github.io/mystery-chatbot-lab/overlay-test.html)
-- [애니메이션 WebP](https://leejwoo.github.io/mystery-chatbot-lab/arcane_portal.webp)
-- [WebP 내장 단일 HTML](https://leejwoo.github.io/mystery-chatbot-lab/standalone.html)
-- [챗봇 출력 코드](./chatbot-snippets.md)
+추리 챗봇 화면 전환을 위한 테스트 페이지입니다. **GitHub 저장소 파일 업로드는 완료**됐습니다.
 
 ## 파일
-- `index.html`: 웹페이지 위에 고정 애니메이션 WebP를 오버레이
-- `arcane_portal.webp`: 57프레임 애니메이션, 마지막 프레임은 완전 투명
-- `overlay-test.html`: 전체 화면 고정 레이어 시험
-- `standalone.html`: WebP base64 포함 단일 파일
-- `chatbot-snippets.md`: Markdown, HTML, iframe 호출 코드
 
-## Pages 최초 활성화
-GitHub 저장소 → **Settings → Pages → Build and deployment → Deploy from a branch** → **main** / **/(root)** → Save.
+- `index.html`: 마법진이 사라진 뒤 클릭 가능한 단서 조사 페이지
+- `arcane_portal.webp`: 57프레임의 WebP 화면 전환, 마지막 프레임 투명
+- `overlay-test.html`: 전체 화면 오버레이 및 터치 통과 테스트
+- `standalone.html`: WebP를 인라인으로 포함한 독립 실행형 페이지
+- `chatbot-snippets.md`: 챗봇에 넣을 Markdown/HTML 출력 코드
 
-이 설정을 완료하면 위 공개 주소에서 실행할 수 있습니다. 코드 업로드만으로 Pages가 무조건 자동 활성화되는 것은 아닙니다.
+## GitHub Pages 활성화 (저장소 소유자가 1회 수행)
 
-## 테스트 기준
-1. 브라우저 데모가 웹페이지를 가렸다가 마지막에 투명해지는가?
-2. 전환 후 하단 버튼을 클릭할 수 있는가?
-3. 채팅 앱에서 WebP 이미지 자체를 출력할 수 있는가?
-4. HTML/CSS가 허용되는 채팅 앱에서 fixed 전체 화면 오버레이가 표시되는가?
+1. [이 저장소의 Pages 설정](https://github.com/LEEJWOO/mystery-chatbot-lab/settings/pages)을 엽니다.
+2. **Build and deployment → Source**를 **Deploy from a branch**로 설정합니다.
+3. **Branch: main**, **Folder: /(root)**를 선택하고 **Save**를 누릅니다.
+4. **Visit site**가 나타나면 눌러 실제 공개 여부를 확인합니다.
 
-GitHub Pages가 정상이라고 해서 BabeChat 등 모든 채팅 플랫폼에서 HTML·CSS·iframe이 허용되는 것은 아닙니다.
+사이트 주소(설정 후 확인):
+- 홈페이지: https://leejwoo.github.io/mystery-chatbot-lab/
+- 오버레이 테스트: https://leejwoo.github.io/mystery-chatbot-lab/overlay-test.html
+- 애니메이션 파일: https://leejwoo.github.io/mystery-chatbot-lab/arcane_portal.webp
+
+**중요**: 위 주소는 예상 배포 경로입니다. Pages가 활성화되었다는 확인 없이 접근 성공을 보장하지 않습니다. Pages와 챗봇 HTML/CSS 렌더링은 서로 별도 검증 대상입니다.
+
+GitHub 저장소는 공개 상태이므로 민감한 리소스를 넣지 마세요.
