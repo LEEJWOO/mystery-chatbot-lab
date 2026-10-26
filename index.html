@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111925">
+<title>투명 WebP 화면 전환 — 실제 시연</title>
+<style>
+*{box-sizing:border-box}
+:root{--ink:#151e2a;--gold:#bb8d44;--muted:#76818d;--edge:#e7e6e3;--paper:#f6f5f2}
+html,body{margin:0;min-height:100%;font-family:system-ui,'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;background:#ebeae7;color:var(--ink)}
+.viewport{min-height:100dvh;max-width:620px;margin:auto;background:var(--paper);box-shadow:0 0 36px #0f24301a}
+.top{height:69px;background:#182436;color:#f5eee0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:12px}
+.brand{font-size:12px;font-weight:800;letter-spacing:.16em}.tag{font-size:10px;letter-spacing:.08em;color:#d9b675;border:1px solid #886f4d;padding:5px 7px;border-radius:4px}
+.hero{padding:33px 24px 24px;background:linear-gradient(165deg,#ffffff,#f1eee7);border-bottom:1px solid #e5e1d7}
+.eyebrow{font-size:11px;letter-spacing:.14em;color:#98794c;font-weight:800;margin:0 0 8px}
+h1{font-weight:800;letter-spacing:-.04em;font-size:29px;line-height:1.26;margin:0 0 12px}
+.sub{font-size:13px;line-height:1.72;color:#64717e;margin:0}
+.progress{display:flex;gap:6px;margin-top:20px}.progress>span{height:3px;background:#d4c4a4;flex:1;border-radius:6px}.progress>span:last-child{background:#dcdedc}
+.section{padding:22px 22px 10px}.sectionhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.sectionhead strong{font-size:14px}.sectionhead small{font-size:10px;color:#88919c}
+.scene{border-radius:12px;overflow:hidden;background:linear-gradient(140deg,#243447,#0f1b2b);min-height:172px;position:relative;display:flex;align-items:end;color:white;padding:18px}
+.scene:before{content:"";position:absolute;left:-30px;top:-40px;width:250px;height:250px;border:1px solid #b8935d66;border-radius:50%;box-shadow:0 0 0 26px #c9a76508,0 0 0 60px #c9a7650a}
+.scene:after{content:"";position:absolute;right:30px;top:-30px;bottom:0;width:90px;border-left:1px solid #c6aa7540;transform:rotate(12deg)}
+.scene p{margin:0;z-index:1;font-size:15px;line-height:1.5;font-family:Georgia,'Noto Serif KR',serif}.scene b{color:#dbc08b}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.evidence{padding:16px 12px;text-align:left;background:white;border:1px solid #dfdfdc;border-radius:11px;color:#334354;min-height:113px;cursor:pointer;transition:.15s}
+.evidence:hover,.evidence:focus-visible{border-color:#b99964;outline:none;box-shadow:0 0 0 2px #ddc9a450}
+.evidence .icon{display:block;font-size:25px;margin-bottom:10px}.evidence strong{display:block;font-size:13px}.evidence small{display:block;color:#81909a;font-size:11px;margin-top:3px}
+#result{margin:14px 22px;background:#e7ebe9;border:1px solid #d2dcd8;color:#3d5a54;border-radius:10px;padding:13px;font-size:12px;min-height:46px;line-height:1.5}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 22px 30px}
+button.action{background:#1b2939;color:#fff;border:0;border-radius:10px;padding:13px 8px;font-weight:700;cursor:pointer;font-size:12px}
+button.action.alt{background:white;color:#283749;border:1px solid #ccd0d1}
+footer{font-size:10px;text-align:center;color:#8a9398;padding:0 20px 30px}
+/* 핵심: WebP의 불투명한 프레임은 페이지를 가리고, 투명한 프레임은 페이지를 그대로 노출한다. */
+#portal{position:fixed;inset:0;z-index:9999;width:100vw;height:100vh;display:block;pointer-events:none;background-color:transparent;background-position:center;background-repeat:no-repeat;background-size:cover;background-image:url("arcane_portal.webp")}
+@media(min-width:700px){.viewport{margin:22px auto;border-radius:16px;overflow:hidden;min-height:calc(100dvh - 44px)}}
+</style>
+</head>
+<body>
+  <main class="viewport">
+    <header class="top"><span class="brand">THE NINTH TRIAL</span><span class="tag">CHAPTER 01</span></header>
+    <section class="hero">
+      <p class="eyebrow">INVESTIGATION REPORT</p>
+      <h1>닫힌 방의<br>마지막 증언</h1>
+      <p class="sub">마법진이 회전한 뒤 검은 장막이 좌우로 열립니다.<br>장막이 사라지면 이 페이지를 직접 조작할 수 있습니다.</p>
+      <div class="progress"><span></span><span></span><span></span><span></span><span></span></div>
+    </section>
+    <section class="section">
+      <div class="sectionhead"><strong>사건 현장</strong><small>오전 09:00 · 조사 단계</small></div>
+      <div class="scene"><p>"현장의 시계는<br><b>정확히 9시에 멈춰 있었다.</b>"</p></div>
+    </section>
+    <section class="section" style="padding-top:13px">
+      <div class="sectionhead"><strong>조사할 증거</strong><small>아래 버튼을 선택하세요</small></div>
+      <div class="grid">
+        <button class="evidence" onclick="inspect('시계')"><span class="icon">◷</span><strong>파손된 시계</strong><small>시간이 불확실함</small></button>
+        <button class="evidence" onclick="inspect('쪽지')"><span class="icon">✉</span><strong>찢어진 메모</strong><small>용의자의 필적</small></button>
+      </div>
+    </section>
+    <div id="result" aria-live="polite">증거를 누르면 이곳에 조사 결과가 나타납니다.</div>
+    <div class="actions">
+      <button class="action" onclick="location.reload()">↻ 마법진 다시 보기</button>
+      <button class="action alt" onclick="document.querySelector('#result').textContent='정상 작동 확인: 아래의 페이지 버튼을 사용할 수 있습니다.'">✓ 버튼 동작 확인</button>
+    </div>
+    <footer>연출을 담당하는 것은 실제 애니메이션 WebP 파일입니다.<br>이 HTML은 애니메이션을 그리지 않고 파일을 화면에 표시하기만 합니다.</footer>
+  </main>
+  <span id="portal" aria-hidden="true"></span>
+<script>
+function inspect(key){
+  const msg=key==='시계'?'[단서 획득] 파손된 시계: 유리의 파손 방향이 증언과 일치하지 않습니다.':'[단서 획득] 찢어진 메모: 사건 전날 작성된 기록입니다.';
+  document.getElementById('result').textContent=msg;
+}
+</script>
+</body>
+</html>
