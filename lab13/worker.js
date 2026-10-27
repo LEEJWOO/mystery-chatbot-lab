@@ -48,7 +48,9 @@ function renderSVG(raw, assets) {
   out += img("lab13-" + s.scene + ".svg", 0, 0, 960, 400);
   for (const [id, x] of [["guard", 70], ["detective", 530]]) {
     const opacity = s.speaker === id ? 1 : 0.4;
-    for (const file of ["body.svg", "expression-" + (s.speaker === id ? s.face : "happy") + ".png", "hair-" + (id === "guard" ? "black" : "gold") + ".svg", "outfit-" + (id === "guard" ? "blue" : "red") + ".svg"]) out += img(file, x, 55, 350, 345, opacity);
+    out += `<g opacity="${opacity}">`;
+    for (const file of ["body.svg", "expression-" + (s.speaker === id ? s.face : "happy") + ".png", "hair-" + (id === "guard" ? "black" : "gold") + ".svg", "outfit-" + (id === "guard" ? "blue" : "red") + ".svg"]) out += img(file, x, 55, 350, 345);
+    out += "</g>";
   }
   out += `<rect y="400" width="960" height="300" fill="#1b2940"/><g font-family="sans-serif"><text x="30" y="38" fill="#fff" font-size="22">${s.scene === "hall" ? "\uC11C\uCABD \uBCF5\uB3C4" : "\uC790\uB8CC\uC2E4"} \xB7 ${clock(s)}</text><text x="36" y="446" fill="#efcc8e" font-size="28">${NAMES[s.speaker]}</text>`;
   const lines = wrapText(s.text, 36), font = Math.min(25, 190 / Math.max(1, lines.length));
