@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const dir=path.dirname(new URL(import.meta.url).pathname);
+let core=fs.readFileSync(path.join(dir,'src/core.mjs'),'utf8').replace(/\bexport (const|function)\b/g,'$1');
+let rend=fs.readFileSync(path.join(dir,'src/render.mjs'),'utf8').replace(/^import .*;\n/gm,'').replace(/\bexport (const|function)\b/g,'$1');
+let view=fs.readFileSync(path.join(dir,'src/PerspectiveScene14.view.jsx'),'utf8');
+let out=['// PERSPECTIVE V1 / SINGLE COMPONENT, UUMMAI registration name: PerspectiveScene14','// No import/export/fetch/localStorage, uses UUMMAI React hooks.',core,rend,view].join('\n\n');
+fs.writeFileSync(path.join(dir,'PerspectiveScene14.jsx'),out);
+fs.writeFileSync(path.join(dir,'PerspectiveScene14_UUMMAI.txt'),out);
+console.log('JSX bundle chars:',out.length);
