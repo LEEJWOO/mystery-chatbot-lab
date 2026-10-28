@@ -1,0 +1,100 @@
+name: Configure Mystery Hub KV and deploy Worker
+
+on:
+  push:
+    branches: [feature/mystery-integrated-playtest-20261029]
+    paths: ['.github/workflows/configure-mystery-hub-kv.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mystery-scene-lab13-worker-deploy
+  cancel-in-progress: false
+
+jobs:
+  configure-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: lab13/package-lock.json
+      - name: Locate or create only mystery-hub-saves KV namespace
+        env:
+          CF_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const base='https://api.cloudflare.com/client/v4/accounts/'+process.env.CF_ID+'/storage/kv/namespaces';
+          const headers={Authorization:'Bearer '+process.env.CF_TOKEN,'Content-Type':'application/json'};
+          if(!process.env.CF_ID||!process.env.CF_TOKEN)throw Error('Missing Cloudflare Actions secrets.');
+          const ns=[];
+          for(let page=1;page<=10;page++){
+            const r=await fetch(base+'?per_page=100&page='+page,{headers});
+            const j=await r.json().catch(()=>({}));
+            if(!r.ok||j.success!==true||!Array.isArray(j.result)){
+              console.error('KV namespace listing denied: '+r.status+' '+JSON.stringify(j.errors?.map(x=>x.message)||[]));
+              console.error('Cloudflare API token requires account Workers KV Storage:Edit (and Workers Scripts:Edit).');
+              process.exit(2);
+            }
+            ns.push(...j.result);
+            if(j.result.length<100)break;
+          }
+          let selected=ns.find(n=>n.title==='mystery-hub-saves');
+          if(!selected){
+            const r=await fetch(base,{method:'POST',headers,body:JSON.stringify({title:'mystery-hub-saves'})});
+            const j=await r.json().catch(()=>({}));
+            if(!r.ok||j.success!==true||!j.result?.id){console.error('KV create failed '+r.status+' '+JSON.stringify(j.errors?.map(x=>x.message)||[]));process.exit(2);}
+            selected=j.result;console.log('Created mystery-hub-saves KV namespace.');
+          }else console.log('Reusing existing mystery-hub-saves KV namespace.');
+          const file='lab13/wrangler.jsonc';
+          const config=JSON.parse(fs.readFileSync(file,'utf8'));
+          if(config.name!=='mystery-scene-lab13')throw Error('Wrong worker target.');
+          config.workers_dev=true;
+          config.kv_namespaces=[{binding:'HUB_SAVES',id:selected.id}];
+          fs.writeFileSync(file,JSON.stringify(config,null,2)+'\n');
+          console.log('Configured HUB_SAVES binding for existing Worker.');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'KV namespace: mystery-hub-saves\n');
+          JS
+      - name: Install dependencies and test original Worker
+        working-directory: lab13
+        run: npm ci && npm test && npm run build
+      - name: Test new Mystery Hub
+        working-directory: playtest
+        run: npm test
+      - name: Deploy existing Worker with KV binding
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: lab13
+          command: deploy --config wrangler.jsonc
+      - name: Check routes, save and retrieve a real checkpoint
+        env:
+          URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          curl -fsS --retry 7 --retry-delay 2 --retry-all-errors "$URL/health" | grep -q '"ok":true'
+          curl -fsS --retry 7 --retry-delay 2 --retry-all-errors "$URL/hub/health" | node -e 'let s="";process.stdin.on("data",b=>s+=b).on("end",()=>{let j=JSON.parse(s);if(j.storage!=="kv")process.exit(1);console.log("Hub KV binding active")})'
+          curl -fsS "$URL/hub/world.json" | grep -q 'archive-night-v1'
+          curl -fsS "$URL/hub/sprites/curator/front.svg" | grep -q '<svg'
+          node --input-type=module <<'JS'
+          import {randomBytes} from 'node:crypto';
+          const base=process.env.URL+'/hub/state/ci-'+randomBytes(8).toString('hex');
+          const key=randomBytes(32).toString('base64url'),auth={Authorization:'Bearer '+key};
+          const saved={protocol:'MYSTERY_HUB_V1',v:1,worldId:'archive-night-v1',rev:7,player:{x:3.5,y:7.5,heading:0},timeSec:32700,flags:{},seen:[],known:[],observed:[],taken:[],log:[],appliedReplies:[]};
+          const p=await fetch(base,{method:'PUT',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify(saved)});
+          if(p.status!==200){console.error('KV PUT status',p.status,(await p.text()).slice(0,300));process.exit(1);}
+          const g=await fetch(base,{headers:auth});const v=await g.json();
+          if(g.status!==200||v.rev!==7)throw Error('KV GET revision mismatch');
+          console.log('KV save/load smoke test passed');
+          JS
+          echo "### Worker API and KV save/load verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL/hub/world.json" >> "$GITHUB_STEP_SUMMARY"
