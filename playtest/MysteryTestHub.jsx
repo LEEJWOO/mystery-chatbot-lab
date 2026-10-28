@@ -227,7 +227,12 @@ function mhScript(raw){
   color:/^#[\da-fA-F]{6}$/.test(x.color||'')?x.color:'#f1f5f9',
   speed:mhclamp(Number(x.speed)||36,10,120),
   shake:mhclamp(Number(x.shake)||0,0,5),
-  size:mhclamp(Number(x.size)||19,14,25)
+  size:mhclamp(Number(x.size)||19,14,25),
+   id:String(x.id||'').slice(0,65),
+   speakerId:String(x.speakerId||x.actorId||'').slice(0,55),
+   expression:String(x.expression||x.face||'neutral').slice(0,30),
+   pose:String(x.pose||'neutral').slice(0,30),
+   outfit:String(x.outfit||'').slice(0,45)
  })).filter(x=>x.text);
 }
 function mhPages(raw,max=32,per=3){
@@ -281,36 +286,101 @@ function MysteryTestHub({stage=1,...props}){
  if(!Number.isSafeInteger(n))return <div style={{padding:16,color:'#111',background:'#fff'}}>단계는 1 이상의 자연수여야 합니다.</div>;
  return <MysteryHubRuntime key={'hub-'+n} stage={n} {...props}/>;
 }
+function MHDialoguePortrait({actor,expression='neutral',pose='neutral',outfit=''}){
+ const key=String(actor?.npcProfile||actor?.spriteId||actor?.id||'narrator');
+ const isCurator=/curator/.test(key),isClerk=/clerk/.test(key),isArchivist=/archivist/.test(key);
+ const faceColor=isClerk?'#f4cbb0':isArchivist?'#e9bb9d':'#f3d5b9';
+ const hairColor=isClerk?'#44332e':isArchivist?'#2b2931':'#2b263c';
+ const coat=outfit==='casual'?'#5b6b80':isClerk?'#76758a':isArchivist?'#50443e':'#293e5d';
+ const trim=isArchivist?'#b4a090':'#d6e1e4';
+ const angry=/angry|guarded|tense|분노|경계/.test(expression),happy=/happy|smile|relieved|기쁨|웃음/.test(expression),sad=/sad|worried|불안|슬픔/.test(expression);
+ const poseShift=/lean|forward|전진/.test(pose)?10:/back|avoid|회피/.test(pose)?-9:0;
+ const layers=actor?.portraitLayers||actor?.portrait?.layers;
+ const parts=['base','body','outfit','face','hair','expression','accessories'];
+ const selectLayer=(kind)=>{const value=layers?.[kind];if(typeof value==='string')return value;if(!value||typeof value!=='object')return '';const variant=kind==='outfit'?(outfit||actor?.portrait?.defaultOutfit||'default'):kind==='expression'?expression:kind==='body'?pose:'default';return value[variant]||value.default||value.neutral||'';};
+ const urls=layers&&typeof layers==='object'?parts.map(k=>({k,url:selectLayer(k)})).filter(o=>/^https:\/\/|^data:image\//.test(o.url)):[];
+ if(urls.length)return <div aria-label={(actor?.label||'인물')+' 대화 초상화'} style={{width:'100%',height:'100%',position:'relative',pointerEvents:'none'}}>{urls.map(x=><img key={x.k} src={x.url} alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'contain',objectPosition:'center bottom'}}/>)}</div>;
+ return <svg viewBox="0 0 340 440" width="100%" height="100%" role="img" aria-label={(actor?.label||'인물')+' 독립 대화용 2D 초상화'} preserveAspectRatio="xMidYMax meet" style={{overflow:'visible'}}>
+  <defs>
+   <linearGradient id={'mh-dialog-coat-'+key} x1="0" y1="0" x2="1" y2="1"><stop stopColor={coat}/><stop offset="1" stopColor="#1d2839"/></linearGradient>
+   <linearGradient id={'mh-dialog-hair-'+key} x1="0" y1="0" x2="1" y2="1"><stop stopColor={hairColor}/><stop offset="1" stopColor="#151b28"/></linearGradient>
+  </defs>
+  <g transform={'translate(0 '+poseShift+')'}>
+   <path d="M28 440Q30 330 77 292Q108 264 170 260Q232 267 267 295Q313 336 315 440Z" fill={'url(#mh-dialog-coat-'+key+')'} stroke="#1a2636" strokeWidth="4"/>
+   <path d="M116 277L169 335L227 276L215 420H123Z" fill={isArchivist?'#d3c0ab':'#f3f1ed'} stroke="#8f9eaa" strokeWidth="2"/>
+   <path d="M162 326L178 326L192 407L171 433L151 405Z" fill={isClerk?'#667e90':isArchivist?'#89765b':'#b2abb1'}/>
+   <path d="M94 290L147 371L119 440H51Q51 343 94 290Z M248 288L197 369L222 440H293Q293 344 248 288Z" fill={coat} stroke={trim} strokeWidth="2"/>
+   <path d="M151 261L190 261L189 299Q168 313 150 295Z" fill={faceColor}/>
+   <ellipse cx="170" cy="179" rx="84" ry="109" fill={faceColor} stroke="#b78e7d" strokeWidth="2"/>
+   <ellipse cx="91" cy="188" rx="11" ry="19" fill={faceColor}/><ellipse cx="250" cy="188" rx="11" ry="19" fill={faceColor}/>
+   <path d="M90 159Q67 66 124 42Q188 1 238 64Q270 106 254 166L244 120Q227 85 206 80Q137 102 97 134Z" fill={'url(#mh-dialog-hair-'+key+')'} stroke="#242735" strokeWidth="3"/>
+   <path d="M95 129Q124 73 166 90Q195 64 237 93Q225 119 182 127Q152 140 95 129Z" fill={hairColor}/>
+   <path d={angry?'M113 170L148 178 M191 178L227 170':sad?'M114 177L148 168 M191 168L227 177':'M114 174Q132 167 148 172 M191 172Q211 168 227 174'} stroke={hairColor} strokeWidth="5" fill="none" strokeLinecap="round"/>
+   <ellipse cx="134" cy="185" rx="17" ry="10" fill="#fff7f2"/><ellipse cx="209" cy="185" rx="17" ry="10" fill="#fff7f2"/>
+   <ellipse cx="135" cy="185" rx="7" ry="9" fill={isCurator?'#705b82':'#63544a'}/><ellipse cx="208" cy="185" rx="7" ry="9" fill={isCurator?'#705b82':'#63544a'}/>
+   <circle cx="137" cy="181" r="2.6" fill="#fff"/><circle cx="210" cy="181" r="2.6" fill="#fff"/>
+   <path d="M170 191Q162 213 171 215" stroke="#bb8f82" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+   <path d={happy?'M149 231Q170 249 194 230':angry?'M151 239Q169 226 192 240':sad?'M152 245Q170 232 192 245':'M151 236Q171 240 191 236'} stroke="#a86c6e" strokeWidth="3" fill="none" strokeLinecap="round"/>
+   {isArchivist?<g stroke="#584e47" strokeWidth="3" fill="none"><rect x="110" y="170" width="51" height="30" rx="10"/><rect x="181" y="170" width="51" height="30" rx="10"/><path d="M161 184Q171 177 181 184"/></g>:null}
+   {isClerk?<path d="M89 146Q67 214 100 272L118 266Q100 204 112 170Z" fill={hairColor}/>:null}
+   <path d="M76 290Q42 312 30 368L70 383L111 323Z" fill={coat} stroke="#243246" strokeWidth="3"/>
+   <path d="M265 291Q297 315 313 366L275 384L230 323Z" fill={coat} stroke="#243246" strokeWidth="3"/>
+   <rect x="237" y="344" width="33" height="14" rx="3" fill="#c3a676" stroke="#e7d7ba"/>
+  </g>
+ </svg>;
+}
+function MHDialogueBackdrop({room='lobby',brightness=.9,imageUrl=''}){
+ const archive=/archive|자료|보관|기록/.test(room),dim=mhclamp(brightness,.3,1);
+ if(/^https:\/\//.test(imageUrl))return <img src={imageUrl} alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:`brightness(${dim})`}}/>;
+ return <svg viewBox="0 0 680 438" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{position:'absolute',inset:0,filter:`brightness(${dim})`}} aria-hidden="true">
+  <defs><linearGradient id="mh-db-wall" x1="0" y1="0" x2="0" y2="1"><stop stopColor={archive?'#283c4d':'#5b6570'}/><stop offset="1" stopColor="#18293b"/></linearGradient><linearGradient id="mh-db-floor" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#6b6060"/><stop offset="1" stopColor="#1b2b3b"/></linearGradient></defs>
+  <rect width="680" height="438" fill="url(#mh-db-wall)"/>
+  <path d="M0 340L180 270H503L680 338V438H0Z" fill="url(#mh-db-floor)"/>
+  <path d="M0 0L185 65H505L680 0M185 65V290M505 65V289" stroke="#a3afbb" strokeOpacity=".18" strokeWidth="5" fill="none"/>
+  {archive?<g><rect x="30" y="90" width="157" height="225" rx="3" fill="#343c44" stroke="#8d8175" strokeWidth="6"/><rect x="493" y="90" width="157" height="225" rx="3" fill="#343c44" stroke="#8d8175" strokeWidth="6"/>{[125,185,245].map(y=><g key={y}><path d={`M32 ${y}H182 M496 ${y}H648`} stroke="#9c8371" strokeWidth="6"/>{[45,65,86,109,132,154].map(x=><g key={x}><rect x={x} y={y-27} width="12" height="24" fill={x%2?'#9e8870':'#61748a'}/><rect x={x+462} y={y-27} width="12" height="24" fill="#89908c"/></g>)}</g>)}</g>:<g><rect x="28" y="126" width="132" height="175" rx="6" fill="#324b5c" stroke="#8b9ca9" strokeWidth="5"/><rect x="527" y="116" width="129" height="185" rx="6" fill="#344b57" stroke="#8b9ca9" strokeWidth="5"/><path d="M35 170H153 M535 160H649" stroke="#7b99a9" strokeWidth="4"/><rect x="281" y="68" width="117" height="188" fill="#4f5d68" stroke="#9db3bf" strokeWidth="6"/><path d="M339 70V253" stroke="#90a5b5" strokeWidth="3"/></g>}
+  <rect x="188" y="277" width="306" height="21" rx="4" fill="#917762"/><path d="M201 297V384M479 297V384" stroke="#4f403f" strokeWidth="12"/>
+  <rect x="0" y="0" width="680" height="438" fill="#08121c" opacity=".12"/>
+ </svg>;
+}
 function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',worldData='',appearance='',onHandoff}){
  const [world,setWorld]=useState(()=>{try{return mhworld(worldData?(typeof worldData==='string'?JSON.parse(worldData):worldData):mhDemo(stage));}catch{return mhworld(mhDemo(stage));}});
  const [worldStatus,setWorldStatus]=useState(worldUrl?'지도 연결 확인 중':'내장 지도');
  const [worldError,setWorldError]=useState('');
- const [state,setState]=useState(()=>{try{let value=initial?mhexpand(world,initial):mhinitial(world);if(reply)value=mhreply(world,value,reply);if(appearance){const a=typeof appearance==='string'?JSON.parse(appearance):appearance;if(a&&typeof a==='object'&&!Array.isArray(a))value.appearance={...value.appearance,...a};}return value;}catch{return mhinitial(world);}});
+ const [state,setState]=useState(()=>{try{let value=initial?mhexpand(world,initial):mhinitial(world);if(reply&&!mhScript(speech).length)value=mhreply(world,value,reply);if(appearance){const a=typeof appearance==='string'?JSON.parse(appearance):appearance;if(a&&typeof a==='object'&&!Array.isArray(a))value.appearance={...value.appearance,...a};}return value;}catch{return mhinitial(world);}});
  const live=useRef(state),anim=useRef(null),poseRef=useRef({...state.player,angle:state.player.heading*Math.PI/4,pitch:0}),lockRef=useRef(false),sentRef=useRef(false);
  const [pose,setPose]=useState(poseRef.current),[busy,setBusy]=useState(false);
- const [notice,setNotice]=useState('09:05 · 기록 원본이 사라졌습니다. 인물에게 질문하려면 그 사람을 선택하세요.');
+ const [notice,setNotice]=useState('');
  const [tab,setTab]=useState('scene'),[message,setMessage]=useState(''),[restoreText,setRestoreText]=useState(''),[talkTarget,setTalkTarget]=useState(null),[saveSlot,setSaveSlot]=useState('playtest'),[saveToken,setSaveToken]=useState(''),[saveStatus,setSaveStatus]=useState('서버 저장은 선택 사항이며 KV 연동 후 사용 가능합니다.'),[autoSync,setAutoSync]=useState(false);
  const [sent,setSent]=useState(false),[pending,setPending]=useState(false),[activePuzzle,setActivePuzzle]=useState(null),[puzzleInput,setPuzzleInput]=useState(''),[puzzleSeconds,setPuzzleSeconds]=useState(null);
  const puzzleDeadline=useRef(null),puzzleExpired=useRef(false),lastSyncedRevision=useRef(-1);
- const [dialogueIndex,setDialogueIndex]=useState(0),[pageIndex,setPageIndex]=useState(0),[shown,setShown]=useState(0),[shakeTick,setShakeTick]=useState(0),[interruption,setInterruption]=useState(false);
- const drag=useRef(null),suppressClick=useRef(false);const [actionPage,setActionPage]=useState(0);
+ const [dialogueIndex,setDialogueIndex]=useState(0),[pageIndex,setPageIndex]=useState(0),[shown,setShown]=useState(0),[shakeTick,setShakeTick]=useState(0),[interruption,setInterruption]=useState(false),[dialogueExited,setDialogueExited]=useState(false),[dialogueHistory,setDialogueHistory]=useState(false);
+ const drag=useRef(null),suppressClick=useRef(false),mapDrag=useRef(null),mapClickBlock=useRef(false);
+ const [mapPan,setMapPan]=useState({x:0,y:0});const [actionPage,setActionPage]=useState(0);
  const lines=mhScript(speech),line=lines[dialogueIndex]||null,dialoguePages=line?mhPages(line.text):[],pageText=dialoguePages[pageIndex]||'';
  const pageChars=Array.from(pageText),visibleText=pageChars.slice(0,shown).join(''),fullyShown=shown>=pageChars.length;
  const present=mhobjects(world,state).filter(o=>mhvisible(world,state,o)).sort((a,b)=>mhdistance(state.player.x,state.player.y,a.x,a.y)-mhdistance(state.player.x,state.player.y,b.x,b.y));
  const selected=present.find(o=>o.id===state.selected)||null;
  const selectedDist=selected?mhdistance(state.player.x,state.player.y,selected.x,selected.y):Infinity;
- const stageTitle=world.title||'조사 현장',screenLocked=sent||pending||busy||!!line;
+ const stageTitle=world.title||'조사 현장',dialogueMode=(!dialogueExited&&lines.length>0)||!!talkTarget;
+ const screenLocked=sent||pending||busy|| (!!line&&!dialogueExited) || !!talkTarget, dialogueSendLocked=sent||pending||busy;
  const frame=useMemo(()=>mhrender(world,state,pose),[world,state,pose]);
  const card={background:'#122636',border:'1px solid #304d60',borderRadius:10,color:'#e5f0f6'};
  const btn={background:'#193447',border:'1px solid #527386',borderRadius:9,padding:'9px 8px',fontSize:12,color:'#e9f2f7',fontFamily:'inherit',cursor:'pointer',minHeight:36};
  const box={padding:10,width:'100%',boxSizing:'border-box',background:'#0b1e2d',color:'#ecf3f8',border:'1px solid #506b7c',borderRadius:8,fontSize:13,fontFamily:'inherit'};
  const headingAngle=state.player.heading*Math.PI/4;
  const mapWidth=Math.min(9,world.w),mapHeight=Math.min(9,world.h);
- const mapStartX=mhclamp(Math.floor(state.player.x)-Math.floor(mapWidth/2),0,world.w-mapWidth);
- const mapStartY=mhclamp(Math.floor(state.player.y)-Math.floor(mapHeight/2),0,world.h-mapHeight);
+ const mapBaseX=mhclamp(Math.floor(state.player.x)-Math.floor(mapWidth/2),0,world.w-mapWidth);
+ const mapBaseY=mhclamp(Math.floor(state.player.y)-Math.floor(mapHeight/2),0,world.h-mapHeight);
+ const mapStartX=mhclamp(mapBaseX+mapPan.x,0,world.w-mapWidth);
+ const mapStartY=mhclamp(mapBaseY+mapPan.y,0,world.h-mapHeight);
  const known=new Set(state.seen),knownIds=new Set(state.known);
  const mapFound=(x,y)=>known.has(mhcell(x,y))||(mhtile(world,x,y)==='#'&&[[0,1],[0,-1],[1,0],[-1,0]].some(([dx,dy])=>known.has(mhcell(x+dx,y+dy))));
  const loadedWorldId=world.id;
+ const room=world.rooms?.find(r=>state.player.x>=r.xMin&&state.player.x<=r.xMax)||null;
+ const roomName=room?.label||({lobby:'로비',archive:'기록실',hall:'복도',storage:'창고'})[room?.id]||stageTitle;
+ const dialogueActor=talkTarget?world.objects.find(o=>o.kind==='person'&&o.id===talkTarget):line&&!dialogueExited&&!['서술','narrator','system'].includes(line.speaker)?(world.objects.find(o=>o.kind==='person'&&(o.id===line.speakerId||o.label===line.speaker||o.label.split(' · ')[0]===line.speaker||o.label.includes(line.speaker)))||world.objects.find(o=>o.kind==='person'&&o.id===state.selected)):null;
+ const finalCut=!!line&&dialogueIndex===lines.length-1&&pageIndex===dialoguePages.length-1&&fullyShown;
+ const sceneBackground=world.dialogueBackgrounds?.[room?.id||'']||'';
  function stopAnim(){if(anim.current){if(anim.current.raf&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(anim.current.id);else clearTimeout(anim.current.id);anim.current=null;}lockRef.current=false;setBusy(false);}
  function animate(to,duration=260){
   stopAnim();lockRef.current=true;setBusy(true);
@@ -348,15 +418,41 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
   if(!d.moved)return;suppressClick.current=true;
   const current=poseRef.current,nearest=Math.round(current.angle/(Math.PI/4));
   const old=live.current.player.heading,delta=nearest-old;
-  if(delta){const r=mhmutate(world,live.current,{type:'TURN',delta:mhclamp(delta,-8,8)});live.current=r.state;setState(r.state);setNotice('45° 방향으로 정렬 · 회전 0초');}
+  if(delta){const r=mhmutate(world,live.current,{type:'TURN',delta:mhclamp(delta,-8,8)});live.current=r.state;setState(r.state);setNotice('');}
   animate({...live.current.player,angle:nearest*Math.PI/4,pitch:current.pitch},180);
  }
  function onSceneClick(e){if(suppressClick.current){suppressClick.current=false;e.stopPropagation();}}
- function mapTap(x,y){const dx=x-Math.floor(state.player.x),dy=y-Math.floor(state.player.y);
-  if(Math.abs(dx)>1||Math.abs(dy)>1||(!dx&&!dy)){setNotice('미니맵에서는 인접한 한 칸만 이동할 수 있습니다.');return;}
-  execute({type:'WALK',absolute:true,dx,dy});
+ function onMapPointerDown(e){
+  if(e.isPrimary===false)return;
+  const r=e.currentTarget.getBoundingClientRect();
+  const unit=Math.max(1,Math.min(r.width/mapWidth,r.height/mapHeight));
+  mapDrag.current={x:e.clientX,y:e.clientY,startX:mapStartX,startY:mapStartY,unit,moved:false};
+  mapClickBlock.current=false;
+  if(e.currentTarget.setPointerCapture)try{e.currentTarget.setPointerCapture(e.pointerId);}catch{}
  }
- function select(id){execute({type:'LOOK',id});setActionPage(0);}
+ function onMapPointerMove(e){
+  const d=mapDrag.current;if(!d||e.isPrimary===false)return;
+  const dx=e.clientX-d.x,dy=e.clientY-d.y;
+  if(Math.hypot(dx,dy)>5)d.moved=true;
+  if(!d.moved)return;
+  const x=mhclamp(d.startX-Math.round(dx/d.unit),0,world.w-mapWidth);
+  const y=mhclamp(d.startY-Math.round(dy/d.unit),0,world.h-mapHeight);
+  setMapPan({x:x-mapBaseX,y:y-mapBaseY});
+ }
+ function onMapPointerEnd(){
+  if(!mapDrag.current)return;
+  mapClickBlock.current=mapDrag.current.moved;
+  mapDrag.current=null;
+ }
+ function select(id){
+  execute({type:'LOOK',id});setActionPage(0);
+  const o=mhobject(world,live.current,id);
+  if(o&&(o.x<mapStartX||o.x>=mapStartX+mapWidth||o.y<mapStartY||o.y>=mapStartY+mapHeight)){
+   const x=mhclamp(Math.floor(o.x)-Math.floor(mapWidth/2),0,world.w-mapWidth);
+   const y=mhclamp(Math.floor(o.y)-Math.floor(mapHeight/2),0,world.h-mapHeight);
+   setMapPan({x:x-mapBaseX,y:y-mapBaseY});
+  }
+ }
  function applyObject(verb){if(!selected)return;
   if(verb==='CLEAR'){const next={...live.current,selected:null};live.current=next;setState(next);setNotice('대상 선택을 해제했습니다.');return;}
   if(verb==='LOOK'){select(selected.id);setNotice(selected.readText||selected.detailHint||selected.label);return;}
@@ -396,15 +492,38 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
   setPuzzleInput('');
  }
  useEffect(()=>{if(!activePuzzle||puzzleDeadline.current===null)return;const id=setInterval(()=>{const seconds=Math.max(0,Math.ceil((puzzleDeadline.current-Date.now())/1000));setPuzzleSeconds(seconds);if(seconds===0&&!puzzleExpired.current)solvePuzzle('__TIMEOUT__');},250);return()=>clearInterval(id);},[activePuzzle]);
- function seenSpeech(){const result=lines.slice(0,dialogueIndex).map(x=>({speaker:x.speaker,text:x.text,complete:true}));
-  if(line){const seen=[...dialoguePages.slice(0,pageIndex),visibleText].join('\n');if(seen)result.push({speaker:line.speaker,text:seen,complete:pageIndex===dialoguePages.length-1&&fullyShown});}
+ function seenSpeech(){
+  const result=lines.slice(0,dialogueIndex).map((x,i)=>({id:x.id||'cut-'+(i+1),speaker:x.speaker,text:x.text,complete:true}));
+  if(line){const seen=[...dialoguePages.slice(0,pageIndex),visibleText].join('\n');
+   if(seen)result.push({id:line.id||'cut-'+(dialogueIndex+1),speaker:line.speaker,text:seen,complete:pageIndex===dialoguePages.length-1&&fullyShown});}
   return result.slice(-8);
  }
+ function replayCut(){if(!line||interruption)return;setPageIndex(0);setShown(0);}
+ function previousCut(){if(!line||interruption||dialogueIndex<1)return;setDialogueIndex(n=>n-1);setPageIndex(0);setShown(0);}
  function nextSpeech(){if(!line||interruption)return;
   if(!fullyShown){setShown(pageChars.length);return;}
   if(pageIndex<dialoguePages.length-1){setPageIndex(v=>v+1);setShown(0);return;}
-  setDialogueIndex(v=>v+1);setPageIndex(0);setShown(0);
+  if(dialogueIndex<lines.length-1){setDialogueIndex(v=>v+1);setPageIndex(0);setShown(0);}
  }
+ function pendingDialogueState(partial){
+  if(!reply||!lines.length)return live.current;
+  try{
+   const r=typeof reply==='string'?JSON.parse(reply):reply;
+   if(!r||typeof r!=='object'||!r.id)return live.current;
+   const full=lines.reduce((n,x)=>n+Array.from(x.text).length,0);
+   const seen=seenSpeech().reduce((n,x)=>n+Array.from(x.text).length,0);
+   const ratio=full?mhclamp(seen/full,0,1):0;
+   const sec=partial?Math.round(Number(r.elapsedSec)*ratio):Number(r.elapsedSec);
+   if(!Number.isInteger(sec)||sec<0||sec>900)throw Error('대화 시간값 오류');
+   return mhreply(world,live.current,{...r,elapsedSec:sec});
+  }catch(e){setNotice('대화 상태 반영 실패: '+e.message);return null;}
+ }
+ function exitDialogue(){
+  if(!finalCut||interruption||sent||pending)return;
+  const accepted=pendingDialogueState(false);if(!accepted)return;
+  live.current=accepted;setState(accepted);setDialogueExited(true);setInterruption(false);setNotice('대화를 마쳤습니다. 탐색을 계속할 수 있습니다.');
+ }
+ function beginInterruption(){if(!line||sent||pending)return;setInterruption(true);setMessage('');}
  useEffect(()=>{if(!line||interruption||fullyShown)return;
   const t=setInterval(()=>{setShown(v=>Math.min(pageChars.length,v+1));if(line.shake)setShakeTick(v=>v+1);},line.speed);
   return()=>clearInterval(t);
@@ -417,8 +536,8 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
   setWorldStatus('지도 불러오는 중');
   fetch(worldUrl,{headers:{Accept:'application/json'}}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(raw=>{
    if(!active)return;
-   const w=mhworld(raw);if(worldUrl){const origin=new URL(worldUrl).origin;w.objects=w.objects.map(o=>o.spriteId?{...o,sprites:Object.fromEntries(MH_VIEWS.map(v=>[v,origin+'/hub/sprites/'+o.spriteId+'/'+v+'.svg']))}:o);}let s=initial?mhexpand(w,initial):mhinitial(w);if(reply)s=mhreply(w,s,reply);
-   stopAnim();live.current=s;setWorld(w);setState(s);
+   const w=mhworld(raw);if(worldUrl){const origin=new URL(worldUrl).origin;w.objects=w.objects.map(o=>o.spriteId?{...o,sprites:Object.fromEntries(MH_VIEWS.map(v=>[v,origin+'/hub/sprites/'+o.spriteId+'/'+v+'.svg']))}:o);}let s=initial?mhexpand(w,initial):mhinitial(w);if(reply&&!mhScript(speech).length)s=mhreply(w,s,reply);
+   stopAnim();live.current=s;setWorld(w);setState(s);setMapPan({x:0,y:0});
    poseRef.current={...s.player,angle:s.player.heading*Math.PI/4,pitch:0};setPose(poseRef.current);
    setWorldStatus('외부 지도 '+w.id);setWorldError('');
   }).catch(e=>{if(active){setWorldError(e.message);setWorldStatus('내장 지도 유지');}});
@@ -433,7 +552,7 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
    setSaveStatus(mode==='load'?'서버 복원 중':'서버 저장 중');
    const r=await fetch(url,{method:mode==='load'?'GET':'PUT',headers:{Authorization:'Bearer '+saveToken,...(mode==='load'?{}:{'Content-Type':'application/json'})},...(mode==='load'?{}:{body:JSON.stringify(mhcompact(world,live.current))})});
    const result=await r.json();if(!r.ok)throw Error(result.error||'HTTP '+r.status);
-   if(mode==='load'){const next=mhexpand(world,result);stopAnim();live.current=next;setState(next);poseRef.current={...next.player,angle:next.player.heading*Math.PI/4,pitch:0};setPose(poseRef.current);setNotice('서버 체크포인트를 복원했습니다.');setTab('scene');}
+   if(mode==='load'){const next=mhexpand(world,result);stopAnim();live.current=next;setState(next);setMapPan({x:0,y:0});poseRef.current={...next.player,angle:next.player.heading*Math.PI/4,pitch:0};setPose(poseRef.current);setNotice('서버 체크포인트를 복원했습니다.');setTab('scene');}
    setSaveStatus(mode==='load'?'서버 복원 완료':'서버 저장 완료 · revision '+result.revision);
   }catch(e){setSaveStatus('서버 작업 실패: '+e.message+' · 로컬 게임은 유지됩니다.');}
  }
@@ -442,18 +561,19 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
   lastSyncedRevision.current=state.rev;serverSave('put');
  },[autoSync,worldUrl,saveToken,saveSlot,state.rev]);
  function restore(){if(screenLocked)return;
-  try{const s=mhexpand(world,restoreText);stopAnim();live.current=s;setState(s);poseRef.current={...s.player,angle:s.player.heading*Math.PI/4,pitch:0};setPose(poseRef.current);setNotice('체크포인트 복원 완료');setTab('scene');}
+  try{const s=mhexpand(world,restoreText);stopAnim();live.current=s;setState(s);setMapPan({x:0,y:0});poseRef.current={...s.player,angle:s.player.heading*Math.PI/4,pitch:0};setPose(poseRef.current);setNotice('체크포인트 복원 완료');setTab('scene');}
   catch(e){setNotice('복원 실패: '+e.message);}
  }
  async function handoff(kindOverride){if(sentRef.current||pending)return;
   const fn=onHandoff||(typeof sendMessage==='function'?sendMessage:null);
   if(!fn){setNotice('UUMMAI sendMessage를 찾을 수 없습니다.');return;}
-  const actor=talkTarget?mhobject(world,live.current,talkTarget):null;
+  const actor=interruption?dialogueActor:talkTarget?mhobject(world,live.current,talkTarget):null;
   let after=live.current;
   try{
-   if(actor)after=mhmutate(world,live.current,{type:'TALK_SEND',id:actor.id}).state;
-   if(!actor&&!message.trim()&&!interruption){setNotice('전달할 발화 또는 요청을 입력하세요.');return;}
-   const payload={protocol:MH_PROTOCOL,event:'HANDOFF',stage,worldId:loadedWorldId,worldUrl:worldUrl||null,state:mhhandoffState(world,after),request:{kind:actor?'NPC_DIALOGUE':interruption?'INTERRUPT':typeof kindOverride==='string'?kindOverride:'PLAYER_INPUT',target:actor?{id:actor.id,name:actor.label,identityHint:actor.identityHint||''}:null,userText:message.trim().slice(0,800)},dialogue:{seen:seenSpeech(),futureIsCanon:false},context:{visible:present.map(o=>o.id),publicScenario:world.scenario?.publicIntro||''}};
+   if(interruption){after=pendingDialogueState(true);if(!after)return;}
+   else if(actor)after=mhmutate(world,live.current,{type:'TALK_SEND',id:actor.id}).state;
+   if(!message.trim()){setNotice('AI에게 전달할 말을 입력하세요.');return;}
+   const payload={protocol:MH_PROTOCOL,event:'HANDOFF',stage,worldId:loadedWorldId,worldUrl:worldUrl||null,state:mhhandoffState(world,after),request:{kind:interruption?'INTERRUPT':actor?'NPC_DIALOGUE':typeof kindOverride==='string'?kindOverride:'PLAYER_INPUT',target:actor?{id:actor.id,name:actor.label,identityHint:actor.identityHint||''}:null,userText:message.trim().slice(0,800)},dialogue:{seen:interruption?seenSpeech():[],futureIsCanon:false,cut:interruption?{index:dialogueIndex+1,total:lines.length,page:pageIndex+1,visibleChars:shown}:null},context:{visible:present.map(o=>o.id),publicScenario:world.scenario?.publicIntro||''}};
    sentRef.current=true;setPending(true);
    await Promise.resolve(fn(MH_PROTOCOL+' '+JSON.stringify(payload)));
    live.current=after;setState(after);setSent(true);setNotice('AI에 인계했습니다. 새 JSX에서 이어집니다.');
@@ -461,101 +581,131 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
  }
  const currentPuzzle=activePuzzle?world.objects.find(o=>o.id===activePuzzle):null;
  const currentPuzzleData=currentPuzzle&&currentPuzzle.puzzle;
- return <div style={{maxWidth:540,width:'100%',margin:'0 auto',background:'#091723',border:'1px solid #3a5869',borderRadius:15,overflow:'hidden',color:'#f1f6fa',fontFamily:'system-ui, sans-serif',fontSize:13}}>
-  <div style={{padding:'10px 11px 5px',display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:6}}>
-   <strong style={{fontSize:15,letterSpacing:'.01em'}}>{stageTitle}</strong>
-   <span style={{fontSize:11,color:'#bad0da',whiteSpace:'nowrap'}}>{mhclock(state.timeSec)} · 조사 중</span>
-  </div>
-  <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(123px,38%)',gap:9,padding:'4px 10px 10px',alignItems:'start'}}>
-   <div style={{minWidth:0,display:'flex',flexDirection:'column',gap:8}}>
-    <div style={{display:'flex',gap:4}}>
-     {[['scene','탐색'],['journal','기록'],['save','저장·인계']].map(([id,label])=><button key={id} onClick={()=>setTab(id)} style={{...btn,flex:1,padding:'8px 3px',background:tab===id?'#31566b':'#142d3e',fontSize:11}}>{label}</button>)}
+ const inSpeech=!!line&&!dialogueExited;
+ const dialogueLineText=line?visibleText:'';
+ const mapTiles=Array.from({length:mapHeight},(_,y)=>Array.from({length:mapWidth},(_,x)=>{
+  const xx=mapStartX+x,yy=mapStartY+y,found=mapFound(xx,yy),tile=mhtile(world,xx,yy),cx=x*18,cy=y*18;
+  const door=tile==='D',walkable=tile!=='#';
+  return <rect key={x+'_'+y} x={cx+1} y={cy+1} width="16" height="16" rx="2" fill={!found?'#101924':!walkable?'#384b5a':door&&mhblocked(world,state,xx,yy)?'#c3935b':'#516f80'}/>;
+ }));
+ return <div style={{maxWidth:540,width:'100%',margin:'0 auto',background:'#091723',border:'1px solid #3a5869',borderRadius:12,overflow:'hidden',color:'#f1f6fa',fontFamily:'system-ui,sans-serif',fontSize:13}}>
+  {dialogueMode?<div>
+   <div style={{position:'relative',width:'100%',height:'min(84vw,450px)',minHeight:260,maxHeight:450,background:'#293b4a',overflow:'hidden'}}>
+    <MHDialogueBackdrop room={room?.id||'lobby'} brightness={mhroomlight(world,state,state.player.x)} imageUrl={sceneBackground}/>
+    {dialogueActor?<div style={{position:'absolute',inset:'7% 9% 1%',pointerEvents:'none'}}><MHDialoguePortrait actor={dialogueActor} expression={line?.expression||'neutral'} pose={line?.pose||'neutral'} outfit={line?.outfit||''}/></div>:null}
+    <div style={{position:'absolute',top:9,left:10,right:10,display:'flex',justifyContent:'space-between',gap:10,fontSize:11,color:'#f2f4f8',textShadow:'0 1px 4px #08131d'}}>
+     <span>{roomName}</span><span>{mhclock(state.timeSec)}{inSpeech?' · '+(dialogueIndex+1)+'/'+lines.length:''}</span>
     </div>
-    <div style={{...card,padding:'7px 8px',minHeight:112,maxHeight:145,overflowY:'auto'}}>
-     <div style={{fontWeight:700,color:'#c2d9e5',fontSize:11,marginBottom:5}}>시야 내 대상</div>
-     {present.length?present.map(o=><button key={o.id} onClick={()=>select(o.id)} disabled={screenLocked} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:5,textAlign:'left',border:0,borderRadius:5,padding:'5px',background:state.selected===o.id?'#42697a':'transparent',color:'#e7eef2',fontSize:11,cursor:'pointer'}}><span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.kind==='person'?'● ':'◇ '}{o.label}</span><span style={{color:'#9fb8c8',flexShrink:0}}>{mhdistance(state.player.x,state.player.y,o.x,o.y).toFixed(1)}</span></button>):<span style={{color:'#8eabba',fontSize:11}}>보이는 대상 없음</span>}
-    </div>
+    {inSpeech?<div onClick={nextSpeech} style={{position:'absolute',left:9,right:9,bottom:9,padding:'14px 14px 12px',minHeight:126,borderRadius:10,background:'rgba(7,18,31,.94)',border:'1px solid #68849a',boxShadow:'0 4px 20px #07111a8a',touchAction:'manipulation'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:6,marginBottom:8}}>
+       <strong style={{color:'#f2d19f',fontSize:15}}>{line.speaker}</strong>
+       <span style={{fontSize:10,color:'#96b3c7'}}>{interruption?'일시정지':fullyShown?'▼':'···'}</span>
+      </div>
+      <div style={{fontSize:Math.min(line.size,21),lineHeight:1.6,color:line.color,minHeight:90,whiteSpace:'pre-wrap',overflowWrap:'anywhere',transform:line.shake?`translate(${Math.sin(shakeTick*2.6)*line.shake}px,${Math.cos(shakeTick*1.9)*line.shake}px)`:'none'}}>{dialogueLineText}</div>
+     </div>:<div style={{position:'absolute',left:9,right:9,bottom:9,padding:14,borderRadius:10,background:'rgba(7,18,31,.93)',border:'1px solid #68849a',fontSize:14}}>{dialogueActor?.label||'대화 상대'}에게 하고 싶은 말을 입력하세요.</div>}
    </div>
-   <div style={{...card,padding:6,minWidth:0}}>
-    <svg viewBox={`0 0 ${mapWidth*18} ${mapHeight*18}`} width="100%" style={{display:'block',borderRadius:5,background:'#0a1826'}} aria-label="발견된 지도 · 삼각형은 바라보는 방향">
-     {Array.from({length:mapHeight},(_,y)=>Array.from({length:mapWidth},(_,x)=>{
-      const xx=mapStartX+x,yy=mapStartY+y,found=mapFound(xx,yy),tile=mhtile(world,xx,yy),cx=x*18,cy=y*18;
-      const door=tile==='D',walkable=tile!== '#';
-      return <rect key={x+'_'+y} x={cx+1} y={cy+1} width="16" height="16" rx="2" fill={!found?'#101924':!walkable?'#384b5a':door&&mhblocked(world,state,xx,yy)?'#c3935b':'#516f80'} style={{cursor:'default'}}/>;
-     }))}
-     {mhobjects(world,state).filter(o=>knownIds.has(o.id)&&mapFound(Math.floor(o.x),Math.floor(o.y))&&!state.taken.includes(o.id)).map(o=>{
-      const dx=(o.x-mapStartX)*18,dy=(o.y-mapStartY)*18;
-      return <circle key={o.id} cx={dx} cy={dy} r="2.9" fill={o.kind==='person'?'#84d4b5':'#e7c58a'} stroke="#15202a" strokeWidth=".8"/>;
-     })}
-     <g transform={`translate(${(state.player.x-mapStartX)*18},${(state.player.y-mapStartY)*18}) rotate(${pose.angle*180/Math.PI})`}>
-      <path d="M0 -8 L6 6 L0 3 L-6 6Z" fill="#ffe19b" stroke="#172533" strokeWidth="1.4"/>
-     </g>
+   {inSpeech?<>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,padding:'8px 10px 5px'}}>
+     <button style={{...btn,minHeight:43,background:'#284a60'}} onClick={replayCut} disabled={!!interruption||sent}>↺ 이번 컷 다시 듣기</button>
+     {finalCut?<button style={{...btn,minHeight:43,background:'#356c78'}} onClick={exitDialogue} disabled={!!interruption||sent}>대화 종료</button>:<button style={{...btn,minHeight:43,background:'#534c60'}} onClick={beginInterruption} disabled={!!interruption||sent}>대사에 끼어들기</button>}
+    </div>
+    {!interruption?<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'2px 11px 9px',gap:8}}>
+      <button onClick={previousCut} disabled={dialogueIndex<1} style={{...btn,padding:'5px 9px',minHeight:29,opacity:dialogueIndex?1:.4,fontSize:11}}>‹ 이전 컷</button>
+      <span style={{color:'#a7bbc9',fontSize:10}}>{fullyShown?(finalCut?'마지막 컷':'화면 터치 또는 다음 컷'):'화면 터치로 즉시 완성'}</span>
+      {!finalCut?<button onClick={nextSpeech} style={{...btn,padding:'5px 9px',minHeight:29,fontSize:11}}>다음 컷 ›</button>:<span style={{width:72}}/>}
+    </div>:null}
+   </>:null}
+   {(!inSpeech||interruption)?<div style={{padding:'8px 11px 12px',background:'#0e2233'}}>
+    <strong style={{fontSize:12,color:'#f1d9a4'}}>{interruption?'지금 끼어들기 · 연출 일시정지':(dialogueActor?.label||'인물')+'에게 말하기'}</strong>
+    {interruption?<div style={{fontSize:11,color:'#a6becb',margin:'4px 0'}}>현재 컷을 여기서 중단합니다. 이 시점 이후 대사는 확정되지 않습니다.</div>:null}
+    <textarea value={message} onChange={e=>setMessage(e.target.value.slice(0,800))} rows={3} placeholder="인물에게 직접 말하거나 행동을 입력하세요." style={{...box,marginTop:8,resize:'vertical'}}/>
+    <div style={{display:'flex',gap:6,marginTop:7}}>
+     <button onClick={()=>handoff()} disabled={dialogueSendLocked||!message.trim()} style={{...btn,flex:1,background:'#326e7e'}}>AI에게 전달</button>
+     <button onClick={()=>{if(interruption){setInterruption(false);}else{setTalkTarget(null);setMessage('');}}} disabled={dialogueSendLocked} style={btn}>취소</button>
+    </div>
+   </div>:null}
+   {sent?<div style={{padding:'9px 11px',color:'#aacecf',fontSize:11}}>AI에 전송했습니다. 다음 JSX에서 대화가 이어집니다.</div>:null}
+  </div>:<>
+   {tab==='scene'?<>
+    <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(125px,38%)',gap:8,padding:'9px 10px 6px',alignItems:'stretch'}}>
+     <div style={{...card,height:105,minWidth:0,boxSizing:'border-box',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:5,padding:'8px 9px 6px',flexShrink:0,borderBottom:'1px solid #304d60'}}><strong style={{fontSize:12,color:'#eacb9d',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{roomName}</strong><span style={{color:'#bacfdb',fontSize:11,whiteSpace:'nowrap'}}>{mhclock(state.timeSec)}</span></div>
+      <div style={{flex:'0 0 64px',height:64,overflowY:'auto',overscrollBehavior:'contain',WebkitOverflowScrolling:'touch',touchAction:'pan-y',scrollbarWidth:'thin',padding:'0px 4px'}}>
+       {present.length?present.map(o=><button key={o.id} onClick={()=>select(o.id)} disabled={screenLocked} style={{width:'100%',display:'flex',justifyContent:'space-between',gap:4,alignItems:'center',textAlign:'left',minHeight:25,padding:'2px 4px',lineHeight:1.15,border:0,borderRadius:5,background:state.selected===o.id?'#42697a':'transparent',color:'#e5eef4',fontSize:11,cursor:'pointer'}}><span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.kind==='person'?'● ':'◇ '}{o.label}</span><span style={{color:'#9db8c8',flexShrink:0,fontSize:10}}>{mhdistance(state.player.x,state.player.y,o.x,o.y).toFixed(1)}</span></button>):<span style={{fontSize:11,color:'#93aab8'}}>주변에 보이는 대상 없음</span>}
+      </div>
+     </div>
+     <div style={{...card,height:105,boxSizing:'border-box',padding:5,minWidth:0,position:'relative'}}>
+      <svg viewBox={`0 0 ${mapWidth*18} ${mapHeight*18}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" aria-label="발견된 구역 지도. 드래그해 다른 구역 보기" style={{display:'block',background:'#0a1826',borderRadius:4,touchAction:'none',cursor:'grab'}} onPointerDown={onMapPointerDown} onPointerMove={onMapPointerMove} onPointerUp={onMapPointerEnd} onPointerCancel={onMapPointerEnd}>
+       {mapTiles}
+       {mhobjects(world,state).filter(o=>knownIds.has(o.id)&&mapFound(Math.floor(o.x),Math.floor(o.y))&&!state.taken.includes(o.id)).sort((a,b)=>(a.id===state.selected?1:0)-(b.id===state.selected?1:0)).map(o=>{
+        const chosen=o.id===state.selected;
+        const cellmates=mhobjects(world,state).filter(p=>Math.floor(p.x)===Math.floor(o.x)&&Math.floor(p.y)===Math.floor(o.y)&&knownIds.has(p.id)&&!state.taken.includes(p.id));
+        const i=cellmates.findIndex(p=>p.id===o.id);
+        const offset=cellmates.length>1?[[0,-3.3],[-3.3,1.9],[3.3,1.9],[0,3.3]][i%4]:[0,0];
+        const x=(o.x-mapStartX)*18+offset[0],y=(o.y-mapStartY)*18+offset[1];
+        return <g key={o.id} role="img" aria-label={(chosen?'선택 중: ':'발견 대상: ')+o.label} onClick={e=>{e.stopPropagation();const moved=mapClickBlock.current;mapClickBlock.current=false;if(!moved&&!screenLocked&&present.some(p=>p.id===o.id))select(o.id);}} style={{cursor:'pointer'}}>
+         {chosen?<circle cx={x} cy={y} r="6.2" fill="none" stroke="#fff" strokeWidth="1.65"/>:null}
+         <circle cx={x} cy={y} r={chosen?4.4:2.9} fill={chosen?'#ff4f9d':o.kind==='person'?'#84d4b5':'#e7c58a'} stroke={chosen?'#fff':'#15202a'} strokeWidth={chosen?1.2:.8}/>
+        </g>;
+       })}
+       <g transform={`translate(${(state.player.x-mapStartX)*18},${(state.player.y-mapStartY)*18}) rotate(${pose.angle*180/Math.PI})`}><path d="M0 -8 L6 6 L0 3 L-6 6Z" fill="#ffe19b" stroke="#172533" strokeWidth="1.4"/></g>
+      </svg>
+      {(mapPan.x!==0||mapPan.y!==0)?<button aria-label="지도에서 내 위치로 돌아가기" onClick={()=>setMapPan({x:0,y:0})} style={{position:'absolute',right:6,bottom:6,width:22,height:22,minHeight:22,border:'1px solid #92b6cc',borderRadius:5,padding:0,color:'#e7f4ff',background:'#263f54de',fontSize:15,lineHeight:'20px',cursor:'pointer'}}>⌖</button>:null}
+     </div>
+    </div>
+    <svg viewBox={`0 0 ${MH_W} ${MH_H}`} width="100%" role="img" aria-label="주변 탐색 시야" style={{display:'block',background:'#243544',touchAction:'none',userSelect:'none',cursor:'grab'}} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd} onClick={onSceneClick}>
+     <defs>
+      <linearGradient id="mh-ceiling" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#182f42"/><stop offset="1" stopColor="#536675"/></linearGradient>
+      <linearGradient id="mh-floor" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#6c7378"/><stop offset=".5" stopColor="#3a4c5b"/><stop offset="1" stopColor="#172a37"/></linearGradient>
+      {frame.objects.map(o=><clipPath key={o.id} id={'mhclip-'+stage+'-'+o.id}>{o.mask.map((m,i)=><rect key={i} x={m.x} y="0" width={m.w} height={MH_H}/>)}</clipPath>)}
+     </defs>
+     <rect x="0" y="0" width={MH_W} height={mhclamp(MH_HORIZON+(pose.pitch||0)*220,0,MH_H)} fill="url(#mh-ceiling)"/>
+     <rect x="0" y={mhclamp(MH_HORIZON+(pose.pitch||0)*220,0,MH_H)} width={MH_W} height={MH_H-mhclamp(MH_HORIZON+(pose.pitch||0)*220,0,MH_H)} fill="url(#mh-floor)"/>
+     {frame.floor.map((f,i)=><line key={i} x1={f.a.x} y1={f.a.y} x2={f.b.x} y2={f.b.y} stroke="#c6d6dc" strokeWidth=".7" opacity=".16"/>)}
+     {frame.rays.map((r,i)=>r.fill?<rect key={i} x={r.x} y={r.y} width={r.width} height={r.height} fill={r.fill}/>:null)}
+     {frame.objects.map(o=><g key={o.id} clipPath={'url(#mhclip-'+stage+'-'+o.id+')'} onClick={()=>!suppressClick.current&&select(o.id)} style={{cursor:'pointer'}}>{o.shapes.map((sh,i)=>mhAppearance(sh,i))}</g>)}
+     <path d={`M${MH_W/2-7} ${MH_HORIZON}h14 M${MH_W/2} ${MH_HORIZON-7}v14`} stroke="#e9d6ae" strokeWidth="1.4" opacity=".56"/>
     </svg>
-   </div>
-  </div>
-  {tab==='scene'?<>
-   <svg viewBox={`0 0 ${MH_W} ${MH_H}`} width="100%" role="img" aria-label="주변 탐색 화면. 좌우로 드래그하면 회전합니다." style={{display:'block',background:'#243544',touchAction:'none',userSelect:'none',cursor:'grab'}}
-    onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd} onClick={onSceneClick}>
-    <defs>
-     <linearGradient id="mh-ceiling" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#182f42"/><stop offset="1" stopColor="#536675"/></linearGradient>
-     <linearGradient id="mh-floor" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#6c7378"/><stop offset=".5" stopColor="#3a4c5b"/><stop offset="1" stopColor="#172a37"/></linearGradient>
-     {frame.objects.map(o=><clipPath key={o.id} id={'mhclip-'+stage+'-'+o.id}>{o.mask.map((m,i)=><rect key={i} x={m.x} y="0" width={m.w} height={MH_H}/>)}</clipPath>)}
-    </defs>
-    <rect x="0" y="0" width={MH_W} height={mhclamp(MH_HORIZON+(pose.pitch||0)*220,0,MH_H)} fill="url(#mh-ceiling)"/>
-    <rect x="0" y={mhclamp(MH_HORIZON+(pose.pitch||0)*220,0,MH_H)} width={MH_W} height={MH_H-mhclamp(MH_HORIZON+(pose.pitch||0)*220,0,MH_H)} fill="url(#mh-floor)"/>
-    {frame.floor.map((f,i)=><line key={i} x1={f.a.x} y1={f.a.y} x2={f.b.x} y2={f.b.y} stroke="#c6d6dc" strokeWidth=".7" opacity=".16"/>)}
-    {frame.rays.map((r,i)=>r.fill?<rect key={i} x={r.x} y={r.y} width={r.width} height={r.height} fill={r.fill} onClick={r.kind==='door'?()=>select('door'):undefined}/>:null)}
-    {frame.objects.map(o=><g key={o.id} clipPath={'url(#mhclip-'+stage+'-'+o.id+')'} onClick={()=>!suppressClick.current&&select(o.id)} style={{cursor:'pointer'}}>{o.shapes.map((sh,i)=>mhAppearance(sh,i))}</g>)}
-    <rect x="0" y="0" width={MH_W} height="32" fill="#091722" opacity=".58"/>
-    <text x="15" y="22" fontSize="13" fill="#eaf2f7">시야 드래그: 좌우 45° 정렬 / 상하 자유 · 회전 0초</text>
-    {!line?<path d={`M${MH_W/2-7} ${MH_HORIZON}h14 M${MH_W/2} ${MH_HORIZON-7}v14`} stroke="#e9d6ae" strokeWidth="1.4" opacity=".75"/>:null}
-    {line?<g>
-     <rect x="12" y="252" width="656" height="145" rx="12" fill="#091522" opacity=".95" stroke="#7490a5" strokeWidth="1.6"/>
-     <rect x="28" y="235" width={mhclamp(line.speaker.length*19+42,104,220)} height="34" rx="8" fill="#264d64" stroke="#84a9bd"/>
-     <text x="43" y="257" fill="#f5dcaa" fontSize="16" fontWeight="700">{line.speaker}</text>
-     <g transform={`translate(${line.shake?Math.sin(shakeTick*2.6)*line.shake:0},${line.shake?Math.cos(shakeTick*1.9)*line.shake:0})`}>
-      {visibleText.split('\n').slice(0,3).map((t,i)=><text key={i} x="32" y={297+i*30} fontSize={line.size} fill={line.color}>{t}</text>)}
-     </g>
-     <text x="646" y="381" textAnchor="end" fontSize="12" fill="#a6bbc8">{fullyShown?'▼':'···'}</text>
-     <rect x="12" y="273" width="655" height="124" fill="transparent" onClick={e=>{e.stopPropagation();nextSpeech();}}/>
-    </g>:null}
-   </svg>
-   {line?<div style={{display:'flex',justifyContent:'space-between',gap:8,padding:'7px 11px',background:'#122839'}}>
-    <button style={{...btn,flex:1}} onClick={nextSpeech}>{fullyShown?'다음 대사':'문장 완성'}</button>
-    <button style={{...btn,flex:1,background:interruption?'#5d4b44':'#334d62'}} onClick={()=>{setInterruption(v=>!v);setTalkTarget(null);}}>대사에 끼어들기</button>
+    <div style={{display:'grid',gridTemplateColumns:'1.05fr 1fr 1fr',gridTemplateRows:'repeat(2,minmax(36px,auto))',gap:4,padding:'7px 9px 6px'}}>
+     <button onClick={()=>execute({type:'WALK',forward:1})} disabled={screenLocked||!!activePuzzle} style={{...btn,gridColumn:1,gridRow:'1 / 3',fontSize:17,fontWeight:700,background:'#356b7c',padding:'4px 4px'}}>↑ 전진</button>
+     {[0,1,2].map(i=>{const a=pageActions[i];return <button key={i} disabled={screenLocked||!a||a.disabled} onClick={()=>applyObject(a.verb)} style={{...btn,gridColumn:i===1?3:2,gridRow:i===2?2:1,opacity:!a||a.disabled?.36:1,background:a&&!a.disabled?'#264b5c':'#172c3d',fontSize:11,padding:'3px 3px'}}>{a?a.label:'—'}{a&&a.time?<span style={{display:'block',fontSize:9,color:'#afcad5'}}>{a.time}</span>:null}</button>;})}
+     <button onClick={()=>setActionPage(p=>p?0:1)} disabled={actions.length<=3||screenLocked} style={{...btn,gridColumn:3,gridRow:2,background:'#253c50',opacity:actions.length<=3?.35:1,padding:'3px 3px'}}>{actionPage?'‹ 이전':'다음 ›'}</button>
+    </div>
+    {(selected||notice)?<div role="status" style={{...card,margin:'1px 9px 6px',padding:'7px 9px',fontSize:11}}>
+     {selected?<div><strong style={{color:'#f3d5a6'}}>{selected.label}</strong> <span style={{color:'#a4c1ce'}}>· {selectedDist.toFixed(1)}칸</span></div>:null}
+     <div style={{marginTop:selected?3:0,color:'#b9ccd5',lineHeight:1.4,whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{notice&&notice!=='대상을 선택했습니다.'?notice:selected?.identityHint||selected?.observeText||notice||'대상을 선택했습니다.'}</div>
+    </div>:null}
+    {currentPuzzleData?<div style={{...card,margin:'7px 9px',padding:9}}><strong>{currentPuzzle.label} · {currentPuzzleData.question||'장치 조작'}</strong>
+     {puzzleSeconds!==null?<div style={{color:'#f4d393',marginTop:5}}>남은 시간 {puzzleSeconds}초</div>:null}
+     {Number.isInteger(currentPuzzleData.hearts)&&currentPuzzleData.hearts>0?<div style={{fontSize:11,color:'#bbceda',marginTop:4}}>남은 기회 {state.flags['hearts:'+currentPuzzle.id]??currentPuzzleData.hearts}회</div>:null}
+     {currentPuzzleData.type==='choice'?<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:5,marginTop:7}}>{(currentPuzzleData.choices||[]).map((c,i)=><button key={i} onClick={()=>solvePuzzle(i)} style={btn}>{c}</button>)}</div>:<div style={{display:'flex',gap:5,marginTop:7}}><input value={puzzleInput} onChange={e=>setPuzzleInput(e.target.value)} style={{...box,flex:1}} placeholder="정답 입력"/><button style={btn} onClick={()=>solvePuzzle(puzzleInput)}>확인</button></div>}
+     <button onClick={()=>{puzzleDeadline.current=null;puzzleExpired.current=true;setActivePuzzle(null);setPuzzleSeconds(null);}} style={{...btn,marginTop:5}}>닫기</button>
+    </div>:null}
+   </>:null}
+   {tab==='journal'?<div style={{padding:'8px 10px',display:'grid',gap:8}}>
+    <div style={{...card,padding:10}}><strong>조사 및 소지품</strong><div style={{color:'#b7cbd5',marginTop:6,lineHeight:1.7}}>{state.observed.length?'조사: '+state.observed.map(id=>world.objects.find(o=>o.id===id)?.label||id).join(', '):'조사한 대상 없음'}<div>{state.taken.length?'소지품: '+state.taken.map(id=>world.objects.find(o=>o.id===id)?.label||id).join(', '):'소지품 없음'}</div></div></div>
+    <div style={{...card,padding:10,display:'grid',gap:7}}><strong>자유 추리 제출</strong><textarea rows={2} value={message} onChange={e=>setMessage(e.target.value.slice(0,800))} placeholder="누가, 언제, 어떻게, 왜 문서를 옮겼는지 자유롭게 추론하세요." style={box}/><button onClick={()=>handoff('ACCUSATION')} disabled={screenLocked||!message.trim()} style={btn}>추리 제시 · AI 인계</button></div>
+    <div style={{...card,padding:10}}><strong>최근 중요한 행동</strong>{state.log.filter(e=>!['LOOK','MOVE'].includes(e.type)).slice(-8).map((e,i)=><div key={i} style={{color:'#aac5d1',fontSize:11,marginTop:5}}>{mhclock(e.at)} · {e.type} {e.objectId||''} {e.cost?'+'+e.cost+'초':''}</div>)}</div>
    </div>:null}
-   <div style={{display:'grid',gridTemplateColumns:'1.05fr 1fr 1fr',gridTemplateRows:'repeat(2,43px)',gap:6,padding:'10px 11px'}}>
-    <button onClick={()=>execute({type:'WALK',forward:1})} disabled={screenLocked||!!activePuzzle} style={{...btn,gridColumn:1,gridRow:'1 / 3',fontSize:18,fontWeight:700,background:'#356b7c'}}>↑ 전진</button>
-    {[0,1,2].map(i=>{const a=pageActions[i];return <button key={i} disabled={screenLocked||!a||a.disabled} onClick={()=>applyObject(a.verb)} style={{...btn,gridColumn:i===1?3:2,gridRow:i===2?2:1,opacity:!a||a.disabled?.36:1,background:a&&!a.disabled?'#264b5c':'#172c3d',fontSize:11,padding:'4px 3px'}}>{a?a.label:'—'}{a&&a.time?<span style={{display:'block',fontSize:9,color:'#afcad5'}}>{a.time}</span>:null}</button>;})}<button onClick={()=>setActionPage(p=>p?0:1)} disabled={actions.length<=3||screenLocked} style={{...btn,gridColumn:3,gridRow:2,background:'#253c50',opacity:actions.length<=3?.35:1}}>{actionPage?'‹ 이전':'다음 ›'}</button>
-   </div>
-   {selected?<div style={{...card,margin:'0 11px 10px',padding:'8px 10px',fontSize:12}}><strong style={{color:'#f3d5a6'}}>{selected.label}</strong> <span style={{color:'#a4c1ce'}}>· {selectedDist.toFixed(1)}칸</span><div style={{marginTop:4,color:'#b9ccd5'}}>{selected.identityHint||selected.observeText||'대상을 선택했습니다. 가능한 행동이 아래에 표시됩니다.'}</div></div>:null}
-   {currentPuzzleData?<div style={{...card,margin:11,padding:12}}><strong>{currentPuzzle.label} · {currentPuzzleData.question||'장치 조작'}</strong>
-    {puzzleSeconds!==null?<div style={{color:'#f4d393',marginTop:5}}>남은 시간 {puzzleSeconds}초</div>:null}
-    {Number.isInteger(currentPuzzleData.hearts)&&currentPuzzleData.hearts>0?<div style={{fontSize:11,color:'#bbceda',marginTop:4}}>남은 기회 {state.flags['hearts:'+currentPuzzle.id]??currentPuzzleData.hearts}회</div>:null}
-    {currentPuzzleData.type==='choice'?<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginTop:9}}>{(currentPuzzleData.choices||[]).map((c,i)=><button key={i} onClick={()=>solvePuzzle(i)} style={btn}>{c}</button>)}</div>:<div style={{display:'flex',gap:7,marginTop:9}}><input value={puzzleInput} onChange={e=>setPuzzleInput(e.target.value)} style={{...box,flex:1}} placeholder="정답 입력"/><button style={btn} onClick={()=>solvePuzzle(puzzleInput)}>확인</button></div>}
-    <button onClick={()=>{puzzleDeadline.current=null;puzzleExpired.current=true;setActivePuzzle(null);setPuzzleSeconds(null);}} style={{...btn,marginTop:8}}>닫기</button>
+   {tab==='save'?<div style={{padding:'8px 10px',display:'grid',gap:6}}>
+    <strong style={{fontSize:12,color:'#d4e2eb'}}>상태 저장·인계</strong>
+    <textarea rows={4} readOnly value={JSON.stringify(mhcompact(world,state))} style={box}/>
+    <textarea rows={2} value={restoreText} onChange={e=>setRestoreText(e.target.value)} placeholder="체크포인트 JSON" style={box}/>
+    <button onClick={restore} disabled={screenLocked} style={btn}>체크포인트 복원</button>
+    <div style={{...card,padding:8,display:'grid',gap:6}}><strong style={{fontSize:12}}>Worker 저장 (개인 복구 키)</strong>
+     <input value={saveSlot} onChange={e=>setSaveSlot(e.target.value.slice(0,64))} style={box} placeholder="저장 슬롯 ID"/>
+     <input type="password" value={saveToken} onChange={e=>setSaveToken(e.target.value.slice(0,128))} style={box} placeholder="복구 키 · 24자 이상" autoComplete="off"/>
+     <div style={{display:'flex',gap:5,flexWrap:'wrap'}}><button style={btn} onClick={makeSaveToken}>복구 키 생성</button><button style={btn} onClick={()=>serverSave('put')} disabled={screenLocked}>서버 저장</button><button style={btn} onClick={()=>serverSave('load')} disabled={screenLocked}>서버 복원</button></div>
+     <label style={{fontSize:11,display:'flex',gap:6,alignItems:'center'}}><input type="checkbox" checked={autoSync} onChange={e=>setAutoSync(e.target.checked)}/>중요 행동 시 자동 동기화</label><div style={{fontSize:10,color:'#b6cad3'}}>{saveStatus}</div>
+    </div>
+    <div style={{fontSize:11,color:'#a8becd'}}>지도: {worldStatus}{worldError?' · 오류: '+worldError:''}</div>
+    <textarea rows={2} value={message} onChange={e=>setMessage(e.target.value.slice(0,800))} placeholder="AI에게 전달할 요청" style={box}/>
+    <button onClick={()=>handoff()} disabled={screenLocked||!message.trim()} style={{...btn,background:'#316d7c'}}>현재 상태와 요청 인계</button>
    </div>:null}
-   {(talkTarget||interruption)?<div style={{padding:'0 11px 10px'}}><div style={{color:'#edd49f',fontSize:12,marginBottom:5}}>{talkTarget?(world.objects.find(o=>o.id===talkTarget)?.label||'인물')+'에게 말하기':'지금 끼어들기'}</div><textarea value={message} onChange={e=>setMessage(e.target.value.slice(0,800))} rows={2} placeholder="자유롭게 말하거나 행동하세요. AI가 응답합니다." style={box}/><div style={{display:'flex',gap:7,marginTop:7}}><button onClick={handoff} disabled={screenLocked||!message.trim()} style={{...btn,flex:1,background:'#326e7e'}}>AI에게 전달</button><button onClick={()=>{setTalkTarget(null);setInterruption(false);}} style={btn}>취소</button></div></div>:null}
-  </>:null}
-  {tab==='journal'?<div style={{padding:'4px 11px 12px',display:'grid',gap:8}}>
-   <div style={{...card,padding:10}}><strong>조사 및 소지품</strong><div style={{color:'#b7cbd5',marginTop:6,lineHeight:1.7}}>{state.observed.length?'조사: '+state.observed.map(id=>world.objects.find(o=>o.id===id)?.label||id).join(', '):'조사한 대상 없음'}<div>{state.taken.length?'소지품: '+state.taken.map(id=>world.objects.find(o=>o.id===id)?.label||id).join(', '):'소지품 없음'}</div></div></div>
-   <div style={{...card,padding:10,display:'grid',gap:7}}><strong>자유 추리 제출</strong><textarea rows={2} value={message} onChange={e=>setMessage(e.target.value.slice(0,800))} placeholder="누가, 언제, 어떻게, 왜 문서를 옮겼는지 자유롭게 추론하세요." style={box}/><button onClick={()=>handoff('ACCUSATION')} disabled={screenLocked||!message.trim()} style={btn}>추리 제시 · AI 인계</button></div>
-   <div style={{...card,padding:10}}><strong>최근 행동</strong>{state.log.slice(-12).map((e,i)=><div key={i} style={{color:'#aac5d1',fontSize:11,marginTop:5}}>{mhclock(e.at)} · {e.type} {e.objectId||''} {e.cost?'+'+e.cost+'초':''}</div>)}</div>
-  </div>:null}
-  {tab==='save'?<div style={{padding:'4px 11px 12px',display:'grid',gap:7}}>
-   <div style={{fontSize:12,color:'#d4e2eb',fontWeight:700}}>현재 상태 · 복사 및 복원</div>
-   <textarea rows={4} readOnly value={JSON.stringify(mhcompact(world,state))} style={box}/>
-   <textarea rows={2} value={restoreText} onChange={e=>setRestoreText(e.target.value)} placeholder="이전 체크포인트 JSON" style={box}/>
-   <button onClick={restore} disabled={screenLocked} style={btn}>체크포인트 복원</button><div style={{...card,padding:8,display:'grid',gap:6}}><strong style={{fontSize:12}}>선택적 Worker 저장 (비공개 복구 키 방식)</strong>
-   <input value={saveSlot} onChange={e=>setSaveSlot(e.target.value.slice(0,64))} style={box} placeholder="저장 슬롯 ID"/>
-   <input type="password" value={saveToken} onChange={e=>setSaveToken(e.target.value.slice(0,128))} style={box} placeholder="복구 키 · 24자 이상" autoComplete="off"/>
-   <div style={{display:'flex',gap:5,flexWrap:'wrap'}}><button style={btn} onClick={makeSaveToken}>복구 키 생성</button><button style={btn} onClick={()=>serverSave('put')} disabled={screenLocked}>서버 저장</button><button style={btn} onClick={()=>serverSave('load')} disabled={screenLocked}>서버 복원</button></div>
-   <label style={{fontSize:11,display:'flex',gap:6,alignItems:'center'}}><input type="checkbox" checked={autoSync} onChange={e=>setAutoSync(e.target.checked)}/>중요 행동 시 자동 동기화 (KV 연결 후)</label><div style={{fontSize:10,color:'#b6cad3'}}>{saveStatus}</div>
-  </div>
-   <div style={{fontSize:11,color:'#a8becd'}}>지도: {worldStatus}{worldError?' · 오류: '+worldError:''}</div>
-   <textarea rows={2} value={message} onChange={e=>setMessage(e.target.value.slice(0,800))} placeholder="AI에게 전달할 요청" style={box}/>
-   <button onClick={handoff} disabled={screenLocked||!message.trim()} style={{...btn,background:'#316d7c'}}>현재 상태와 요청 인계</button>
-  </div>:null}
-  <div role="status" style={{padding:'8px 11px 11px',borderTop:'1px solid #2b4659',fontSize:11,minHeight:18,color:'#c4d7e0'}}>{sent?'제어권 인계 완료 · ':''}{notice}</div>
+   {tab!=='scene'&&notice?<div role="status" style={{padding:'5px 10px',fontSize:11,color:'#b9d2db'}}>{notice}</div>:null}
+   <div style={{display:'flex',gap:4,padding:'8px 9px',borderTop:'1px solid #2b4659',background:'#0c1c2c'}}>
+    {[['scene','탐색'],['journal','기록'],['save','저장·인계']].map(([id,label])=><button key={id} onClick={()=>setTab(id)} style={{...btn,flex:1,padding:'6px 3px',minHeight:30,background:tab===id?'#31566b':'#142d3e',fontSize:11}}>{label}</button>)}
+   </div>
+  </>}
  </div>;
 }
