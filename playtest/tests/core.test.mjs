@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {MH_DEMO,MH_VIEWS,mhworld,mhinitial,mhmutate,mhview,mhobjects,mhseenNow,mhrender,mhexpand,mhcompact,mhreply,mhtimeline,mhblocked,mhvisible} from '../src/core.mjs';
+import {MH_DEMO,MH_VIEWS,mhworld,mhinitial,mhmutate,mhview,mhobjects,mhseenNow,mhrender,mhexpand,mhcompact,mhhandoffState,mhreply,mhtimeline,mhblocked,mhvisible} from '../src/core.mjs';
 import {hubFetch} from '../src/hub_worker.mjs';
 const w=mhworld(MH_DEMO);const initial=()=>mhinitial(w);
 test('world is a valid 15 x 10 archive with 3 NPCs',()=>{assert.equal(w.w,15);assert.equal(w.h,10);assert.equal(w.objects.filter(o=>o.kind==='person').length,3)});
@@ -36,4 +36,15 @@ test('Worker blocks unauthenticated and stale writes and disables unbound KV',as
  const s1={...mhcompact(w,initial()),rev:6},s2={...s1,rev:5};
  await hubFetch(new Request(path,{method:'PUT',headers:{Authorization:token},body:JSON.stringify(s1)}),env);
  assert.equal((await hubFetch(new Request(path,{method:'PUT',headers:{Authorization:token},body:JSON.stringify(s2)}),env)).status,409);
+});
+test('AI handoff excludes raw movement, repeated LOOK and full observation history, while server checkpoint keeps it',()=>{
+ const s=initial();s.log=Array.from({length:45},(_,i)=>({type:i%3?'LOOK':'MOVE',objectId:'entrance_sign',at:32700+i,dx:0,dy:1,cost:2}));
+ s.log.push({type:'TAKE',objectId:'brass_key',at:32750,cost:5});
+ s.log.push({type:'OPEN',objectId:'archive_door',at:32755,cost:4});
+ const backup=mhcompact(w,s),transmitted=mhhandoffState(w,s);
+ assert.equal(backup.log.length,47);
+ assert.deepEqual(transmitted.log.map(x=>x.type),['TAKE','OPEN']);
+ const before=JSON.stringify(backup).length,after=JSON.stringify(transmitted).length;
+ assert.ok(after<before*.4,{before,after});
+ assert.equal(mhexpand(w,transmitted).player.x,s.player.x);
 });
