@@ -84,6 +84,23 @@ function mhcompact(w,s){const a=mhvalidate(w,s);const indices=[...new Set(a.seen
  const fog=Object.keys(groups).map(k=>Number(k).toString(36)+':'+groups[k].toString(36)).join('.');
  const {seen,...rest}=a;return {...rest,fog};
 }
+function mhhandoffState(w,s){
+ const state=mhcompact(w,s),keep=new Map();
+ for(const e of state.log){
+  if(!['WORLD_EVENT','NPC_REPLY','TAKE','OPEN','PUZZLE','TOGGLE'].includes(e.type))continue;
+  if(e.type==='PUZZLE'&&!e.success)continue;
+  const key=e.type+':'+(e.objectId||e.id||'');
+  const row={type:e.type};
+  if(e.objectId)row.objectId=e.objectId;
+  if(e.id)row.id=e.id;
+  if(e.success===true)row.success=true;
+  if(Number.isInteger(e.cost)&&e.cost>0)row.cost=e.cost;
+  if(Number.isInteger(e.at))row.at=e.at;
+  keep.set(key,row);
+ }
+ state.log=[...keep.values()].slice(-8);
+ return state;
+}
 function mhexpand(w,raw){let obj=typeof raw==='string'?JSON.parse(raw):raw;
  if(obj&&typeof obj.fog==='string'&&!Array.isArray(obj.seen)){
   const seen=[];for(const group of obj.fog.split('.')){if(!group)continue;const [k,v]=group.split(':');const chunk=parseInt(k,36),mask=parseInt(v,36)>>>0;if(!Number.isInteger(chunk)||chunk<0||chunk>Math.ceil(w.w*w.h/32)||!Number.isFinite(mask))throw Error('발견 지도 압축 오류');for(let i=0;i<32;i++)if(mask&(1<<i)){const n=chunk*32+i;if(n<w.w*w.h)seen.push(mhcell(n%w.w,Math.floor(n/w.w)));}}
@@ -228,4 +245,4 @@ function mhPages(raw,max=32,per=3){
  return pages.length?pages:[''];
 }
 
-export {MH_DEMO,MH_VIEWS,mhworld,mhinitial,mhmutate,mhview,mhobjects,mhvisible,mhseenNow,mhrender,mhexpand,mhcompact,mhreply,mhtimeline,mhclock,mhblocked,mhray,mhvalidPosition,mhbrightness,mhdistance};
+export {MH_DEMO,MH_VIEWS,mhworld,mhinitial,mhmutate,mhview,mhobjects,mhvisible,mhseenNow,mhrender,mhexpand,mhcompact,mhhandoffState,mhreply,mhtimeline,mhclock,mhblocked,mhray,mhvalidPosition,mhbrightness,mhdistance};
