@@ -84,6 +84,23 @@ function mhcompact(w,s){const a=mhvalidate(w,s);const indices=[...new Set(a.seen
  const fog=Object.keys(groups).map(k=>Number(k).toString(36)+':'+groups[k].toString(36)).join('.');
  const {seen,...rest}=a;return {...rest,fog};
 }
+function mhhandoffState(w,s){
+ const state=mhcompact(w,s),keep=new Map();
+ for(const e of state.log){
+  if(!['WORLD_EVENT','NPC_REPLY','TAKE','OPEN','PUZZLE','TOGGLE'].includes(e.type))continue;
+  if(e.type==='PUZZLE'&&!e.success)continue;
+  const key=e.type+':'+(e.objectId||e.id||'');
+  const row={type:e.type};
+  if(e.objectId)row.objectId=e.objectId;
+  if(e.id)row.id=e.id;
+  if(e.success===true)row.success=true;
+  if(Number.isInteger(e.cost)&&e.cost>0)row.cost=e.cost;
+  if(Number.isInteger(e.at))row.at=e.at;
+  keep.set(key,row);
+ }
+ state.log=[...keep.values()].slice(-8);
+ return state;
+}
 function mhexpand(w,raw){let obj=typeof raw==='string'?JSON.parse(raw):raw;
  if(obj&&typeof obj.fog==='string'&&!Array.isArray(obj.seen)){
   const seen=[];for(const group of obj.fog.split('.')){if(!group)continue;const [k,v]=group.split(':');const chunk=parseInt(k,36),mask=parseInt(v,36)>>>0;if(!Number.isInteger(chunk)||chunk<0||chunk>Math.ceil(w.w*w.h/32)||!Number.isFinite(mask))throw Error('발견 지도 압축 오류');for(let i=0;i<32;i++)if(mask&(1<<i)){const n=chunk*32+i;if(n<w.w*w.h)seen.push(mhcell(n%w.w,Math.floor(n/w.w)));}}
@@ -436,7 +453,7 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
   try{
    if(actor)after=mhmutate(world,live.current,{type:'TALK_SEND',id:actor.id}).state;
    if(!actor&&!message.trim()&&!interruption){setNotice('전달할 발화 또는 요청을 입력하세요.');return;}
-   const payload={protocol:MH_PROTOCOL,event:'HANDOFF',stage,worldId:loadedWorldId,worldUrl:worldUrl||null,state:mhcompact(world,after),request:{kind:actor?'NPC_DIALOGUE':interruption?'INTERRUPT':typeof kindOverride==='string'?kindOverride:'PLAYER_INPUT',target:actor?{id:actor.id,name:actor.label,identityHint:actor.identityHint||''}:null,userText:message.trim().slice(0,800)},dialogue:{seen:seenSpeech(),futureIsCanon:false},context:{selected:after.selected,visible:present.map(o=>o.id),observed:after.observed,taken:after.taken,latestEvents:after.log.slice(-15),publicScenario:world.scenario?.publicIntro||''}};
+   const payload={protocol:MH_PROTOCOL,event:'HANDOFF',stage,worldId:loadedWorldId,worldUrl:worldUrl||null,state:mhhandoffState(world,after),request:{kind:actor?'NPC_DIALOGUE':interruption?'INTERRUPT':typeof kindOverride==='string'?kindOverride:'PLAYER_INPUT',target:actor?{id:actor.id,name:actor.label,identityHint:actor.identityHint||''}:null,userText:message.trim().slice(0,800)},dialogue:{seen:seenSpeech(),futureIsCanon:false},context:{visible:present.map(o=>o.id),publicScenario:world.scenario?.publicIntro||''}};
    sentRef.current=true;setPending(true);
    await Promise.resolve(fn(MH_PROTOCOL+' '+JSON.stringify(payload)));
    live.current=after;setState(after);setSent(true);setNotice('AI에 인계했습니다. 새 JSX에서 이어집니다.');
