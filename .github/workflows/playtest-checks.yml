@@ -1,0 +1,32 @@
+name: Integrated Mystery Hub checks
+on:
+  pull_request:
+    paths:
+      - 'playtest/**'
+      - 'lab13/src/worker.mjs'
+      - '.github/workflows/playtest-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: lab13/package-lock.json
+      - name: Run playtest engine tests
+        run: node --test playtest/tests/core.test.mjs
+      - name: Install existing Lab13 dependencies
+        working-directory: lab13
+        run: npm ci
+      - name: Verify existing Lab13 tests
+        working-directory: lab13
+        run: npm test
+      - name: Bundle shared existing Worker and UUMMAI Lab13
+        working-directory: lab13
+        run: npm run build
