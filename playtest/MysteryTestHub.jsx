@@ -36,6 +36,13 @@ function mhblocked(world,s,x,y){
  return !(door?s.flags?.['door:'+door.id]:s.flags?.doorOpen);
 }
 function mhvalidPosition(world,s,x,y){return !mhblocked(world,s,Math.floor(x),Math.floor(y));}
+function mhwalkCheck(w,s,dx,dy){
+ const x=Math.floor(s.player.x),y=Math.floor(s.player.y),nx=x+dx,ny=y+dy;
+ const target=mhtile(w,nx,ny);
+ if(mhblocked(w,s,nx,ny))return {ok:false,kind:target==='D'?'door':'wall',nx,ny};
+ if(dx&&dy&&mhblocked(w,s,x+dx,y)&&mhblocked(w,s,x,y+dy))return {ok:false,kind:'corner',nx,ny};
+ return {ok:true,kind:'open',nx,ny};
+}
 function mhray(world,s,ox,oy,dx,dy,range=MH_RANGE){
  const magnitude=Math.hypot(dx,dy);if(magnitude<.00001)return null;dx/=magnitude;dy/=magnitude;
  let mx=Math.floor(ox),my=Math.floor(oy),sx=dx<0?-1:1,sy=dy<0?-1:1;
@@ -54,6 +61,7 @@ function mhbrightness(w,s,x,y){return mhroomlight(w,s,x);}
 function mhvisible(w,s,o){
  if(s.taken?.includes(o.id)||(o.visibleIf&&!s.flags?.[o.visibleIf]))return false;
  const d=mhdistance(s.player.x,s.player.y,o.x,o.y);if(d>MH_RANGE)return false;
+ if(o.kind==='person'&&d<.65)return true;
  const f=mhvector(s.player.heading),a=Math.atan2(o.y-s.player.y,o.x-s.player.x),front=Math.atan2(f.y,f.x),off=mhangleDelta(front,a);
  if(Math.abs(off)>MH_FOV*Math.PI/360+.12)return false;
  if(o.kind==='door'&&mhblocked(w,s,Math.floor(o.x),Math.floor(o.y))){const h=mhray(w,s,s.player.x,s.player.y,o.x-s.player.x,o.y-s.player.y,d);return !!h&&h.kind==='door'&&h.x===Math.floor(o.x)&&h.y===Math.floor(o.y);}
@@ -119,8 +127,11 @@ function mhmutate(w,s0,a){
  }else if(a.type==='WALK'){
   const {dx,dy}=a.absolute?{dx:a.dx,dy:a.dy}:mhstep(before.heading,a.forward||0,a.side||0);
   if(!Number.isInteger(dx)||!Number.isInteger(dy)||Math.abs(dx)>1||Math.abs(dy)>1||(!dx&&!dy))throw Error('이동 벡터 오류');
-  const bx=Math.floor(before.x),by=Math.floor(before.y),nx=bx+dx,ny=by+dy;
-  if(mhblocked(w,s,nx,ny)||(dx&&dy&&(mhblocked(w,s,bx+dx,by)||mhblocked(w,s,bx,by+dy)))||mhobjects(w,s).some(o=>o.kind==='person'&&Math.floor(o.x)===nx&&Math.floor(o.y)===ny))return {state:s,notice:'이 방향은 벽·문·인물에 막혀 있습니다. +0초',effect:null,changed:false};
+  const move=mhwalkCheck(w,s,dx,dy),nx=move.nx,ny=move.ny;
+  if(!move.ok){
+   const notice=move.kind==='door'?'앞쪽에 닫힌 문이 있습니다. 문을 선택해 열어주세요. +0초':move.kind==='corner'?'양쪽 벽 사이의 좁은 모서리는 통과할 수 없습니다. +0초':'앞쪽 칸이 벽입니다. 시선을 돌려 다른 통로를 찾아보세요. +0초';
+   return {state:s,notice,effect:null,changed:false,blocked:move.kind};
+  }
   s.player.x=nx+.5;s.player.y=ny+.5;const sec=mhcost(dx,dy);s.timeSec+=sec;
   effect={from:before,to:{...s.player},duration:340};notice=`${sec}초 이동 · ${mhclock(s.timeSec)}`;event={type:'MOVE',dx,dy,cost:sec,at:oldTime};
  }else if(a.type==='LOOK'){
@@ -373,6 +384,8 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
  const mapBaseY=mhclamp(Math.floor(state.player.y)-Math.floor(mapHeight/2),0,world.h-mapHeight);
  const mapStartX=mhclamp(mapBaseX+mapPan.x,0,world.w-mapWidth);
  const mapStartY=mhclamp(mapBaseY+mapPan.y,0,world.h-mapHeight);
+ const forwardStep=mhstep(state.player.heading,1,0);
+ const forwardCheck=mhwalkCheck(world,state,forwardStep.dx,forwardStep.dy);
  const known=new Set(state.seen),knownIds=new Set(state.known);
  const mapFound=(x,y)=>known.has(mhcell(x,y))||(mhtile(world,x,y)==='#'&&[[0,1],[0,-1],[1,0],[-1,0]].some(([dx,dy])=>known.has(mhcell(x+dx,y+dy))));
  const loadedWorldId=world.id;
@@ -586,7 +599,7 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
  const mapTiles=Array.from({length:mapHeight},(_,y)=>Array.from({length:mapWidth},(_,x)=>{
   const xx=mapStartX+x,yy=mapStartY+y,found=mapFound(xx,yy),tile=mhtile(world,xx,yy),cx=x*18,cy=y*18;
   const door=tile==='D',walkable=tile!=='#';
-  return <rect key={x+'_'+y} x={cx+1} y={cy+1} width="16" height="16" rx="2" fill={!found?'#101924':!walkable?'#384b5a':door&&mhblocked(world,state,xx,yy)?'#c3935b':'#516f80'}/>;
+  return <rect key={x+'_'+y} x={cx+1} y={cy+1} width="16" height="16" rx="2" fill={!found?'#101924':!walkable?'#273947':door&&mhblocked(world,state,xx,yy)?'#c3935b':'#65879b'}/>;
  }));
  return <div style={{maxWidth:540,width:'100%',margin:'0 auto',background:'#091723',border:'1px solid #3a5869',borderRadius:12,overflow:'hidden',color:'#f1f6fa',fontFamily:'system-ui,sans-serif',fontSize:13}}>
   {dialogueMode?<div>
@@ -627,16 +640,17 @@ function MysteryHubRuntime({stage=1,initial='',speech='',reply='',worldUrl='',wo
    {sent?<div style={{padding:'9px 11px',color:'#aacecf',fontSize:11}}>AI에 전송했습니다. 다음 JSX에서 대화가 이어집니다.</div>:null}
   </div>:<>
    {tab==='scene'?<>
-    <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(125px,38%)',gap:8,padding:'9px 10px 6px',alignItems:'stretch'}}>
-     <div style={{...card,height:105,minWidth:0,boxSizing:'border-box',display:'flex',flexDirection:'column',overflow:'hidden'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:5,padding:'8px 9px 6px',flexShrink:0,borderBottom:'1px solid #304d60'}}><strong style={{fontSize:12,color:'#eacb9d',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{roomName}</strong><span style={{color:'#bacfdb',fontSize:11,whiteSpace:'nowrap'}}>{mhclock(state.timeSec)}</span></div>
-      <div style={{flex:'0 0 64px',height:64,overflowY:'auto',overscrollBehavior:'contain',WebkitOverflowScrolling:'touch',touchAction:'pan-y',scrollbarWidth:'thin',padding:'0px 4px'}}>
-       {present.length?present.map(o=><button key={o.id} onClick={()=>select(o.id)} disabled={screenLocked} style={{width:'100%',display:'flex',justifyContent:'space-between',gap:4,alignItems:'center',textAlign:'left',minHeight:25,padding:'2px 4px',lineHeight:1.15,border:0,borderRadius:5,background:state.selected===o.id?'#42697a':'transparent',color:'#e5eef4',fontSize:11,cursor:'pointer'}}><span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.kind==='person'?'● ':'◇ '}{o.label}</span><span style={{color:'#9db8c8',flexShrink:0,fontSize:10}}>{mhdistance(state.player.x,state.player.y,o.x,o.y).toFixed(1)}</span></button>):<span style={{fontSize:11,color:'#93aab8'}}>주변에 보이는 대상 없음</span>}
+    <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(125px,38%)',gap:6,padding:'5px 9px 4px',alignItems:'stretch'}}>
+     <div style={{...card,height:84,minWidth:0,boxSizing:'border-box',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:5,padding:'5px 7px 4px',flexShrink:0,borderBottom:'1px solid #304d60'}}><strong style={{fontSize:12,color:'#eacb9d',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{roomName}</strong><span style={{color:'#bacfdb',fontSize:11,whiteSpace:'nowrap'}}>{mhclock(state.timeSec)}</span></div>
+      <div style={{flex:'1 1 auto',minHeight:0,overflowY:'auto',overscrollBehavior:'contain',WebkitOverflowScrolling:'touch',touchAction:'pan-y',scrollbarWidth:'thin',padding:'0px 3px'}}>
+       {present.length?present.map(o=><button key={o.id} onClick={()=>select(o.id)} disabled={screenLocked} style={{width:'100%',display:'flex',justifyContent:'space-between',gap:4,alignItems:'center',textAlign:'left',minHeight:26,padding:'1px 3px',lineHeight:1.05,border:0,borderRadius:5,background:state.selected===o.id?'#42697a':'transparent',color:'#e5eef4',fontSize:11,cursor:'pointer'}}><span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.kind==='person'?'● ':'◇ '}{o.label}</span><span style={{color:'#9db8c8',flexShrink:0,fontSize:10}}>{mhdistance(state.player.x,state.player.y,o.x,o.y).toFixed(1)}</span></button>):<span style={{fontSize:11,color:'#93aab8'}}>주변에 보이는 대상 없음</span>}
       </div>
      </div>
-     <div style={{...card,height:105,boxSizing:'border-box',padding:5,minWidth:0,position:'relative'}}>
+     <div style={{...card,height:84,boxSizing:'border-box',padding:4,minWidth:0,position:'relative'}}>
       <svg viewBox={`0 0 ${mapWidth*18} ${mapHeight*18}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" aria-label="발견된 구역 지도. 드래그해 다른 구역 보기" style={{display:'block',background:'#0a1826',borderRadius:4,touchAction:'none',cursor:'grab'}} onPointerDown={onMapPointerDown} onPointerMove={onMapPointerMove} onPointerUp={onMapPointerEnd} onPointerCancel={onMapPointerEnd}>
        {mapTiles}
+       {!forwardCheck.ok&&mapFound(forwardCheck.nx,forwardCheck.ny)&&forwardCheck.nx>=mapStartX&&forwardCheck.nx<mapStartX+mapWidth&&forwardCheck.ny>=mapStartY&&forwardCheck.ny<mapStartY+mapHeight?<rect x={(forwardCheck.nx-mapStartX)*18+1.8} y={(forwardCheck.ny-mapStartY)*18+1.8} width="14.4" height="14.4" rx="2" fill="none" stroke="#ff8e84" strokeWidth="2" strokeDasharray="3 2" pointerEvents="none"/>:null}
        {mhobjects(world,state).filter(o=>knownIds.has(o.id)&&mapFound(Math.floor(o.x),Math.floor(o.y))&&!state.taken.includes(o.id)).sort((a,b)=>(a.id===state.selected?1:0)-(b.id===state.selected?1:0)).map(o=>{
         const chosen=o.id===state.selected;
         const cellmates=mhobjects(world,state).filter(p=>Math.floor(p.x)===Math.floor(o.x)&&Math.floor(p.y)===Math.floor(o.y)&&knownIds.has(p.id)&&!state.taken.includes(p.id));
