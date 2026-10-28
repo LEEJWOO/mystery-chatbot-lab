@@ -1,0 +1,6 @@
+{
+  "name":"mystery-playtest-integrated",
+  "private":true,
+  "type":"module",
+  "scripts":{"test":"node --test tests/*.test.mjs","build:data":"python3 build_data.py","check:jsx":"node tests/check-jsx.cjs"}
+}
