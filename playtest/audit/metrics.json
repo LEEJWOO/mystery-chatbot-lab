@@ -1,0 +1,40 @@
+{
+  "baseline": "09304210cea07a5e669f0277624c9014671e8639",
+  "before": {
+    "bytes": 149923,
+    "gzipBytes": 31391
+  },
+  "after": {
+    "bytes": 153580,
+    "gzipBytes": 33375
+  },
+  "world": {
+    "bytes": 5479,
+    "gzipBytes": 2352
+  },
+  "sprites": {
+    "count": 24,
+    "unique": 24,
+    "rawBytes": 53163,
+    "generatedBytes": 51411
+  },
+  "handoff": {
+    "sample": "90 MOVE/LOOK + 1 TAKE; identical state",
+    "fullCheckpointBytes": 7329,
+    "handoffStateBytes": 399,
+    "algorithm": "Existing compact-handoff behavior preserved; not a new reduction claim."
+  },
+  "coreBefore": {
+    "bytes": 98182,
+    "gzipBytes": 14562
+  },
+  "coreAfter": {
+    "bytes": 25693,
+    "gzipBytes": 9818
+  },
+  "notes": [
+    "UTF-8 bytes, not tokens.",
+    "JSX grows due to validation and recovery; sprite whitespace removed without changing pixels.",
+    "All 16 exposed cuts retained; state correctness takes priority over truncation."
+  ]
+}

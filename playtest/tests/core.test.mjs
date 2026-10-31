@@ -41,6 +41,7 @@ test('AI handoff excludes raw movement, repeated LOOK and full observation histo
  const s=initial();s.log=Array.from({length:45},(_,i)=>({type:i%3?'LOOK':'MOVE',objectId:'entrance_sign',at:32700+i,dx:0,dy:1,cost:2}));
  s.log.push({type:'TAKE',objectId:'brass_key',at:32750,cost:5});
  s.log.push({type:'OPEN',objectId:'archive_door',at:32755,cost:4});
+ s.timeSec=32760;
  const backup=mhcompact(w,s),transmitted=mhhandoffState(w,s);
  assert.equal(backup.log.length,47);
  assert.deepEqual(transmitted.log.map(x=>x.type),['TAKE','OPEN']);
@@ -48,3 +49,4 @@ test('AI handoff excludes raw movement, repeated LOOK and full observation histo
  assert.ok(after<before*.4,{before,after});
  assert.equal(mhexpand(w,transmitted).player.x,s.player.x);
 });
+
