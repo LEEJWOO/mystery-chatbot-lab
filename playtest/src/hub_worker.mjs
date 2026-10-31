@@ -1,5 +1,7 @@
+import {mhworld,mhexpand,mhcompact} from './core.mjs';
 import {HUB_WORLD} from './world.generated.mjs';
 import {HUB_SPRITES} from './sprites.generated.mjs';
+const stable=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 const HUB_CORS={
  'Access-Control-Allow-Origin':'*',
  'Access-Control-Allow-Methods':'GET, HEAD, PUT, OPTIONS',
@@ -27,11 +29,11 @@ export async function hubFetch(request,env={}){
   if(Number(request.headers.get('Content-Length')||0)>65536)return json({error:'Checkpoint too large'},413);
   const body=await request.text();
   if(body.length>60000)return json({error:'Checkpoint too large'},413);
-  let state;try{state=JSON.parse(body);}catch{return json({error:'Invalid JSON'},400);}
+  let state;try{state=mhcompact(mhworld(HUB_WORLD),mhexpand(mhworld(HUB_WORLD),JSON.parse(body)));}catch{return json({error:'Invalid checkpoint'},400);}
   if(!state||state.protocol!=='MYSTERY_HUB_V1'||state.worldId!=='archive-night-v1'||!Number.isInteger(state.rev)||state.rev<0)return json({error:'Invalid checkpoint'},400);
   const previous=await env.HUB_SAVES.get(key);
-  if(previous){try{const before=JSON.parse(previous);if(before.rev>state.rev)return json({error:'Stale checkpoint',currentRevision:before.rev},409);}catch{}}
-  await env.HUB_SAVES.put(key,body,{expirationTtl:30*24*60*60});
+  if(previous){try{const before=JSON.parse(previous);if(before.rev>state.rev)return json({error:'Stale checkpoint',currentRevision:before.rev},409);if(before.rev===state.rev&&stable(before)!==stable(state))return json({error:'Conflicting checkpoint at same revision',currentRevision:before.rev},409);}catch{}}
+  await env.HUB_SAVES.put(key,JSON.stringify(state),{expirationTtl:30*24*60*60});
   return json({ok:true,revision:state.rev,ttlDays:30});
  }
  if(method!=='GET'&&method!=='HEAD')return json({error:'read-only API'},405);

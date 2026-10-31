@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import {gzipSync} from 'node:zlib';
+import {MH_DEMO,mhworld,mhinitial,mhcompact,mhhandoffState} from './src/core.mjs';
+const size=p=>{const x=fs.readFileSync(new URL(p,import.meta.url));return {bytes:x.length,gzipBytes:gzipSync(x).length};};
+const w=mhworld(MH_DEMO),s=mhinitial(w);s.timeSec=32800;
+s.log=Array.from({length:90},(_,i)=>({type:i%2?'LOOK':'MOVE',objectId:'entrance_sign',at:32700+i,cost:2,dx:1,dy:0}));s.log.push({type:'TAKE',objectId:'brass_key',at:32795,cost:5});
+const measure=x=>Buffer.byteLength(JSON.stringify(x));
+const dir=new URL('assets/npcs/',import.meta.url),originals=fs.readdirSync(dir).filter(n=>n.endsWith('.svg')).map(n=>fs.readFileSync(new URL(n,dir),'utf8'));
+const result={baseline:'09304210cea07a5e669f0277624c9014671e8639',before:{bytes:149923,gzipBytes:31391},after:size('MysteryTestHub.jsx'),world:size('data/world.json'),sprites:{count:originals.length,unique:new Set(originals).size,rawBytes:originals.reduce((n,s)=>n+Buffer.byteLength(s),0),generatedBytes:originals.reduce((n,s)=>n+Buffer.byteLength(s.replace(/>\s+</g,'><').trim()),0)},handoff:{sample:'90 MOVE/LOOK + 1 TAKE; identical state',fullCheckpointBytes:measure(mhcompact(w,s)),handoffStateBytes:measure(mhhandoffState(w,s)),algorithm:'Existing compact-handoff behavior preserved; not a new reduction claim.'},coreBefore:{bytes:98182,gzipBytes:14562},coreAfter:size('src/core.mjs'),notes:['UTF-8 bytes, not tokens.','JSX grows due to validation and recovery; sprite whitespace removed without changing pixels.','All 16 exposed cuts retained; state correctness takes priority over truncation.']};
+fs.mkdirSync(new URL('audit/',import.meta.url),{recursive:true});fs.writeFileSync(new URL('audit/metrics.json',import.meta.url),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));

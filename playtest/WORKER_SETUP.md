@@ -1,3 +1,11 @@
+# 상태 정정 — 2026-11-01
+
+기존 Worker `https://mystery-scene-lab13.hgschat.workers.dev`와 KV는 이미 배포/연결되어 있다. 배포 로그에서 실제 저장/복원 통과를 확인했으며 health가 `storage:kv`를 반환했다. 아래 설치 설명은 초기 구축 절차다. 이미 있는 namespace나 Worker를 중복 생성하지 않는다.
+
+이번 안정화의 `src/hub_worker.mjs` 변경은 로컬 검증만 완료했고 운영에는 아직 미배포다. 기존 lab13의 빌드가 변경 코어/Worker를 번들하므로 `playtest` 생성 검사와 `lab13` 빌드를 함께 실행해야 한다. 새 서버는 잘못된 전체 상태와 같은 리비전의 상이한 저장을 거부한다. KV는 원자적 다중 클라이언트 쓰기를 보장하지 않는다.
+
+---
+
 # 기존 Cloudflare Worker 연동 안내
 
 현재 GitHub 저장소 `LEEJWOO/mystery-chatbot-lab`에는 `lab13` 프로젝트와 **수동 실행 전용** `.github/workflows/lab13-worker-deploy.yml`이 존재한다. 현재 설정된 Worker 이름은 `mystery-scene-lab13`이다. 본 변경은 기존 `/health`, `/manifest.json`, `/render.svg`, `/assets/*`를 보존하고 `/hub/*` 경로를 추가하도록 설계했다.

@@ -19,8 +19,20 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: lab13/package-lock.json
-      - name: Run playtest engine tests
-        run: node --test playtest/tests/core.test.mjs
+      - name: Install playtest dependencies
+        working-directory: playtest
+        run: npm ci
+      - name: Verify generated source, core regressions and JSX
+        working-directory: playtest
+        run: |
+          npm test
+          npm run check:jsx
+      - name: Install browser
+        working-directory: playtest
+        run: npx playwright install --with-deps chromium
+      - name: Browser regression
+        working-directory: playtest
+        run: npm run test:browser
       - name: Install existing Lab13 dependencies
         working-directory: lab13
         run: npm ci
@@ -30,3 +42,4 @@ jobs:
       - name: Bundle shared existing Worker and UUMMAI Lab13
         working-directory: lab13
         run: npm run build
+

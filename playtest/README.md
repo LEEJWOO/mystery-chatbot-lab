@@ -1,21 +1,15 @@
-# MysteryTestHub — 통합 사건 플레이 테스트
+# MysteryTestHub — 안정화 패키지 (2026-11-01)
 
-UUMMAI 단일 컴포넌트 `MysteryTestHub`용 미스터리 어드벤처. **초기 화면에서 바로 플레이하며 `/n차` 명령은 필요 없다.** 기본 배경은 《폐관 직전의 기록실》이다.
+등록 파일은 `MysteryTestHub.jsx`다. 새 UUMMAI 시험 챗봇에서 `<MysteryTestHub />`로 시작한다. 외부 맵은 `<MysteryTestHub worldUrl="https://mystery-scene-lab13.hgschat.workers.dev/hub/world.json" />`로 확인한다. 옛 1~12차 시험 컴포넌트와 같은 등록 이름이므로 기존 챗봇을 자동으로 덮어쓰지 않는다.
 
-- `MysteryTestHub.jsx`: 등록용 단일 JSX, 24종 기본 방향 에셋 포함
-- `MAIN_PROMPT_ADDENDUM.md`: 기존 운영 프롬프트에 추가하는 LLM 인계 규칙
-- `NPC_LOREBOOK_TEST.md`: 제작자용 비공개 사건 진상과 NPC 성격; 공개 저장소에 게시하지 말 것
-- `data/world.json`: 공개 월드와 확정된 고정 문구
-- `src/hub_worker.mjs`: 기존 lab13 Worker의 `/hub/*` API
-- `integration/lab13/src/worker.mjs`: 기존 Worker 경로를 유지하면서 hub API를 추가한 교체 후보
-- `WORKER_SETUP.md`: GitHub Actions와 KV 연결 방법
-- `SMOKE_TESTS.md`: 수동 검증 시나리오
-- `tests`: Node 테스트 및 JSX 구문 검사
+정본·수정·미완료 사항: [audit/STATUS_AND_HANDOFF.md](audit/STATUS_AND_HANDOFF.md). 프롬프트 보완: [MAIN_PROMPT_ADDENDUM.md](MAIN_PROMPT_ADDENDUM.md).
 
-실행 시 `MysteryTestHub`를 그대로 등록하고 `<MysteryTestHub />`를 첫 장면으로 출력한다. Worker가 실제로 배포되었다면 `<MysteryTestHub worldUrl="https://실제-호스트/hub/world.json" />`로 시작할 수 있다.
+- 원본 코드: `src/core.mjs`, `src/view.jsx`
+- 원본 데이터: `data/world.json`, `assets/npcs/*.svg`
+- 생성: `npm run build` → 등록용 JSX와 generated 모듈. 생성 파일 직접 수정 금지.
+- 회귀: `npm ci && npm test && npm run check:jsx`
+- 브라우저: `npx playwright install --with-deps chromium && npm run test:browser`
+- 측정: `node measure.mjs`
+- 기존 Worker 결합 빌드: 저장소 루트 기준 `cd lab13 && npm ci && npm test && npm run build`
 
-Node 테스트: `npm test` (외부 의존성 없음). JSX 구문 검사는 TypeScript 설치가 필요한 개발 환경에서 `npm run check:jsx`.
-
-## 현 시점 제한
-
-UUMMAI 실제 설치 및 LLM 응답 이벤트는 원격에서 확인되지 않았다. Worker API는 로컬에서 테스트되지만 Cloudflare에 배포되지 않았다. 중요한 상태의 KV 저장은 namespace 연결 후 작동한다. 2D 이미지는 8방향 SVG 시제품이며 상용 일러스트 수준의 완성 에셋은 아니다. 탐색·대화·사건 상태의 통합 연결을 검증하는 플레이어블 프로토타입으로 취급한다.
+기존 Worker/KV 배포는 확인됐다. **이번 안정화 서버 변경은 미배포**이며 UUMMAI 최신 통합 실기는 별도다. 공개 시험 맵/에셋만 포함한다. 본편 진상·NPC 비공개 로어북은 추가하지 않았다. 이전 문서에 기재된 로컬 전용 파일이 공개 저장소에도 있는 것으로 해석하지 않는다.
