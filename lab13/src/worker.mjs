@@ -2,7 +2,9 @@ import {initialState,validateState} from './core.mjs';
 import {renderSVG} from './render.mjs';
 import {ASSETS} from './assets.generated.mjs';
 import {hubFetch} from '../../playtest/src/hub_worker.mjs';
+import {visualRouteFetch} from '../../visual-lab/worker/visual_route.mjs';
 export default {async fetch(request,env){
+ const visual=visualRouteFetch(request);if(visual)return visual;
  const extra=await hubFetch(request,env);if(extra)return extra;
  const url=new URL(request.url),h={'Access-Control-Allow-Origin':'*','X-Content-Type-Options':'nosniff'};
  const json=(obj,status=200)=>new Response(JSON.stringify(obj),{status,headers:{...h,'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
