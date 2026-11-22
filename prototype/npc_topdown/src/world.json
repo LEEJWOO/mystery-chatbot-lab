@@ -1,0 +1,262 @@
+{
+ "version": 1,
+ "kind": "prototype-world-not-canon",
+ "title": "트로메라 · 일상 행동 샌드박스",
+ "notes": "인물/장소/사건은 동작 검증용 임시 데이터이며 본편 설정이 아니다.",
+ "map": {
+  "id": "prototype",
+  "width": 30,
+  "height": 18,
+  "rows": [
+   "##############################",
+   "#..............#.............#",
+   "#..............#.............#",
+   "#..............#..#..........#",
+   "#...#..........#.............#",
+   "#..........................#.#",
+   "#.........#....#.............#",
+   "#..............#.............#",
+   "########.###########.#########",
+   "#..............#.............#",
+   "#..............#.............#",
+   "#..............#.............#",
+   "#............................#",
+   "#..............#.........#...#",
+   "#............#.#.............#",
+   "#...#..........#.#...........#",
+   "#..............#.............#",
+   "##############################"
+  ],
+  "tileSeconds": 4,
+  "areas": [
+   {
+    "name": "자료실",
+    "x0": 1,
+    "y0": 1,
+    "x1": 14,
+    "y1": 7
+   },
+   {
+    "name": "작업실",
+    "x0": 16,
+    "y0": 1,
+    "x1": 28,
+    "y1": 7
+   },
+   {
+    "name": "정원",
+    "x0": 1,
+    "y0": 9,
+    "x1": 14,
+    "y1": 16
+   },
+   {
+    "name": "광장",
+    "x0": 16,
+    "y0": 9,
+    "x1": 28,
+    "y1": 16
+   }
+  ],
+  "landmarks": [
+   {
+    "id": "archive",
+    "name": "자료실 선반",
+    "x": 6,
+    "y": 4,
+    "icon": "▣"
+   },
+   {
+    "id": "desk",
+    "name": "작업실 탁자",
+    "x": 24,
+    "y": 4,
+    "icon": "◇"
+   },
+   {
+    "id": "fountain",
+    "name": "광장 분수",
+    "x": 22,
+    "y": 12,
+    "icon": "◉"
+   },
+   {
+    "id": "garden",
+    "name": "정원 벤치",
+    "x": 7,
+    "y": 13,
+    "icon": "▤"
+   },
+   {
+    "id": "notice",
+    "name": "게시판",
+    "x": 11,
+    "y": 12,
+    "icon": "▥"
+   }
+  ]
+ },
+ "player": {
+  "x": 7,
+  "y": 12,
+  "moveSeconds": 4
+ },
+ "npcs": [
+  {
+   "id": "companion",
+   "name": "유리",
+   "symbol": "유",
+   "color": "#de9f68",
+   "x": 8,
+   "y": 12,
+   "stepSeconds": 5,
+   "agenda": [
+    {
+     "id": "meet_contact",
+     "kind": "meet",
+     "targetNpc": "contact",
+     "from": "09:00",
+     "until": "09:25",
+     "durationSeconds": 45,
+     "priority": 90,
+     "weight": 5,
+     "once": true,
+     "interruptible": true,
+     "onComplete": "meeting_created",
+     "onInterrupt": "meeting_prevented"
+    },
+    {
+     "id": "garden_break",
+     "kind": "visit",
+     "landmark": "garden",
+     "from": "09:00",
+     "until": "18:30",
+     "durationSeconds": 100,
+     "priority": 10,
+     "weight": 3,
+     "cooldownSeconds": 180,
+     "interruptible": true
+    },
+    {
+     "id": "fountain_walk",
+     "kind": "visit",
+     "landmark": "fountain",
+     "from": "09:00",
+     "until": "18:30",
+     "durationSeconds": 80,
+     "priority": 10,
+     "weight": 2,
+     "cooldownSeconds": 150,
+     "interruptible": true
+    }
+   ]
+  },
+  {
+   "id": "contact",
+   "name": "도윤",
+   "symbol": "도",
+   "color": "#7aaddd",
+   "x": 24,
+   "y": 4,
+   "stepSeconds": 8,
+   "agenda": []
+  },
+  {
+   "id": "librarian",
+   "name": "세린",
+   "symbol": "세",
+   "color": "#a49ad8",
+   "x": 5,
+   "y": 5,
+   "stepSeconds": 9,
+   "agenda": [
+    {
+     "id": "archive_patrol",
+     "kind": "visit",
+     "landmark": "archive",
+     "from": "09:00",
+     "until": "18:00",
+     "durationSeconds": 90,
+     "priority": 10,
+     "weight": 4,
+     "cooldownSeconds": 120,
+     "interruptible": true
+    },
+    {
+     "id": "notice_review",
+     "kind": "visit",
+     "landmark": "notice",
+     "from": "09:00",
+     "until": "18:00",
+     "durationSeconds": 40,
+     "priority": 10,
+     "weight": 1,
+     "cooldownSeconds": 180,
+     "interruptible": true
+    }
+   ]
+  },
+  {
+   "id": "courier",
+   "name": "태수",
+   "symbol": "태",
+   "color": "#88bfa6",
+   "x": 21,
+   "y": 14,
+   "stepSeconds": 7,
+   "agenda": [
+    {
+     "id": "post_delivery",
+     "kind": "visit",
+     "landmark": "notice",
+     "from": "09:00",
+     "until": "18:30",
+     "durationSeconds": 40,
+     "priority": 10,
+     "weight": 4,
+     "cooldownSeconds": 140,
+     "interruptible": true
+    },
+    {
+     "id": "fetch_material",
+     "kind": "visit",
+     "landmark": "desk",
+     "from": "09:00",
+     "until": "18:30",
+     "durationSeconds": 90,
+     "priority": 10,
+     "weight": 2,
+     "cooldownSeconds": 150,
+     "interruptible": true
+    }
+   ]
+  }
+ ],
+ "onComplete": [
+  {
+   "id": "meeting_created",
+   "when": {
+    "npc": "companion",
+    "task": "meet_contact",
+    "targetNpc": "contact"
+   },
+   "setFlag": "meeting_occurred",
+   "queueTask": {
+    "id": "deliver_request",
+    "kind": "visit",
+    "landmark": "archive",
+    "durationSeconds": 70,
+    "priority": 100,
+    "interruptible": false,
+    "once": true,
+    "onCompleteFlag": "delivery_done"
+   },
+   "publicLog": "두 사람이 대화를 마쳤고, 유리에게 자료실 방문 일정이 새로 생겼다."
+  }
+ ],
+ "flagNames": [
+  "meeting_occurred",
+  "meeting_prevented",
+  "delivery_done"
+ ]
+}
