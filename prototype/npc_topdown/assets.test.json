@@ -1,0 +1,47 @@
+{
+ "url": "https://raw.githubusercontent.com/LEEJWOO/mystery-chatbot-lab/refs/heads/troemerei/prototype-v0.2/assets/pub/",
+ "out_dir": "../../assets/pub",
+ "table": "src/assets.web.json",
+ "height": 960,
+ "chars": {
+  "companion": {
+   "def": "웃음",
+   "faces": {
+    "웃음": "assets_src/test/pink_웃음.png",
+    "불만": "assets_src/test/pink_불만.png",
+    "놀람": "assets_src/test/pink_놀람.png"
+   }
+  },
+  "librarian": {
+   "def": "평상시",
+   "faces": {
+    "평상시": "assets_src/test/white_평상시.png",
+    "놀람": "assets_src/test/white_놀람.png",
+    "웃음": "assets_src/test/white_웃음.png"
+   }
+  },
+  "contact": {
+   "def": "평상시",
+   "faces": {
+    "평상시": "assets_src/test/doyun_평상시.png",
+    "웃음": "assets_src/test/doyun_웃음.png",
+    "놀람": "assets_src/test/doyun_놀람.png"
+   }
+  },
+  "courier": {
+   "def": "평상시",
+   "faces": {
+    "평상시": "assets_src/test/taesu_평상시.png",
+    "놀람": "assets_src/test/taesu_놀람.png",
+    "웃음": "assets_src/test/taesu_웃음.png"
+   }
+  }
+ },
+ "bg": {
+  "정원": "assets_src/test/bg_classroom.webp",
+  "자료실": "assets_src/test/bg_library.webp"
+ },
+ "map": "assets_src/test/map.png",
+ "sprites": "assets_src/test/sprites.png",
+ "sprites_meta": "assets_src/test/sprites.json"
+}

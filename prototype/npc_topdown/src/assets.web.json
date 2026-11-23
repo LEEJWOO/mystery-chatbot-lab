@@ -1,0 +1,154 @@
+{
+ "url": "https://raw.githubusercontent.com/LEEJWOO/mystery-chatbot-lab/refs/heads/troemerei/prototype-v0.2/assets/pub/",
+ "chars": {
+  "companion": {
+   "src": "ac98b7e2672f.webp",
+   "w": 613,
+   "h": 960,
+   "def": "웃음",
+   "faces": {
+    "불만": {
+     "src": "ac1f51ec65d2.webp",
+     "x": 282,
+     "y": 246,
+     "w": 51,
+     "h": 51
+    },
+    "놀람": {
+     "src": "35ca8f5fd7c8.webp",
+     "x": 287,
+     "y": 246,
+     "w": 46,
+     "h": 51
+    }
+   }
+  },
+  "librarian": {
+   "src": "b0f6630913be.webp",
+   "w": 618,
+   "h": 960,
+   "def": "평상시",
+   "faces": {
+    "놀람": {
+     "src": "9ed06bff46d8.webp",
+     "x": 249,
+     "y": 217,
+     "w": 117,
+     "h": 106
+    },
+    "웃음": {
+     "src": "43f98406dd35.webp",
+     "x": 252,
+     "y": 220,
+     "w": 115,
+     "h": 72
+    }
+   }
+  },
+  "contact": {
+   "src": "228677c39afe.webp",
+   "w": 614,
+   "h": 960,
+   "def": "평상시",
+   "faces": {
+    "웃음": {
+     "src": "21414d5c9e04.webp",
+     "x": 276,
+     "y": 258,
+     "w": 84,
+     "h": 37
+    },
+    "놀람": {
+     "src": "0a087320fb27.webp",
+     "x": 256,
+     "y": 206,
+     "w": 146,
+     "h": 102
+    }
+   }
+  },
+  "courier": {
+   "src": "ab0ed085bb4b.webp",
+   "w": 625,
+   "h": 960,
+   "def": "평상시",
+   "faces": {
+    "놀람": {
+     "src": "503003278dc5.webp",
+     "x": 262,
+     "y": 235,
+     "w": 143,
+     "h": 50
+    },
+    "웃음": {
+     "src": "5ba65c1751ba.webp",
+     "x": 262,
+     "y": 242,
+     "w": 143,
+     "h": 52
+    }
+   }
+  }
+ },
+ "bg": {
+  "정원": "63dade8b9031.webp",
+  "자료실": "f5c86e3b9ab1.webp"
+ },
+ "map": {
+  "src": "f5ed4b431122.webp",
+  "w": 1080,
+  "h": 648
+ },
+ "sprites": {
+  "src": "ea7c9abcf434.webp",
+  "w": 720,
+  "h": 270,
+  "ids": [
+   "player",
+   "companion",
+   "contact",
+   "librarian",
+   "courier"
+  ],
+  "cw": 36,
+  "ch": 54,
+  "dirs": {
+   "down": {
+    "idle": 0,
+    "walk": [
+     1,
+     2,
+     3,
+     4
+    ]
+   },
+   "up": {
+    "idle": 5,
+    "walk": [
+     6,
+     7,
+     8,
+     9
+    ]
+   },
+   "left": {
+    "idle": 10,
+    "walk": [
+     11,
+     12,
+     13,
+     14
+    ]
+   },
+   "right": {
+    "idle": 15,
+    "walk": [
+     16,
+     17,
+     18,
+     19
+    ]
+   }
+  }
+ }
+}

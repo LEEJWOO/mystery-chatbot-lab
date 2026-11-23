@@ -1,0 +1,887 @@
+{
+ "version": 3,
+ "kind": "prototype-world-not-canon",
+ "title": "트로메라 · 일상 행동 샌드박스",
+ "notes": "인물/장소/사건은 동작 검증용 임시 데이터이며 본편 설정이 아니다.",
+ "map": {
+  "id": "prototype",
+  "width": 30,
+  "height": 18,
+  "rows": [
+   "##############################",
+   "#.####...#####.#.####......###",
+   "#..............#.............#",
+   "#.....##.......#..#.....##...#",
+   "#...#..........#.............#",
+   "#..........................#.#",
+   "#.........#....#.............#",
+   "#..............#.............#",
+   "########.###########.#########",
+   "##.............#.............#",
+   "#............#.#......##.....#",
+   "#..........#...#......##.....#",
+   "#............................#",
+   "#..............#.........#...#",
+   "#......##....#.#.............#",
+   "#...#..........#.#...........#",
+   "#..............#.............#",
+   "##############################"
+  ],
+  "tileSeconds": 4,
+  "areas": [
+   {
+    "name": "자료실",
+    "x0": 1,
+    "y0": 1,
+    "x1": 14,
+    "y1": 7
+   },
+   {
+    "name": "작업실",
+    "x0": 16,
+    "y0": 1,
+    "x1": 28,
+    "y1": 7
+   },
+   {
+    "name": "정원",
+    "x0": 1,
+    "y0": 9,
+    "x1": 14,
+    "y1": 16
+   },
+   {
+    "name": "광장",
+    "x0": 16,
+    "y0": 9,
+    "x1": 28,
+    "y1": 16
+   }
+  ],
+  "landmarks": [
+   {
+    "id": "archive",
+    "name": "자료실 선반",
+    "x": 6,
+    "y": 4,
+    "icon": "▣",
+    "hit": [
+     [
+      6,
+      3
+     ],
+     [
+      7,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "desk",
+    "name": "작업실 탁자",
+    "x": 24,
+    "y": 4,
+    "icon": "◇",
+    "hit": [
+     [
+      24,
+      3
+     ],
+     [
+      25,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "fountain",
+    "name": "광장 분수",
+    "x": 22,
+    "y": 12,
+    "icon": "◉",
+    "hit": [
+     [
+      22,
+      10
+     ],
+     [
+      23,
+      10
+     ],
+     [
+      22,
+      11
+     ],
+     [
+      23,
+      11
+     ]
+    ]
+   },
+   {
+    "id": "garden",
+    "name": "정원 벤치",
+    "x": 7,
+    "y": 13,
+    "icon": "▤",
+    "hit": [
+     [
+      7,
+      14
+     ],
+     [
+      8,
+      14
+     ]
+    ]
+   },
+   {
+    "id": "notice",
+    "name": "게시판",
+    "x": 11,
+    "y": 12,
+    "icon": "▥",
+    "hit": [
+     [
+      11,
+      11
+     ]
+    ]
+   }
+  ],
+  "props": [
+   {
+    "t": "shelf",
+    "x": 2,
+    "y": 1,
+    "w": 4,
+    "h": 1
+   },
+   {
+    "t": "shelf",
+    "x": 9,
+    "y": 1,
+    "w": 5,
+    "h": 1
+   },
+   {
+    "t": "shelf",
+    "x": 6,
+    "y": 3,
+    "w": 2,
+    "h": 1
+   },
+   {
+    "t": "table",
+    "x": 4,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true
+   },
+   {
+    "t": "pot",
+    "x": 10,
+    "y": 6,
+    "w": 1,
+    "h": 1
+   },
+   {
+    "t": "cabinet",
+    "x": 17,
+    "y": 1,
+    "w": 4,
+    "h": 1
+   },
+   {
+    "t": "cabinet",
+    "x": 27,
+    "y": 1,
+    "w": 2,
+    "h": 1
+   },
+   {
+    "t": "crate",
+    "x": 18,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true
+   },
+   {
+    "t": "desk",
+    "x": 24,
+    "y": 3,
+    "w": 2,
+    "h": 1,
+    "low": true
+   },
+   {
+    "t": "crate",
+    "x": 27,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true
+   },
+   {
+    "t": "tree",
+    "x": 13,
+    "y": 14,
+    "w": 1,
+    "h": 1
+   },
+   {
+    "t": "tree",
+    "x": 4,
+    "y": 15,
+    "w": 1,
+    "h": 1
+   },
+   {
+    "t": "tree",
+    "x": 13,
+    "y": 10,
+    "w": 1,
+    "h": 1
+   },
+   {
+    "t": "tree",
+    "x": 1,
+    "y": 9,
+    "w": 1,
+    "h": 1
+   },
+   {
+    "t": "bench",
+    "x": 7,
+    "y": 14,
+    "w": 2,
+    "h": 1,
+    "low": true
+   },
+   {
+    "t": "board",
+    "x": 11,
+    "y": 11,
+    "w": 1,
+    "h": 1
+   },
+   {
+    "t": "fountain",
+    "x": 22,
+    "y": 10,
+    "w": 2,
+    "h": 2,
+    "low": true
+   },
+   {
+    "t": "lamp",
+    "x": 25,
+    "y": 13,
+    "w": 1,
+    "h": 1,
+    "low": true
+   },
+   {
+    "t": "planter",
+    "x": 17,
+    "y": 15,
+    "w": 1,
+    "h": 1,
+    "low": true
+   }
+  ],
+  "floors": [
+   "parquet",
+   "tile",
+   "grass",
+   "cobble"
+  ],
+  "decor": [
+   {
+    "t": "rug",
+    "x": 8,
+    "y": 4,
+    "w": 4,
+    "h": 2
+   },
+   {
+    "t": "path",
+    "cells": [
+     [
+      8,
+      9
+     ],
+     [
+      8,
+      10
+     ],
+     [
+      8,
+      11
+     ],
+     [
+      8,
+      12
+     ],
+     [
+      9,
+      12
+     ],
+     [
+      10,
+      12
+     ],
+     [
+      11,
+      12
+     ],
+     [
+      12,
+      12
+     ],
+     [
+      13,
+      12
+     ],
+     [
+      14,
+      12
+     ]
+    ]
+   },
+   {
+    "t": "flowers",
+    "cells": [
+     [
+      2,
+      12
+     ],
+     [
+      3,
+      13
+     ],
+     [
+      10,
+      15
+     ],
+     [
+      11,
+      16
+     ],
+     [
+      5,
+      10
+     ],
+     [
+      12,
+      15
+     ],
+     [
+      2,
+      16
+     ]
+    ]
+   },
+   {
+    "t": "mat",
+    "cells": [
+     [
+      8,
+      8
+     ],
+     [
+      20,
+      8
+     ],
+     [
+      15,
+      5
+     ],
+     [
+      15,
+      12
+     ]
+    ]
+   }
+  ]
+ },
+ "player": {
+  "x": 7,
+  "y": 12,
+  "moveSeconds": 4
+ },
+ "npcs": [
+  {
+   "id": "companion",
+   "name": "유리",
+   "symbol": "유",
+   "color": "#de9f68",
+   "x": 8,
+   "y": 12,
+   "stepSeconds": 5,
+   "agenda": [
+    {
+     "id": "meet_contact",
+     "kind": "meet",
+     "targetNpc": "contact",
+     "from": "09:00",
+     "until": "09:25",
+     "durationSeconds": 45,
+     "priority": 90,
+     "weight": 5,
+     "once": true,
+     "interruptible": true,
+     "onComplete": "meeting_created",
+     "onInterrupt": "meeting_prevented",
+     "onInterruptFact": "missed_doyun",
+     "onAccompany": "cancel"
+    },
+    {
+     "id": "garden_break",
+     "kind": "visit",
+     "landmark": "garden",
+     "from": "09:00",
+     "until": "18:30",
+     "durationSeconds": 100,
+     "priority": 10,
+     "weight": 3,
+     "cooldownSeconds": 180,
+     "interruptible": true
+    },
+    {
+     "id": "fountain_walk",
+     "kind": "visit",
+     "landmark": "fountain",
+     "from": "09:00",
+     "until": "18:30",
+     "durationSeconds": 80,
+     "priority": 10,
+     "weight": 2,
+     "cooldownSeconds": 150,
+     "interruptible": true
+    }
+   ],
+   "portrait": "yuri_default",
+   "profile": "20대 후반 · 밝고 말이 빠르다",
+   "notes": [
+    {
+     "text": "오전에 도윤에게 업무 메모를 전할 일이 있다",
+     "unlock": {
+      "talked": true
+     }
+    },
+    {
+     "text": "자료실 선반에 메모 사본을 둔다",
+     "unlock": {
+      "fact": "delivered"
+     }
+    },
+    {
+     "text": "부탁하면 하던 일을 미루고 따라와 준다",
+     "unlock": {
+      "flag": "meeting_prevented"
+     }
+    }
+   ]
+  },
+  {
+   "id": "contact",
+   "name": "도윤",
+   "symbol": "도",
+   "color": "#7aaddd",
+   "x": 24,
+   "y": 4,
+   "stepSeconds": 8,
+   "agenda": [],
+   "profile": "30대 초반 · 무뚝뚝하고 꼼꼼하다",
+   "notes": [
+    {
+     "text": "작업실 탁자를 거의 떠나지 않는다",
+     "unlock": {
+      "seen": true
+     }
+    },
+    {
+     "text": "오전에 유리에게 업무 메모를 받는다",
+     "unlock": {
+      "fact": "met_doyun"
+     }
+    }
+   ]
+  },
+  {
+   "id": "librarian",
+   "name": "세린",
+   "symbol": "세",
+   "color": "#a49ad8",
+   "x": 5,
+   "y": 5,
+   "stepSeconds": 9,
+   "agenda": [
+    {
+     "id": "archive_patrol",
+     "kind": "visit",
+     "landmark": "archive",
+     "from": "09:00",
+     "until": "18:00",
+     "durationSeconds": 90,
+     "priority": 10,
+     "weight": 4,
+     "cooldownSeconds": 120,
+     "interruptible": true
+    },
+    {
+     "id": "notice_review",
+     "kind": "visit",
+     "landmark": "notice",
+     "from": "09:00",
+     "until": "18:00",
+     "durationSeconds": 40,
+     "priority": 10,
+     "weight": 1,
+     "cooldownSeconds": 180,
+     "interruptible": true
+    }
+   ],
+   "portrait": "serin_default",
+   "profile": "20대 중반 · 조용한 자료실 담당",
+   "notes": [
+    {
+     "text": "자료실 선반과 정원 게시판을 오간다",
+     "unlock": {
+      "scene": "serin_board"
+     }
+    },
+    {
+     "text": "조용하지만 묻는 말에는 정확히 답한다",
+     "unlock": {
+      "talked": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "courier",
+   "name": "태수",
+   "symbol": "태",
+   "color": "#88bfa6",
+   "x": 21,
+   "y": 14,
+   "stepSeconds": 7,
+   "agenda": [
+    {
+     "id": "post_delivery",
+     "kind": "visit",
+     "landmark": "notice",
+     "from": "09:00",
+     "until": "18:30",
+     "durationSeconds": 40,
+     "priority": 10,
+     "weight": 4,
+     "cooldownSeconds": 140,
+     "interruptible": true
+    },
+    {
+     "id": "fetch_material",
+     "kind": "visit",
+     "landmark": "desk",
+     "from": "09:00",
+     "until": "18:30",
+     "durationSeconds": 90,
+     "priority": 10,
+     "weight": 2,
+     "cooldownSeconds": 150,
+     "interruptible": true
+    },
+    {
+     "id": "call_player",
+     "kind": "call",
+     "targetPlayer": true,
+     "from": "09:40",
+     "until": "10:30",
+     "durationSeconds": 120,
+     "priority": 50,
+     "weight": 1,
+     "once": true,
+     "interruptible": false
+    }
+   ],
+   "profile": "30대 · 배달 담당",
+   "notes": [
+    {
+     "text": "게시판과 작업실을 오가며 물건을 나른다",
+     "unlock": {
+      "seen": true
+     }
+    }
+   ]
+  }
+ ],
+ "onComplete": [
+  {
+   "id": "meeting_created",
+   "when": {
+    "npc": "companion",
+    "task": "meet_contact",
+    "targetNpc": "contact"
+   },
+   "setFlag": "meeting_occurred",
+   "queueTask": {
+    "id": "deliver_request",
+    "kind": "visit",
+    "landmark": "archive",
+    "durationSeconds": 70,
+    "priority": 100,
+    "interruptible": false,
+    "once": true,
+    "onCompleteFlag": "delivery_done",
+    "onCompleteFact": "delivered"
+   },
+   "publicLog": "두 사람이 대화를 마쳤고, 유리에게 자료실 방문 일정이 새로 생겼다.",
+   "fact": "met_doyun"
+  }
+ ],
+ "flagNames": [
+  "meeting_occurred",
+  "meeting_prevented",
+  "delivery_done",
+  "true_route",
+  "trial_only",
+  "trial_memo_done"
+ ],
+ "facts": [
+  {
+   "id": "met_doyun",
+   "self": {
+    "companion": "도윤에게 업무 메모를 전했다",
+    "contact": "유리에게 업무 메모를 받았다"
+   },
+   "seen": "유리와 도윤이 작업실에서 짧게 이야기하는 걸 봤다",
+   "player": "유리와 도윤이 작업실에서 이야기했다",
+   "code": "K3R8"
+  },
+  {
+   "id": "missed_doyun",
+   "self": {
+    "companion": "플레이어와 동행하느라 도윤에게 메모를 전하지 못했다"
+   },
+   "seen": "",
+   "player": "",
+   "code": "T9M2"
+  },
+  {
+   "id": "delivered",
+   "self": {
+    "companion": "자료실 선반에 메모 사본을 두었다"
+   },
+   "seen": "유리가 자료실 선반에 무언가 두는 걸 봤다",
+   "player": "유리가 자료실 선반에 무언가를 두었다",
+   "code": "P4X6"
+  }
+ ],
+ "chapter": 1,
+ "events": {
+  "TRUE": {
+   "npcs": [
+    "companion"
+   ],
+   "flag": "true_route",
+   "log": "(시험) 진엔딩 루트 표식이 인정되었다.",
+   "kinds": [
+    "T",
+    "I"
+   ]
+  },
+  "T1_R1": {
+   "kinds": [
+    "R"
+   ],
+   "npcs": [
+    "librarian"
+   ],
+   "trial": "T1",
+   "phase": 3
+  }
+ },
+ "markers": [
+  {
+   "flag": "true_route",
+   "token": "#진루트"
+  }
+ ],
+ "items": [
+  {
+   "id": "memo_copy",
+   "name": "메모 사본",
+   "at": "archive",
+   "flag": "delivery_done",
+   "desc": "유리의 글씨. 「도윤 씨, 오후 작업 순서 변경」"
+  },
+  {
+   "id": "button",
+   "name": "떨어진 단추",
+   "at": "garden",
+   "from": "1일 09:30",
+   "desc": "짙은 남색 단추 하나. 벤치 밑에 떨어져 있었다."
+  },
+  {
+   "id": "work_order",
+   "name": "바뀐 작업 순서표",
+   "at": "desk",
+   "flag": "trial_only",
+   "desc": "작업실 탁자의 순서표. 오후 작업 순서가 메모대로 바뀌어 있다."
+  }
+ ],
+ "notices": [
+  {
+   "time": "12:00",
+   "text": "점심 식사",
+   "place": "광장"
+  },
+  {
+   "time": "19:00",
+   "text": "저녁 식사",
+   "place": "광장"
+  }
+ ],
+ "slots": [
+  {
+   "name": "아침",
+   "from": "06:00"
+  },
+  {
+   "name": "오후",
+   "from": "12:00"
+  },
+  {
+   "name": "저녁",
+   "from": "18:00"
+  },
+  {
+   "name": "밤",
+   "from": "22:00"
+  }
+ ],
+ "branches": [
+  {
+   "flag": "meeting_prevented",
+   "letter": "B"
+  }
+ ],
+ "searchSeconds": 20,
+ "scenes": [
+  {
+   "id": "meet",
+   "title": "작업실의 짧은 대화",
+   "fact": "met_doyun",
+   "caption": "유리와 도윤이 작업실에서 메모를 주고받았다."
+  },
+  {
+   "id": "serin_board",
+   "title": "게시판 앞의 세린",
+   "npc": "librarian",
+   "from": "09:00",
+   "to": "12:00",
+   "caption": "세린이 정원 게시판 앞을 지나가며 무언가를 확인했다.",
+   "near": "notice",
+   "radius": 1
+  },
+  {
+   "id": "yuri_shelf",
+   "title": "선반 앞의 유리",
+   "fact": "delivered",
+   "caption": "유리가 자료실 선반에 무언가를 두고 갔다."
+  }
+ ],
+ "dataVersion": 1,
+ "trials": [
+  {
+   "id": "memo",
+   "code": "T1",
+   "title": "작업실 메모 소동",
+   "hp": 5,
+   "flag": "trial_memo_done",
+   "evidence": [
+    "memo_copy",
+    "button",
+    "work_order"
+   ],
+   "phases": [
+    {
+     "type": "talk",
+     "lines": [
+      "바쿠:여러분, 모이셨군요. 오늘 아침 작업실 탁자의 작업 순서가 누군가의 메모 한 장으로 바뀌어 있었습니다.",
+      "바쿠:누가 그 메모를 남겼는지, 이 자리에서 밝혀 주시지요.",
+      "*살인 사건은 아니다. 하지만 이 자리 어딘가에 거짓말이 섞여 있다."
+     ]
+    },
+    {
+     "type": "debate",
+     "title": "엇갈린 증언",
+     "lines": [
+      {
+       "who": "courier",
+       "text": "저는 아침 내내 작업실을 드나들었는데요, 메모를 두고 가는 사람은 못 봤어요."
+      },
+      {
+       "who": "librarian",
+       "text": "순서표에 붙은 메모, 글씨가 도윤 씨 본인 글씨 같던데요. 혼자 바꾸고 잊은 거 아닐까요?",
+       "weak": "도윤 씨 본인 글씨",
+       "answer": "memo_copy"
+      },
+      {
+       "who": "contact",
+       "text": "……난 그런 메모 쓴 적 없어."
+      }
+     ],
+     "win": "메모 사본의 글씨는 도윤이 아니라 유리의 것이다."
+    },
+    {
+     "type": "talk",
+     "lines": [
+      "세린(놀람):유리 씨 글씨……? 그래도, 잠깐만요."
+     ]
+    },
+    {
+     "type": "rebut",
+     "npc": "librarian",
+     "claim": "사본이 유리 씨 글씨라고 해서 원본도 유리 씨가 쓴 건 아니잖아요. 도윤 씨가 유리 씨 글씨를 흉내 냈을 수도 있고요.",
+     "event": "T1_R1"
+    },
+    {
+     "type": "dream",
+     "title": "꿈 조각 잇기",
+     "guide": "그날 아침 일을 일어난 순서대로 이어 붙인다",
+     "pieces": [
+      "유리가 정원에서 작업실로 향한다",
+      "유리가 도윤에게 메모를 건넨다",
+      "도윤이 순서표에 메모를 붙인다",
+      "유리가 자료실 선반에 사본을 둔다"
+     ]
+    },
+    {
+     "type": "vote",
+     "question": "메모를 남긴 사람은?",
+     "answer": "companion",
+     "options": [
+      "companion",
+      "contact",
+      "librarian",
+      "courier"
+     ]
+    },
+    {
+     "type": "talk",
+     "lines": [
+      "바쿠:정답입니다. 메모를 남긴 분은 유리 님이었습니다.",
+      "유리(놀람):에, 에헤헤…… 전해 주고 말하는 걸 깜빡했네.",
+      "도윤(웃음):……다음엔 직접 말해.",
+      "*소동은 웃음으로 끝났다."
+     ]
+    }
+   ]
+  }
+ ]
+}
