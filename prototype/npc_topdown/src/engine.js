@@ -212,7 +212,31 @@ const TroemereiNPC = (() => {
     s.player.nextMoveAt=s.player.route.length?s.clock+(w.player.moveSeconds||4):0;
     for(const n of s.npcs.filter(n=>n.mode==='accompany')){n.x=old.x;n.y=old.y;}
   }
+  // 다음 예정 행동 시각으로 바로 건너뛴다(그 사이엔 아무도 움직이지 않으므로 1초씩 도는 것과 결과가 같다).
+  // 긴 대기에서도 계산량이 '행동 횟수'에만 비례해 UUMMAI의 5초 실행 제한에 걸리지 않는다.
+  function nextDue(s){
+    let t=Infinity;
+    if(s.player.route.length)t=Math.min(t,Math.max(s.player.nextMoveAt,s.clock+1));
+    for(const n of s.npcs)if(n.mode!=='accompany')t=Math.min(t,Math.max(n.nextMoveAt,s.clock+1));
+    return t;
+  }
   function advance(w,state,seconds){
+    const s=clone(state),end=s.clock+Math.max(0,Math.min(7200,Math.floor(seconds)));
+    while(s.clock<end){
+      const t=nextDue(s);
+      if(t>end){s.clock=end;updateSeen(w,s);break;}
+      if(t-1>s.clock){s.clock=t-1;updateSeen(w,s);} // 직전 초까지 보이던 인물의 '마지막으로 본 시각'
+      s.clock=t;
+      if(s.player.route.length&&s.player.nextMoveAt<=s.clock)stepPlayer(w,s);
+      for(const n of s.npcs){if(n.mode!=='accompany'&&n.nextMoveAt<=s.clock)npcStep(w,s,n);}
+      updateSeen(w,s);
+    }
+    s.day=1+Math.floor(s.clock/DAY);
+    s.revision++;
+    return s;
+  }
+  // 이전 방식(1초씩). 테스트에서 결과 동일성 비교용.
+  function advanceSlow(w,state,seconds){
     const s=clone(state),end=s.clock+Math.max(0,Math.min(7200,Math.floor(seconds)));
     for(;s.clock<end;){
       s.clock++;
@@ -223,6 +247,26 @@ const TroemereiNPC = (() => {
     s.day=1+Math.floor(s.clock/DAY);
     s.revision++;
     return s;
+  }
+  // AI가 붙인 사건 코드(e)는 조건을 검사한 뒤에만 인정한다. 대화가 반영되기 전(pend가 남아 있을 때) 호출.
+  function applyEvent(w,state,e){
+    const code=String(e||'').trim().toUpperCase();
+    if(!code)return {state,accepted:false,reason:''};
+    const rule=(w.events||{})[code];
+    if(!rule)return {state,accepted:false,reason:'알 수 없는 사건 코드'};
+    if(rule.kind&&rule.kind!==state.pk)return {state,accepted:false,reason:'대화 종류가 맞지 않음'};
+    if(rule.npcs&&!rule.npcs.includes(state.pend))return {state,accepted:false,reason:'이 인물에게는 인정되지 않음'};
+    if(rule.flag&&state.flags[rule.flag])return {state,accepted:false,reason:'이미 기록됨'};
+    const s=clone(state);
+    if(rule.flag)s.flags[rule.flag]=true;
+    addLog(s,rule.log||('사건 '+code+' 기록'),'world');
+    return {state:s,accepted:true,reason:''};
+  }
+  // 로어북을 켜는 표식. 화면이 매 메시지 머리말에 붙인다(검색 범위 '현재 유저 입력만' 항목용).
+  function markers(w,s){
+    const out=['#장'+(w.chapter||1)];
+    for(const m of w.markers||[])if(s.flags[m.flag])out.push(m.token);
+    return out;
   }
   function dispatch(w,state,action){
     let s=clone(state);const player=s.player;
@@ -293,6 +337,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, advance, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, advance, advanceSlow, applyEvent, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;

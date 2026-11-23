@@ -20,9 +20,9 @@ const TroemereiTalk = (() => {
     return Math.round(Math.max(0, Math.min(1, seen / all)) * total);
   }
   // kind: T 대화, I 끼어들기, A 추리 제시, P 자유 행동. ctx: 화면이 실제 상태로 만든 사실 줄(대상 상태·기억, 내 단서).
-  function handoff({ kind, target = '', where = '', time = '', ctx = [], cut = '', text = '', code }) {
+  function handoff({ kind, target = '', where = '', time = '', marks = [], ctx = [], cut = '', text = '', code }) {
     const head = ['TRM1', kind, target, cut ? 'cut=' + cut : ''].filter(Boolean).join(' ');
-    const where2 = [time, where].filter(Boolean).join(' ');
+    const where2 = [time, where, ...marks].filter(Boolean).join(' ');
     return [head + (where2 ? ' | ' + where2 : ''), ...ctx.filter(Boolean), text, 's=' + code].filter(Boolean).join('\n');
   }
   return { parse, partialSeconds, handoff };

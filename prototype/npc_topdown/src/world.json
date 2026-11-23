@@ -1,5 +1,5 @@
 {
- "version": 2,
+ "version": 3,
  "kind": "prototype-world-not-canon",
  "title": "트로메라 · 일상 행동 샌드박스",
  "notes": "인물/장소/사건은 동작 검증용 임시 데이터이며 본편 설정이 아니다.",
@@ -151,7 +151,8 @@
      "cooldownSeconds": 150,
      "interruptible": true
     }
-   ]
+   ],
+   "portrait": "yuri_default"
   },
   {
    "id": "contact",
@@ -196,7 +197,8 @@
      "cooldownSeconds": 180,
      "interruptible": true
     }
-   ]
+   ],
+   "portrait": "serin_default"
   },
   {
    "id": "courier",
@@ -261,7 +263,8 @@
  "flagNames": [
   "meeting_occurred",
   "meeting_prevented",
-  "delivery_done"
+  "delivery_done",
+  "true_route"
  ],
  "facts": [
   {
@@ -288,6 +291,23 @@
    },
    "seen": "유리가 자료실 선반에 무언가 두는 걸 봤다",
    "player": "유리가 자료실 선반에 무언가를 두었다"
+  }
+ ],
+ "chapter": 1,
+ "events": {
+  "TRUE": {
+   "kind": "T",
+   "npcs": [
+    "companion"
+   ],
+   "flag": "true_route",
+   "log": "(시험) 진엔딩 루트 표식이 인정되었다."
+  }
+ },
+ "markers": [
+  {
+   "flag": "true_route",
+   "token": "#진"
   }
  ]
 }

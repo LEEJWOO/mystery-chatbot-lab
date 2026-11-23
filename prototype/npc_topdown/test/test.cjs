@@ -142,6 +142,46 @@ test('대화 시간은 글자 수로 계산하고, 대기 정보(종류·글자 
   assert.deepEqual(back.player.seen, s.player.seen);
 });
 
+test('빠른 계산: 다음 사건 시각으로 건너뛰어도 1초씩 계산한 결과와 완전히 같음', () => {
+  const strip = s => JSON.stringify({ ...s, logs: s.logs.map(l => [l.time, l.text]) });
+  const scenarios = [
+    s => s,
+    s => E.dispatch(W, s, { type: 'ACCOMPANY', npcId: 'companion' }),
+    s => E.dispatch(W, s, { type: 'MOVE_TO', x: 22, y: 11 }),
+    s => { s = E.dispatch(W, s, { type: 'MOVE_TO', x: 7, y: 9 }); return s; },
+    s => { s.player.x = 22; s.player.y = 6; return s; },
+  ];
+  for (const [i, prep] of scenarios.entries()) {
+    let a = prep(E.createWorld(W)), b = prep(E.createWorld(W));
+    for (const step of [1, 7, 33, 120, 600, 1800, 7200, 7200, 7200, 7200, 7200, 7200, 7200, 7200, 7200, 7200, 7200, 7200, 7200]) {
+      a = E.advance(W, a, step); b = E.advanceSlow(W, b, step);
+      assert.equal(strip(a), strip(b), '시나리오 ' + i + ' 시각 ' + E.clock(b.clock) + '에서 달라짐');
+    }
+  }
+});
+test('빠른 계산: 하루를 건너뛰어도 1초 안에 끝남', () => {
+  let s = E.createWorld(W); const t0 = Date.now();
+  for (let i = 0; i < 12; i++) s = E.advance(W, s, 7200);
+  const ms = Date.now() - t0;
+  assert.ok(ms < 1000, '하루 계산에 ' + ms + 'ms'); console.log('   하루(86,400초) 계산', ms, 'ms');
+});
+test('사건 코드: 조건이 맞을 때만 인정(대상 인물·대화 종류), 두 번은 기록 안 함', () => {
+  let s = E.dispatch(W, E.createWorld(W), { type: 'TALK_REQUEST', npcId: 'companion', kind: 'T', chars: 5 });
+  const ok = E.applyEvent(W, s, 'TRUE'); assert.equal(ok.accepted, true); assert.equal(ok.state.flags.true_route, true);
+  assert.equal(E.applyEvent(W, ok.state, 'TRUE').accepted, false);
+  let far = E.createWorld(W); far.player.x = 5; far.player.y = 6;
+  far = E.dispatch(W, far, { type: 'TALK_REQUEST', npcId: 'librarian', kind: 'T', chars: 5 });
+  const wrongNpc = E.applyEvent(W, far, 'TRUE'); assert.equal(wrongNpc.accepted, false);
+  assert.equal(E.applyEvent(W, s, 'HACK').accepted, false);
+  assert.equal(E.applyEvent(W, s, '').accepted, false);
+});
+test('로어북 표식: 장 표식은 항상, 진엔딩 표식은 플래그가 있을 때만', () => {
+  const s = E.createWorld(W);
+  assert.deepEqual(E.markers(W, s), ['#장1']);
+  s.flags.true_route = true; assert.deepEqual(E.markers(W, s), ['#장1', '#진']);
+  assert.equal(T.handoff({ kind: 'T', target: '유리', where: '정원', time: '1일 09:00', marks: ['#장1', '#진'], text: 'x', code: 'A' }).split('\n')[0], 'TRM1 T 유리 | 1일 09:00 정원 #장1 #진');
+});
+
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
 console.log(`${pass}/${tests.length} 통과`);
 process.exit(pass === tests.length ? 0 : 1);

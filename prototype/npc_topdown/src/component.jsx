@@ -9,12 +9,20 @@ const trFact = (id, role, who) => { const f = (TN_WORLD.facts || []).find(x => x
 const trVisible = (s, n) => TroemereiNPC.sees(TN_WORLD, s.player, n);
 const trChars = lines => lines.reduce((k, l) => k + Array.from(l.text).length, 0);
 
-// AI 출력: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 P에만 t='초' 허용)
-function Troemerei({ s = '', t = '', d = '' }) {
+// 이미지 ID → 실제 주소. 주소 표(TN_ASSETS)는 빌드할 때 플랫폼별로 끼워 넣는다.
+const trImg = id => (id && typeof TN_ASSETS === 'object' && TN_ASSETS[id]) || '';
+
+// AI 출력: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 P에만 t='초', 사건 코드는 e='…')
+function Troemerei({ s = '', t = '', d = '', e = '' }) {
   const lines = useMemo(() => TroemereiTalk.parse(d), [d]);
   const [boot] = useState(() => {
-    if (!s) return { base: TroemereiNPC.createWorld(TN_WORLD), error: '' };
-    try { return { base: TroemereiCodec.unpack(TN_WORLD, s), error: '' }; } catch (e) { return { base: null, error: e.message }; }
+    if (!s) return { base: TroemereiNPC.createWorld(TN_WORLD), error: '', ev: null };
+    try {
+      let base = TroemereiCodec.unpack(TN_WORLD, s), ev = null;
+      // 사건 코드는 화면이 조건을 검사한 뒤에만 상태에 반영한다(대화 시간 반영 전에 검사).
+      if (e) { const r = TroemereiNPC.applyEvent(TN_WORLD, base, e); base = r.state; ev = { code: String(e), accepted: r.accepted, reason: r.reason }; }
+      return { base, error: '', ev };
+    } catch (err) { return { base: null, error: err.message, ev: null }; }
   });
   const replySec = b => (b && b.pk === 'P' && String(t).trim() !== '') ? Math.max(0, Math.min(900, Math.floor(Number(t) || 0))) : TroemereiNPC.talkSeconds(b ? b.pc : 0, trChars(lines));
   const pendNpc = boot.base && boot.base.pend;
@@ -28,11 +36,12 @@ function Troemerei({ s = '', t = '', d = '' }) {
   const [drop, setDrop] = useState(false);
   const [text, setText] = useState('');
   const [codeText, setCodeText] = useState('');
-  const [toast, setToast] = useState(boot.base && s && !lines.length && boot.base.pk ? '응답을 반영했습니다' : '');
+  const [toast, setToast] = useState(boot.ev && boot.ev.accepted ? (TroemereiNPC.clone(boot.base).logs.slice(-1)[0] || {}).text || '' : boot.base && s && !lines.length && boot.base.pk ? '응답을 반영했습니다' : '');
   const [debug, setDebug] = useState(false);
   const [sent, setSent] = useState('');
   const [scale, setScale] = useState(1);
-  const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null);
+  const [badImg, setBadImg] = useState({}); // 불러오지 못한 그림은 임시 그림으로 대체
+  const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null), lastSpeaker = useRef(null);
 
   useEffect(() => {
     const fit = () => { const el = outRef.current; if (!el) return; const w = el.getBoundingClientRect().width || TR_W; const h = (typeof window !== 'undefined' && window.innerHeight) || 99999; setScale(Math.max(0.6, Math.min(1.6, w / TR_W, (h - 8) / TR_H))); };
@@ -128,7 +137,7 @@ function Troemerei({ s = '', t = '', d = '' }) {
       ctx = [clueLine(next)];
     }
     const code = TroemereiCodec.pack(TN_WORLD, next);
-    const message = TroemereiTalk.handoff({ kind: id ? kind : (kind === 'T' ? 'P' : kind), target, cut, where: trArea(next.player.x, next.player.y), time: next.day + '일 ' + trHM(next.clock), ctx, text: msg, code });
+    const message = TroemereiTalk.handoff({ kind: id ? kind : (kind === 'T' ? 'P' : kind), target, cut, where: trArea(next.player.x, next.player.y), time: next.day + '일 ' + trHM(next.clock), marks: TroemereiNPC.markers(TN_WORLD, next), ctx, text: msg, code });
     try { if (typeof sendMessage === 'function') sendMessage(message); setState(next); setConsumed(true); setSent(message); setText(''); setDrop(false); }
     catch (e) { setToast('전송 실패: ' + e.message); }
   }
@@ -156,11 +165,13 @@ function Troemerei({ s = '', t = '', d = '' }) {
     const n = talk.npc ? state.npcs.find(v => v.id === talk.npc) : null;
     const def = n ? trNpc(talk.npc) : { name: '상황', color: '#6b7a8c', symbol: '…' };
     const sp = line && !line.narration ? (TN_WORLD.npcs.find(x => x.name === line.speaker) || null) : null;
+    const pic = trImg((sp && sp.portrait) || (lastSpeaker.current && lastSpeaker.current.portrait) || def.portrait);
+    if (sp) lastSpeaker.current = sp;
     const boxBottom = canInput ? 92 : 5;
     return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
       <div className="tr-card" style={{ transform: `scale(${scale})`, background: TR_BG[Math.max(0, area)] }}>
         <div className="tr-talk">
-          {def.portrait ? <img src={def.portrait} alt="" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: '88%', objectFit: 'contain', objectPosition: 'center bottom' }} /> :
+          {pic && !badImg[pic] ? <img src={pic} alt="" onError={() => setBadImg(v => ({ ...v, [pic]: true }))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} /> :
             <svg viewBox="0 0 360 540" style={{ position: 'absolute', inset: 0 }} aria-hidden="true"><ellipse cx="180" cy="520" rx="150" ry="230" fill={def.color} opacity=".55" /><circle cx="180" cy="190" r="78" fill={def.color} opacity=".9" /><text x="180" y="212" textAnchor="middle" fontSize="64" fontWeight="700" fill="#14212c">{def.symbol}</text></svg>}
           <div className="tr-hud"><span className="tr-pill">{def.name} · {trArea(n ? n.x : state.player.x, n ? n.y : state.player.y)}</span><span style={{ flex: 1 }} /><span className="tr-pill tr-time">{TroemereiNPC.clock(state.clock)}</span></div>
           <div className="tr-toast" style={{ right: 'auto' }}>{toast || (n ? TR_IMP[n.mode] : '행동의 결과')}</div>
@@ -226,7 +237,7 @@ function Troemerei({ s = '', t = '', d = '' }) {
       {ml ? <div className="tr-menu"><div className="tr-menu-h"><b>{ml.name}</b><span>{Math.abs(p.x - ml.x) + Math.abs(p.y - ml.y)}칸</span></div>
         <div className="tr-menu-g"><button onClick={() => menuDo('LOOK')}>관찰 0초</button><button onClick={() => menuDo('SEARCH')}>조사</button><button onClick={() => menuDo('GO')}>여기로 이동</button><button onClick={() => setMenu(null)}>닫기</button></div></div> : null}
       {sent ? <div className="tr-preview" style={{ left: 112 }}>전달했습니다. 새 화면에서 이어집니다.</div> : null}
-      {sheet ? trSheet({ tab: sheet, setTab: setSheet, state, debug, setDebug, busy,
+      {sheet ? trSheet({ ev: boot.ev, tab: sheet, setTab: setSheet, state, debug, setDebug, busy,
         onWait: sec => { act({ type: 'WAIT', seconds: sec }); setSheet(''); }, codeText, setCodeText,
         onRestore: () => { try { const v = TroemereiCodec.unpack(TN_WORLD, codeText.trim()); setState(TroemereiNPC.applyTalk(TN_WORLD, v, 0)); setSheet(''); setToast('상태 코드를 복원했습니다'); } catch (e) { setToast('복원 실패: ' + e.message); } },
         onFree: () => { setSheet('free'); setText(''); }, text, setText, send, sent }) : null}
@@ -247,7 +258,7 @@ const trStaticLayer = (() => {
   };
 })();
 
-function trSheet({ tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
+function trSheet({ ev, tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
   const tabs = [['clue', '단서'], ['people', '인물'], ['log', '기록'], ['set', '설정']];
   const mem = (state.player.mem || []).slice().reverse();
   return <div className="tr-sheet">
@@ -263,7 +274,9 @@ function trSheet({ tab, setTab, state, debug, setDebug, busy, onWait, codeText, 
         <div className="tr-mut">상태 코드</div><div className="tr-mono">{TroemereiCodec.pack(TN_WORLD, state)}</div>
         <textarea className="tr-ta" rows={2} value={codeText} onChange={e => setCodeText(e.target.value)} placeholder="복원할 상태 코드" />
         <button style={{ height: 30 }} disabled={busy} onClick={onRestore}>이 코드로 복원</button>
-        <div className="tr-mut">시험판 v0.3 · 임시 인물·장소(본편 아님)</div></div> : null}
+        {ev ? <div className="tr-mut">받은 사건 코드: {ev.code} · {ev.accepted ? '인정' : '거부(' + (ev.reason || '조건 불일치') + ')'}</div> : null}
+        <div className="tr-mut">표식: {TroemereiNPC.markers(TN_WORLD, state).join(' ')}</div>
+        <div className="tr-mut">시험판 v0.4 · 임시 인물·장소(본편 아님)</div></div> : null}
       {tab === 'free' ? <div style={{ display: 'grid', gap: 6, paddingTop: 4 }}>
         <div className="tr-mut">인물이 아닌 상대로 하는 행동이나, 지금까지의 추리를 적는다.</div>
         <textarea className="tr-ta" rows={4} value={text} onChange={e => setText(e.target.value.slice(0, 500))} placeholder="행동이나 추리" />

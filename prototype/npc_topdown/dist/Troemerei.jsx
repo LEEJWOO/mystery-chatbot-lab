@@ -1,8 +1,9 @@
-// 몽환의 트로이메라이 · 탑다운 시험판 v0.3 (TRM1) — UUMMAI에 컴포넌트 1개로 등록: 이름 Troemerei
+// 몽환의 트로이메라이 · 탑다운 시험판 v0.4 (TRM1) — UUMMAI에 컴포넌트 1개로 등록: 이름 Troemerei
 // import·fetch·외부 에셋·브라우저 저장소 없음. useState/useEffect/useRef/useMemo/sendMessage는 호스트 제공.
-// AI 출력 형식: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 응답에만 t='초')
-const TN_WORLD = {"version":2,"kind":"prototype-world-not-canon","title":"트로메라 · 일상 행동 샌드박스","notes":"인물/장소/사건은 동작 검증용 임시 데이터이며 본편 설정이 아니다.","map":{"id":"prototype","width":30,"height":18,"rows":["##############################","#..............#.............#","#..............#.............#","#..............#..#..........#","#...#..........#.............#","#..........................#.#","#.........#....#.............#","#..............#.............#","########.###########.#########","#..............#.............#","#..............#.............#","#..............#.............#","#............................#","#..............#.........#...#","#............#.#.............#","#...#..........#.#...........#","#..............#.............#","##############################"],"tileSeconds":4,"areas":[{"name":"자료실","x0":1,"y0":1,"x1":14,"y1":7},{"name":"작업실","x0":16,"y0":1,"x1":28,"y1":7},{"name":"정원","x0":1,"y0":9,"x1":14,"y1":16},{"name":"광장","x0":16,"y0":9,"x1":28,"y1":16}],"landmarks":[{"id":"archive","name":"자료실 선반","x":6,"y":4,"icon":"▣"},{"id":"desk","name":"작업실 탁자","x":24,"y":4,"icon":"◇"},{"id":"fountain","name":"광장 분수","x":22,"y":12,"icon":"◉"},{"id":"garden","name":"정원 벤치","x":7,"y":13,"icon":"▤"},{"id":"notice","name":"게시판","x":11,"y":12,"icon":"▥"}]},"player":{"x":7,"y":12,"moveSeconds":4},"npcs":[{"id":"companion","name":"유리","symbol":"유","color":"#de9f68","x":8,"y":12,"stepSeconds":5,"agenda":[{"id":"meet_contact","kind":"meet","targetNpc":"contact","from":"09:00","until":"09:25","durationSeconds":45,"priority":90,"weight":5,"once":true,"interruptible":true,"onComplete":"meeting_created","onInterrupt":"meeting_prevented","onInterruptFact":"missed_doyun","onAccompany":"cancel"},{"id":"garden_break","kind":"visit","landmark":"garden","from":"09:00","until":"18:30","durationSeconds":100,"priority":10,"weight":3,"cooldownSeconds":180,"interruptible":true},{"id":"fountain_walk","kind":"visit","landmark":"fountain","from":"09:00","until":"18:30","durationSeconds":80,"priority":10,"weight":2,"cooldownSeconds":150,"interruptible":true}]},{"id":"contact","name":"도윤","symbol":"도","color":"#7aaddd","x":24,"y":4,"stepSeconds":8,"agenda":[]},{"id":"librarian","name":"세린","symbol":"세","color":"#a49ad8","x":5,"y":5,"stepSeconds":9,"agenda":[{"id":"archive_patrol","kind":"visit","landmark":"archive","from":"09:00","until":"18:00","durationSeconds":90,"priority":10,"weight":4,"cooldownSeconds":120,"interruptible":true},{"id":"notice_review","kind":"visit","landmark":"notice","from":"09:00","until":"18:00","durationSeconds":40,"priority":10,"weight":1,"cooldownSeconds":180,"interruptible":true}]},{"id":"courier","name":"태수","symbol":"태","color":"#88bfa6","x":21,"y":14,"stepSeconds":7,"agenda":[{"id":"post_delivery","kind":"visit","landmark":"notice","from":"09:00","until":"18:30","durationSeconds":40,"priority":10,"weight":4,"cooldownSeconds":140,"interruptible":true},{"id":"fetch_material","kind":"visit","landmark":"desk","from":"09:00","until":"18:30","durationSeconds":90,"priority":10,"weight":2,"cooldownSeconds":150,"interruptible":true}]}],"onComplete":[{"id":"meeting_created","when":{"npc":"companion","task":"meet_contact","targetNpc":"contact"},"setFlag":"meeting_occurred","queueTask":{"id":"deliver_request","kind":"visit","landmark":"archive","durationSeconds":70,"priority":100,"interruptible":false,"once":true,"onCompleteFlag":"delivery_done","onCompleteFact":"delivered"},"publicLog":"두 사람이 대화를 마쳤고, 유리에게 자료실 방문 일정이 새로 생겼다.","fact":"met_doyun"}],"flagNames":["meeting_occurred","meeting_prevented","delivery_done"],"facts":[{"id":"met_doyun","self":{"companion":"도윤에게 업무 메모를 전했다","contact":"유리에게 업무 메모를 받았다"},"seen":"유리와 도윤이 작업실에서 짧게 이야기하는 걸 봤다","player":"유리와 도윤이 작업실에서 이야기했다"},{"id":"missed_doyun","self":{"companion":"플레이어와 동행하느라 도윤에게 메모를 전하지 못했다"},"seen":"","player":""},{"id":"delivered","self":{"companion":"자료실 선반에 메모 사본을 두었다"},"seen":"유리가 자료실 선반에 무언가 두는 걸 봤다","player":"유리가 자료실 선반에 무언가를 두었다"}]};
+// AI 출력 형식: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 응답에만 t='초', 사건 코드 e='…')
+const TN_WORLD = {"version":3,"kind":"prototype-world-not-canon","title":"트로메라 · 일상 행동 샌드박스","notes":"인물/장소/사건은 동작 검증용 임시 데이터이며 본편 설정이 아니다.","map":{"id":"prototype","width":30,"height":18,"rows":["##############################","#..............#.............#","#..............#.............#","#..............#..#..........#","#...#..........#.............#","#..........................#.#","#.........#....#.............#","#..............#.............#","########.###########.#########","#..............#.............#","#..............#.............#","#..............#.............#","#............................#","#..............#.........#...#","#............#.#.............#","#...#..........#.#...........#","#..............#.............#","##############################"],"tileSeconds":4,"areas":[{"name":"자료실","x0":1,"y0":1,"x1":14,"y1":7},{"name":"작업실","x0":16,"y0":1,"x1":28,"y1":7},{"name":"정원","x0":1,"y0":9,"x1":14,"y1":16},{"name":"광장","x0":16,"y0":9,"x1":28,"y1":16}],"landmarks":[{"id":"archive","name":"자료실 선반","x":6,"y":4,"icon":"▣"},{"id":"desk","name":"작업실 탁자","x":24,"y":4,"icon":"◇"},{"id":"fountain","name":"광장 분수","x":22,"y":12,"icon":"◉"},{"id":"garden","name":"정원 벤치","x":7,"y":13,"icon":"▤"},{"id":"notice","name":"게시판","x":11,"y":12,"icon":"▥"}]},"player":{"x":7,"y":12,"moveSeconds":4},"npcs":[{"id":"companion","name":"유리","symbol":"유","color":"#de9f68","x":8,"y":12,"stepSeconds":5,"agenda":[{"id":"meet_contact","kind":"meet","targetNpc":"contact","from":"09:00","until":"09:25","durationSeconds":45,"priority":90,"weight":5,"once":true,"interruptible":true,"onComplete":"meeting_created","onInterrupt":"meeting_prevented","onInterruptFact":"missed_doyun","onAccompany":"cancel"},{"id":"garden_break","kind":"visit","landmark":"garden","from":"09:00","until":"18:30","durationSeconds":100,"priority":10,"weight":3,"cooldownSeconds":180,"interruptible":true},{"id":"fountain_walk","kind":"visit","landmark":"fountain","from":"09:00","until":"18:30","durationSeconds":80,"priority":10,"weight":2,"cooldownSeconds":150,"interruptible":true}],"portrait":"yuri_default"},{"id":"contact","name":"도윤","symbol":"도","color":"#7aaddd","x":24,"y":4,"stepSeconds":8,"agenda":[]},{"id":"librarian","name":"세린","symbol":"세","color":"#a49ad8","x":5,"y":5,"stepSeconds":9,"agenda":[{"id":"archive_patrol","kind":"visit","landmark":"archive","from":"09:00","until":"18:00","durationSeconds":90,"priority":10,"weight":4,"cooldownSeconds":120,"interruptible":true},{"id":"notice_review","kind":"visit","landmark":"notice","from":"09:00","until":"18:00","durationSeconds":40,"priority":10,"weight":1,"cooldownSeconds":180,"interruptible":true}],"portrait":"serin_default"},{"id":"courier","name":"태수","symbol":"태","color":"#88bfa6","x":21,"y":14,"stepSeconds":7,"agenda":[{"id":"post_delivery","kind":"visit","landmark":"notice","from":"09:00","until":"18:30","durationSeconds":40,"priority":10,"weight":4,"cooldownSeconds":140,"interruptible":true},{"id":"fetch_material","kind":"visit","landmark":"desk","from":"09:00","until":"18:30","durationSeconds":90,"priority":10,"weight":2,"cooldownSeconds":150,"interruptible":true}]}],"onComplete":[{"id":"meeting_created","when":{"npc":"companion","task":"meet_contact","targetNpc":"contact"},"setFlag":"meeting_occurred","queueTask":{"id":"deliver_request","kind":"visit","landmark":"archive","durationSeconds":70,"priority":100,"interruptible":false,"once":true,"onCompleteFlag":"delivery_done","onCompleteFact":"delivered"},"publicLog":"두 사람이 대화를 마쳤고, 유리에게 자료실 방문 일정이 새로 생겼다.","fact":"met_doyun"}],"flagNames":["meeting_occurred","meeting_prevented","delivery_done","true_route"],"facts":[{"id":"met_doyun","self":{"companion":"도윤에게 업무 메모를 전했다","contact":"유리에게 업무 메모를 받았다"},"seen":"유리와 도윤이 작업실에서 짧게 이야기하는 걸 봤다","player":"유리와 도윤이 작업실에서 이야기했다"},{"id":"missed_doyun","self":{"companion":"플레이어와 동행하느라 도윤에게 메모를 전하지 못했다"},"seen":"","player":""},{"id":"delivered","self":{"companion":"자료실 선반에 메모 사본을 두었다"},"seen":"유리가 자료실 선반에 무언가 두는 걸 봤다","player":"유리가 자료실 선반에 무언가를 두었다"}],"chapter":1,"events":{"TRUE":{"kind":"T","npcs":["companion"],"flag":"true_route","log":"(시험) 진엔딩 루트 표식이 인정되었다."}},"markers":[{"flag":"true_route","token":"#진"}]};
 const TN_CSS = ".tr-out{width:100%;position:relative;font-family:system-ui,-apple-system,\"Malgun Gothic\",sans-serif;color:#e7edf5;-webkit-tap-highlight-color:transparent}\n.tr-card{position:absolute;left:0;top:0;width:360px;height:540px;overflow:hidden;background:#0c1421;border-radius:8px;transform-origin:0 0;user-select:none}\n.tr-card *{box-sizing:border-box}.tr-card button{font:inherit;color:inherit;cursor:pointer;background:#0b1522e0;border:1px solid #3d5368;border-radius:7px;padding:0 8px;line-height:1}\n.tr-card button:disabled{opacity:.38;cursor:default}\n.tr-map{position:absolute;inset:0;display:block;touch-action:manipulation}\n.tr-hud{position:absolute;left:4px;right:4px;top:4px;display:flex;gap:4px;align-items:center;font-size:12px;pointer-events:none}\n.tr-hud>*{pointer-events:auto}\n.tr-pill{background:#0b1522e0;border:1px solid #3d5368;border-radius:7px;padding:3px 7px;line-height:16px;white-space:nowrap}\n.tr-time{color:#e7c894;font-variant-numeric:tabular-nums}\n.tr-hud button{height:24px;font-size:12px}\n.tr-toast{position:absolute;left:4px;right:4px;top:32px;font-size:11px;line-height:15px;padding:2px 7px;background:#0b1522b8;border-radius:6px;color:#c9d5e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}\n.tr-pad{position:absolute;width:34px;height:34px;font-size:15px!important;display:grid;place-items:center;padding:0!important;touch-action:none}\n.tr-menu{position:absolute;left:112px;right:6px;bottom:6px;padding:5px;background:#08111ef2;border:1px solid #6d7f92;border-radius:9px}\n.tr-menu-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;line-height:15px;margin:0 2px 4px}\n.tr-menu-h b{font-weight:600;color:#f2c48f}.tr-menu-h span{color:#93adc2;font-size:11px}\n.tr-menu-g{display:grid;grid-template-columns:1fr 1fr;gap:4px}.tr-menu-g button{height:34px;font-size:13px}\n.tr-menu-why{font-size:10px;color:#93adc2;margin:3px 2px 0;line-height:13px}\n.tr-preview{position:absolute;left:112px;right:6px;bottom:6px;padding:4px 7px;font-size:12px;line-height:16px;background:#f3e6c8;color:#3d2c14;border-radius:8px}\n.tr-sheet{position:absolute;inset:0;background:#0c1421;display:flex;flex-direction:column}\n.tr-tabs{display:flex;gap:3px;padding:4px}.tr-tabs button{flex:1;height:28px;font-size:12px}.tr-tabs .on{background:#2c4a63;border-color:#7ea0bc}\n.tr-body{flex:1;overflow-y:auto;padding:2px 8px 8px;font-size:13px;line-height:18px}\n.tr-row{padding:4px 0;border-bottom:1px solid #22344a}.tr-row time{color:#c6a572;margin-right:6px;font-variant-numeric:tabular-nums}\n.tr-mut{color:#93adc2;font-size:11px;line-height:15px}\n.tr-mono{font:11px ui-monospace,monospace;word-break:break-all;color:#cfe0ee}\n.tr-ta{width:100%;resize:none;padding:5px 7px;background:#08121c;border:1px solid #3d5368;color:#e6eef7;border-radius:6px;font:inherit;font-size:16px;line-height:20px;user-select:text}\n.tr-talk{position:absolute;inset:0}\n.tr-box{position:absolute;left:5px;right:5px;padding:3px 8px 4px;background:#08111ef2;border:1px solid #8a7550;border-radius:8px}\n.tr-name{display:flex;justify-content:space-between;font-size:12px;line-height:16px}.tr-name b{color:#f2c48f;font-weight:600}.tr-name span{color:#93adc2;font-size:11px}\n.tr-line{font-size:14px;line-height:19px;height:57px;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}\n.tr-line.narr{color:#b9c9d6;font-style:italic}\n.tr-ctl{display:flex;gap:4px;margin-top:2px}.tr-ctl button{height:22px;font-size:11px;padding:0 7px}\n.tr-in{position:absolute;left:5px;right:5px;bottom:5px;padding:4px;background:#0e1a29f5;border:1px solid #3d5368;border-radius:8px}\n.tr-in-top{display:flex;gap:4px;margin-bottom:3px;align-items:center}.tr-in-top button{height:22px;font-size:11px}\n.tr-send{width:52px;flex:none;white-space:nowrap;padding:0 4px!important;background:#907040!important;border-color:#c1a06a!important;font-size:13px!important}\n.tr-drop{position:absolute;left:4px;bottom:100%;margin-bottom:3px;display:grid;gap:3px;padding:4px;background:#08111ef7;border:1px solid #6d7f92;border-radius:8px;width:150px}\n.tr-drop button{height:30px;font-size:12px;text-align:left}\n.tr-err{position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:19px}\n";
+const TN_ASSETS = {"yuri_default":"https://image.uumm.ai/fb42aee5-a227-47f2-8756-9e63fbd7272e","serin_default":"https://image.uumm.ai/12737bb8-ff89-4cda-ab96-99a341e886cb"};
 /* Troemerei NPC simulation core v0.3 — 결정적 NPC 일정·경로·기억. DOM/네트워크/LLM 의존 없음. */
 const trNPC = (() => {
   const abs = Math.abs;
@@ -217,7 +218,31 @@ const trNPC = (() => {
     s.player.nextMoveAt=s.player.route.length?s.clock+(w.player.moveSeconds||4):0;
     for(const n of s.npcs.filter(n=>n.mode==='accompany')){n.x=old.x;n.y=old.y;}
   }
+  // 다음 예정 행동 시각으로 바로 건너뛴다(그 사이엔 아무도 움직이지 않으므로 1초씩 도는 것과 결과가 같다).
+  // 긴 대기에서도 계산량이 '행동 횟수'에만 비례해 UUMMAI의 5초 실행 제한에 걸리지 않는다.
+  function nextDue(s){
+    let t=Infinity;
+    if(s.player.route.length)t=Math.min(t,Math.max(s.player.nextMoveAt,s.clock+1));
+    for(const n of s.npcs)if(n.mode!=='accompany')t=Math.min(t,Math.max(n.nextMoveAt,s.clock+1));
+    return t;
+  }
   function advance(w,state,seconds){
+    const s=clone(state),end=s.clock+Math.max(0,Math.min(7200,Math.floor(seconds)));
+    while(s.clock<end){
+      const t=nextDue(s);
+      if(t>end){s.clock=end;updateSeen(w,s);break;}
+      if(t-1>s.clock){s.clock=t-1;updateSeen(w,s);} // 직전 초까지 보이던 인물의 '마지막으로 본 시각'
+      s.clock=t;
+      if(s.player.route.length&&s.player.nextMoveAt<=s.clock)stepPlayer(w,s);
+      for(const n of s.npcs){if(n.mode!=='accompany'&&n.nextMoveAt<=s.clock)npcStep(w,s,n);}
+      updateSeen(w,s);
+    }
+    s.day=1+Math.floor(s.clock/DAY);
+    s.revision++;
+    return s;
+  }
+  // 이전 방식(1초씩). 테스트에서 결과 동일성 비교용.
+  function advanceSlow(w,state,seconds){
     const s=clone(state),end=s.clock+Math.max(0,Math.min(7200,Math.floor(seconds)));
     for(;s.clock<end;){
       s.clock++;
@@ -228,6 +253,26 @@ const trNPC = (() => {
     s.day=1+Math.floor(s.clock/DAY);
     s.revision++;
     return s;
+  }
+  // AI가 붙인 사건 코드(e)는 조건을 검사한 뒤에만 인정한다. 대화가 반영되기 전(pend가 남아 있을 때) 호출.
+  function applyEvent(w,state,e){
+    const code=String(e||'').trim().toUpperCase();
+    if(!code)return {state,accepted:false,reason:''};
+    const rule=(w.events||{})[code];
+    if(!rule)return {state,accepted:false,reason:'알 수 없는 사건 코드'};
+    if(rule.kind&&rule.kind!==state.pk)return {state,accepted:false,reason:'대화 종류가 맞지 않음'};
+    if(rule.npcs&&!rule.npcs.includes(state.pend))return {state,accepted:false,reason:'이 인물에게는 인정되지 않음'};
+    if(rule.flag&&state.flags[rule.flag])return {state,accepted:false,reason:'이미 기록됨'};
+    const s=clone(state);
+    if(rule.flag)s.flags[rule.flag]=true;
+    addLog(s,rule.log||('사건 '+code+' 기록'),'world');
+    return {state:s,accepted:true,reason:''};
+  }
+  // 로어북을 켜는 표식. 화면이 매 메시지 머리말에 붙인다(검색 범위 '현재 유저 입력만' 항목용).
+  function markers(w,s){
+    const out=['#장'+(w.chapter||1)];
+    for(const m of w.markers||[])if(s.flags[m.flag])out.push(m.token);
+    return out;
   }
   function dispatch(w,state,action){
     let s=clone(state);const player=s.player;
@@ -298,7 +343,7 @@ const trNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, advance, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, advance, advanceSlow, applyEvent, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 
 /* Troemerei 상태 압축 코덱 v2 — AI가 매 턴 그대로 복사하는 문자열을 최소화한다.
@@ -479,9 +524,9 @@ const trTalk = (() => {
     return Math.round(Math.max(0, Math.min(1, seen / all)) * total);
   }
   // kind: T 대화, I 끼어들기, A 추리 제시, P 자유 행동. ctx: 화면이 실제 상태로 만든 사실 줄(대상 상태·기억, 내 단서).
-  function handoff({ kind, target = '', where = '', time = '', ctx = [], cut = '', text = '', code }) {
+  function handoff({ kind, target = '', where = '', time = '', marks = [], ctx = [], cut = '', text = '', code }) {
     const head = ['TRM1', kind, target, cut ? 'cut=' + cut : ''].filter(Boolean).join(' ');
-    const where2 = [time, where].filter(Boolean).join(' ');
+    const where2 = [time, where, ...marks].filter(Boolean).join(' ');
     return [head + (where2 ? ' | ' + where2 : ''), ...ctx.filter(Boolean), text, 's=' + code].filter(Boolean).join('\n');
   }
   return { parse, partialSeconds, handoff };
@@ -498,12 +543,20 @@ const trFact = (id, role, who) => { const f = (TN_WORLD.facts || []).find(x => x
 const trVisible = (s, n) => trNPC.sees(TN_WORLD, s.player, n);
 const trChars = lines => lines.reduce((k, l) => k + Array.from(l.text).length, 0);
 
-// AI 출력: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 P에만 t='초' 허용)
-function Troemerei({ s = '', t = '', d = '' }) {
+// 이미지 ID → 실제 주소. 주소 표(TN_ASSETS)는 빌드할 때 플랫폼별로 끼워 넣는다.
+const trImg = id => (id && typeof TN_ASSETS === 'object' && TN_ASSETS[id]) || '';
+
+// AI 출력: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 P에만 t='초', 사건 코드는 e='…')
+function Troemerei({ s = '', t = '', d = '', e = '' }) {
   const lines = useMemo(() => trTalk.parse(d), [d]);
   const [boot] = useState(() => {
-    if (!s) return { base: trNPC.createWorld(TN_WORLD), error: '' };
-    try { return { base: trCodec.unpack(TN_WORLD, s), error: '' }; } catch (e) { return { base: null, error: e.message }; }
+    if (!s) return { base: trNPC.createWorld(TN_WORLD), error: '', ev: null };
+    try {
+      let base = trCodec.unpack(TN_WORLD, s), ev = null;
+      // 사건 코드는 화면이 조건을 검사한 뒤에만 상태에 반영한다(대화 시간 반영 전에 검사).
+      if (e) { const r = trNPC.applyEvent(TN_WORLD, base, e); base = r.state; ev = { code: String(e), accepted: r.accepted, reason: r.reason }; }
+      return { base, error: '', ev };
+    } catch (err) { return { base: null, error: err.message, ev: null }; }
   });
   const replySec = b => (b && b.pk === 'P' && String(t).trim() !== '') ? Math.max(0, Math.min(900, Math.floor(Number(t) || 0))) : trNPC.talkSeconds(b ? b.pc : 0, trChars(lines));
   const pendNpc = boot.base && boot.base.pend;
@@ -517,11 +570,12 @@ function Troemerei({ s = '', t = '', d = '' }) {
   const [drop, setDrop] = useState(false);
   const [text, setText] = useState('');
   const [codeText, setCodeText] = useState('');
-  const [toast, setToast] = useState(boot.base && s && !lines.length && boot.base.pk ? '응답을 반영했습니다' : '');
+  const [toast, setToast] = useState(boot.ev && boot.ev.accepted ? (trNPC.clone(boot.base).logs.slice(-1)[0] || {}).text || '' : boot.base && s && !lines.length && boot.base.pk ? '응답을 반영했습니다' : '');
   const [debug, setDebug] = useState(false);
   const [sent, setSent] = useState('');
   const [scale, setScale] = useState(1);
-  const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null);
+  const [badImg, setBadImg] = useState({}); // 불러오지 못한 그림은 임시 그림으로 대체
+  const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null), lastSpeaker = useRef(null);
 
   useEffect(() => {
     const fit = () => { const el = outRef.current; if (!el) return; const w = el.getBoundingClientRect().width || TR_W; const h = (typeof window !== 'undefined' && window.innerHeight) || 99999; setScale(Math.max(0.6, Math.min(1.6, w / TR_W, (h - 8) / TR_H))); };
@@ -617,7 +671,7 @@ function Troemerei({ s = '', t = '', d = '' }) {
       ctx = [clueLine(next)];
     }
     const code = trCodec.pack(TN_WORLD, next);
-    const message = trTalk.handoff({ kind: id ? kind : (kind === 'T' ? 'P' : kind), target, cut, where: trArea(next.player.x, next.player.y), time: next.day + '일 ' + trHM(next.clock), ctx, text: msg, code });
+    const message = trTalk.handoff({ kind: id ? kind : (kind === 'T' ? 'P' : kind), target, cut, where: trArea(next.player.x, next.player.y), time: next.day + '일 ' + trHM(next.clock), marks: trNPC.markers(TN_WORLD, next), ctx, text: msg, code });
     try { if (typeof sendMessage === 'function') sendMessage(message); setState(next); setConsumed(true); setSent(message); setText(''); setDrop(false); }
     catch (e) { setToast('전송 실패: ' + e.message); }
   }
@@ -645,11 +699,13 @@ function Troemerei({ s = '', t = '', d = '' }) {
     const n = talk.npc ? state.npcs.find(v => v.id === talk.npc) : null;
     const def = n ? trNpc(talk.npc) : { name: '상황', color: '#6b7a8c', symbol: '…' };
     const sp = line && !line.narration ? (TN_WORLD.npcs.find(x => x.name === line.speaker) || null) : null;
+    const pic = trImg((sp && sp.portrait) || (lastSpeaker.current && lastSpeaker.current.portrait) || def.portrait);
+    if (sp) lastSpeaker.current = sp;
     const boxBottom = canInput ? 92 : 5;
     return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
       <div className="tr-card" style={{ transform: `scale(${scale})`, background: TR_BG[Math.max(0, area)] }}>
         <div className="tr-talk">
-          {def.portrait ? <img src={def.portrait} alt="" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: '88%', objectFit: 'contain', objectPosition: 'center bottom' }} /> :
+          {pic && !badImg[pic] ? <img src={pic} alt="" onError={() => setBadImg(v => ({ ...v, [pic]: true }))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} /> :
             <svg viewBox="0 0 360 540" style={{ position: 'absolute', inset: 0 }} aria-hidden="true"><ellipse cx="180" cy="520" rx="150" ry="230" fill={def.color} opacity=".55" /><circle cx="180" cy="190" r="78" fill={def.color} opacity=".9" /><text x="180" y="212" textAnchor="middle" fontSize="64" fontWeight="700" fill="#14212c">{def.symbol}</text></svg>}
           <div className="tr-hud"><span className="tr-pill">{def.name} · {trArea(n ? n.x : state.player.x, n ? n.y : state.player.y)}</span><span style={{ flex: 1 }} /><span className="tr-pill tr-time">{trNPC.clock(state.clock)}</span></div>
           <div className="tr-toast" style={{ right: 'auto' }}>{toast || (n ? TR_IMP[n.mode] : '행동의 결과')}</div>
@@ -715,7 +771,7 @@ function Troemerei({ s = '', t = '', d = '' }) {
       {ml ? <div className="tr-menu"><div className="tr-menu-h"><b>{ml.name}</b><span>{Math.abs(p.x - ml.x) + Math.abs(p.y - ml.y)}칸</span></div>
         <div className="tr-menu-g"><button onClick={() => menuDo('LOOK')}>관찰 0초</button><button onClick={() => menuDo('SEARCH')}>조사</button><button onClick={() => menuDo('GO')}>여기로 이동</button><button onClick={() => setMenu(null)}>닫기</button></div></div> : null}
       {sent ? <div className="tr-preview" style={{ left: 112 }}>전달했습니다. 새 화면에서 이어집니다.</div> : null}
-      {sheet ? trSheet({ tab: sheet, setTab: setSheet, state, debug, setDebug, busy,
+      {sheet ? trSheet({ ev: boot.ev, tab: sheet, setTab: setSheet, state, debug, setDebug, busy,
         onWait: sec => { act({ type: 'WAIT', seconds: sec }); setSheet(''); }, codeText, setCodeText,
         onRestore: () => { try { const v = trCodec.unpack(TN_WORLD, codeText.trim()); setState(trNPC.applyTalk(TN_WORLD, v, 0)); setSheet(''); setToast('상태 코드를 복원했습니다'); } catch (e) { setToast('복원 실패: ' + e.message); } },
         onFree: () => { setSheet('free'); setText(''); }, text, setText, send, sent }) : null}
@@ -736,7 +792,7 @@ const trStaticLayer = (() => {
   };
 })();
 
-function trSheet({ tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
+function trSheet({ ev, tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
   const tabs = [['clue', '단서'], ['people', '인물'], ['log', '기록'], ['set', '설정']];
   const mem = (state.player.mem || []).slice().reverse();
   return <div className="tr-sheet">
@@ -752,7 +808,9 @@ function trSheet({ tab, setTab, state, debug, setDebug, busy, onWait, codeText, 
         <div className="tr-mut">상태 코드</div><div className="tr-mono">{trCodec.pack(TN_WORLD, state)}</div>
         <textarea className="tr-ta" rows={2} value={codeText} onChange={e => setCodeText(e.target.value)} placeholder="복원할 상태 코드" />
         <button style={{ height: 30 }} disabled={busy} onClick={onRestore}>이 코드로 복원</button>
-        <div className="tr-mut">시험판 v0.3 · 임시 인물·장소(본편 아님)</div></div> : null}
+        {ev ? <div className="tr-mut">받은 사건 코드: {ev.code} · {ev.accepted ? '인정' : '거부(' + (ev.reason || '조건 불일치') + ')'}</div> : null}
+        <div className="tr-mut">표식: {trNPC.markers(TN_WORLD, state).join(' ')}</div>
+        <div className="tr-mut">시험판 v0.4 · 임시 인물·장소(본편 아님)</div></div> : null}
       {tab === 'free' ? <div style={{ display: 'grid', gap: 6, paddingTop: 4 }}>
         <div className="tr-mut">인물이 아닌 상대로 하는 행동이나, 지금까지의 추리를 적는다.</div>
         <textarea className="tr-ta" rows={4} value={text} onChange={e => setText(e.target.value.slice(0, 500))} placeholder="행동이나 추리" />
