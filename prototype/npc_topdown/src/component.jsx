@@ -5,43 +5,83 @@ const TR_BG = ['#25344a', '#2d3a30', '#283a4a', '#2c3550'];
 const trNpc = id => TN_WORLD.npcs.find(n => n.id === id) || { name: id, color: '#999', symbol: '?' };
 const trArea = (x, y) => { const i = TroemereiNPC.areaOf(TN_WORLD, x, y); return i < 0 ? '통로' : TN_WORLD.map.areas[i].name; };
 const trHM = n => TroemereiNPC.clock(n).slice(0, 5);
-const trFact = (id, role, who) => { const f = (TN_WORLD.facts || []).find(x => x.id === id); if (!f) return id; if (who === 'player') return f.player || f.seen || id; return role === 0 ? ((f.self || {})[who] || f.seen || id) : (f.seen || id); };
+const trFact = (id, role, who) => {
+  const f = (TN_WORLD.facts || []).find(x => x.id === id); if (!f) return id;
+  if (who === 'player' && role >= 2) { const src = TN_WORLD.npcs[role - 2]; return src ? src.name + '의 증언: ' + ((f.self || {})[src.id] || f.seen || id) : id; }
+  if (who === 'player') return f.player || f.seen || id;
+  return role === 0 ? ((f.self || {})[who] || f.seen || id) : (f.seen || id);
+};
+// 대상 기억은 코드로만 보낸다(채팅에 비밀이 그대로 보이지 않게). 내용은 같은 코드를 키워드로 켜지는 로어북 항목에 있다.
+const trMemCode = (id, role) => TroemereiNPC.factCode(TN_WORLD, id) + (role === 0 ? '직' : role === 1 ? '목' : '들');
 const trVisible = (s, n) => TroemereiNPC.sees(TN_WORLD, s.player, n);
 const trChars = lines => lines.reduce((k, l) => k + Array.from(l.text).length, 0);
 
-// 이미지 ID → 실제 주소. 주소 표(TN_ASSETS)는 빌드할 때 플랫폼별로 끼워 넣는다.
-const trImg = id => (id && typeof TN_ASSETS === 'object' && TN_ASSETS[id]) || '';
+// ---------- 그림: 장소 배경 + 인물 레이어(몸 + 표정 조각) ----------
+// 주소 표(TN_ASSETS)는 빌드할 때 끼워 넣는다. 파일 이름은 내용 해시라 이름만으로 무엇인지 알 수 없다.
+const TR_A = typeof TN_ASSETS === 'object' && TN_ASSETS ? TN_ASSETS : {};
+const trUrl = f => f ? (/^https?:/.test(f) ? f : (TR_A.url || '') + f) : '';
+// AI가 쓴 표정 낱말 → 준비된 표정. 목록에 없으면 기본 표정.
+const TR_SYN = { 웃음: ['웃', '미소', '기쁨', '기뻐', '즐거', '신나', '환하', '장난', '흐뭇', '반가'], 놀람: ['놀', '당황', '경악', '의아', '어리둥절', '깜짝', '멍', '걱정', '불안'], 불만: ['불만', '짜증', '삐', '언짢', '뾰로통', '찡그', '화', '못마땅', '부루퉁', '토라'], 평상시: ['평상', '무표정', '담담', '차분', '진지', '덤덤'] };
+function trFace(c, expr) {
+  if (!c) return '';
+  const keys = Object.keys(c.faces || {}), e = String(expr || '');
+  if (!e) return c.def || '';
+  if (c.faces && c.faces[e]) return e;
+  for (const k of [...keys, c.def || '']) if ((TR_SYN[k] || [k]).some(w => w && e.includes(w))) return k;
+  return c.def || '';
+}
+
+// 인물 레이어: 몸(기본 표정 포함) 위에 표정 조각을 같은 비율 좌표로 겹친다. 화면 아래 가운데 정렬.
+function trSprite(c, face, onBad, bad) {
+  const H = 528, W = Math.round(H * c.w / c.h), f = face && face !== c.def && (c.faces || {})[face];
+  const pct = (a, b) => (a / b * 100) + '%';
+  return <div style={{ position: 'absolute', bottom: 0, left: (TR_W - W) / 2, width: W, height: H }}>
+    <img src={trUrl(c.src)} alt="" onError={() => onBad(trUrl(c.src))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+    {f && !bad[trUrl(f.src)] ? <img src={trUrl(f.src)} alt="" onError={() => onBad(trUrl(f.src))} style={{ position: 'absolute', left: pct(f.x, c.w), top: pct(f.y, c.h), width: pct(f.w, c.w), height: pct(f.h, c.h) }} /> : null}
+  </div>;
+}
 
 // AI 출력: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 P에만 t='초', 사건 코드는 e='…')
-function Troemerei({ s = '', t = '', d = '', e = '' }) {
-  const lines = useMemo(() => TroemereiTalk.parse(d), [d]);
+function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
+  const lines = useMemo(() => TroemereiTalk.paginate(TroemereiTalk.parse(d)), [d]);
+  const free = !!String(f).trim();
   const [boot] = useState(() => {
     if (!s) return { base: TroemereiNPC.createWorld(TN_WORLD), error: '', ev: null };
     try {
-      let base = TroemereiCodec.unpack(TN_WORLD, s), ev = null;
-      // 사건 코드는 화면이 조건을 검사한 뒤에만 상태에 반영한다(대화 시간 반영 전에 검사).
+      let base = TroemereiCodec.unpack(TN_WORLD, s), ev = null, heard = null;
+      // 화면 밖(UUMMAI 입력창) 대화의 응답: 시간·사건을 바꾸지 않고 마지막 전송 시점에서 이어진다.
+      if (free) return { base: { ...TroemereiNPC.clone(base), pend: null, pk: '', pc: 0 }, error: '', ev: null, heard: null };
+      // 사건 코드·증언은 화면이 조건을 검사한 뒤에만 상태에 반영한다(대화 시간 반영 전에 검사).
       if (e) { const r = TroemereiNPC.applyEvent(TN_WORLD, base, e); base = r.state; ev = { code: String(e), accepted: r.accepted, reason: r.reason }; }
-      return { base, error: '', ev };
-    } catch (err) { return { base: null, error: err.message, ev: null }; }
+      if (k) { const r = TroemereiNPC.hearFacts(TN_WORLD, base, k); base = r.state; heard = { raw: String(k), accepted: r.accepted, rejected: r.rejected }; }
+      return { base, error: '', ev, heard };
+    } catch (err) { return { base: null, error: err.message, ev: null, heard: null }; }
   });
   const replySec = b => (b && b.pk === 'P' && String(t).trim() !== '') ? Math.max(0, Math.min(900, Math.floor(Number(t) || 0))) : TroemereiNPC.talkSeconds(b ? b.pc : 0, trChars(lines));
   const pendNpc = boot.base && boot.base.pend;
   const [state, setState] = useState(() => !boot.base ? null : (s && !lines.length) ? TroemereiNPC.applyTalk(TN_WORLD, boot.base, replySec(boot.base)) : boot.base);
-  const [talk, setTalk] = useState(() => boot.base && lines.length ? { npc: pendNpc || null, idx: 0, shown: 0, cut: false, fresh: false } : null);
+  const [talk, setTalk] = useState(() => boot.base && lines.length ? { npc: free ? null : pendNpc || null, idx: 0, shown: 0, cut: false, fresh: false } : null);
   // 받은 응답의 대화 시간을 이미 반영했는지(대사가 있으면 다 읽거나 끊을 때 반영).
-  const [consumed, setConsumed] = useState(() => !lines.length);
+  const [consumed, setConsumed] = useState(() => !lines.length || free);
   const [menu, setMenu] = useState(null);
   const [preview, setPreview] = useState(null);
   const [sheet, setSheet] = useState('');
   const [drop, setDrop] = useState(false);
   const [text, setText] = useState('');
   const [codeText, setCodeText] = useState('');
-  const [toast, setToast] = useState(boot.ev && boot.ev.accepted ? (TroemereiNPC.clone(boot.base).logs.slice(-1)[0] || {}).text || '' : boot.base && s && !lines.length && boot.base.pk ? '응답을 반영했습니다' : '');
+  const [toast, setToast] = useState(() => {
+    if (!boot.base) return '';
+    if (free) return '화면 밖 대화 · ' + trHM(boot.base.clock) + ' 시점에서 이어집니다';
+    if (boot.ev && boot.ev.accepted) return (boot.base.logs.slice(-1)[0] || {}).text || '';
+    if (boot.heard && boot.heard.accepted.length) return '단서 추가: ' + trNpc(boot.base.pend).name + '의 증언 ' + boot.heard.accepted.length + '건';
+    return s && !lines.length && boot.base.pk ? '응답을 반영했습니다' : '';
+  });
+  const [manual, setManual] = useState('');
   const [debug, setDebug] = useState(false);
   const [sent, setSent] = useState('');
   const [scale, setScale] = useState(1);
   const [badImg, setBadImg] = useState({}); // 불러오지 못한 그림은 임시 그림으로 대체
-  const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null), lastSpeaker = useRef(null);
+  const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null), farRef = useRef([0, 0]);
 
   useEffect(() => {
     // 높이 기준은 화면(screen) 크기로 잡는다. UUMMAI는 컴포넌트를 내용 높이에 맞춘 iframe에 넣으므로
@@ -59,6 +99,8 @@ function Troemerei({ s = '', t = '', d = '', e = '' }) {
   const full = !line || talk.shown >= chars.length;
   const lastLine = !!line && talk.idx === lines.length - 1;
   const canInput = talk && !sent && (talk.fresh || talk.cut || (lastLine && full) || talk.done);
+  // 되감아 다시 읽어도 '이미 말해진 위치'는 줄지 않는다(끼어들기 시간·cut 기준).
+  if (line) { const [fi, fs] = farRef.current; if (talk.idx > fi || (talk.idx === fi && talk.shown > fs)) farRef.current = [talk.idx, talk.shown]; }
   useEffect(() => {
     if (!line || talk.cut || full) return;
     const id = setInterval(() => setTalk(v => v && ({ ...v, shown: Math.min(chars.length, v.shown + 1) })), 30);
@@ -118,20 +160,21 @@ function Troemerei({ s = '', t = '', d = '', e = '' }) {
 
   function npcContext(next, id) {
     const n = next.npcs.find(v => v.id === id), name = trNpc(id).name;
-    const mem = (n.mem || []).slice(-5).map(m => trHM(m[2]) + ' ' + trFact(m[0], m[1], id) + (m[1] ? '(목격)' : ''));
+    const mem = (n.mem || []).slice(-5).map(m => trHM(m[2]) + ' ' + trMemCode(m[0], m[1]));
     return [name + ' 상태: ' + TroemereiNPC.describe(TN_WORLD, next, n), mem.length ? name + ' 기억: ' + mem.join(' / ') : ''];
   }
   function clueLine(next) { const c = (next.player.mem || []).slice(-6).map(m => trFact(m[0], m[1], 'player')); return c.length ? '내 단서: ' + c.join(' / ') : ''; }
   function applyReply(kind) {
     if (!lines.length || consumed) return state;
     const full = replySec(boot.base);
-    return TroemereiNPC.applyTalk(TN_WORLD, boot.base, kind === 'I' ? TroemereiTalk.partialSeconds(lines, talk.idx, talk.shown, full) : full);
+    const [fi, fs] = farRef.current;
+    return TroemereiNPC.applyTalk(TN_WORLD, boot.base, kind === 'I' ? TroemereiTalk.partialSeconds(lines, fi, fs, boot.base.pc) : full);
   }
   function send(kind) {
     const msg = text.trim(); if (!msg || busy) return;
     const chars = Array.from(msg).length;
     let next = applyReply(kind), target = '', ctx = [], cut = '';
-    if (kind === 'I') cut = `${talk.idx + 1}/${lines.length}:${talk.shown}`;
+    if (kind === 'I') cut = `${farRef.current[0] + 1}/${lines.length}:${farRef.current[1]}`;
     const id = (kind === 'T' || kind === 'I') && talk ? talk.npc : null;
     if (id) {
       next = TroemereiNPC.dispatch(TN_WORLD, next, { type: 'TALK_REQUEST', npcId: id, kind, chars });
@@ -143,15 +186,22 @@ function Troemerei({ s = '', t = '', d = '', e = '' }) {
     }
     const code = TroemereiCodec.pack(TN_WORLD, next);
     const message = TroemereiTalk.handoff({ kind: id ? kind : (kind === 'T' ? 'P' : kind), target, cut, where: trArea(next.player.x, next.player.y), time: next.day + '일 ' + trHM(next.clock), marks: TroemereiNPC.markers(TN_WORLD, next), ctx, text: msg, code });
-    try { if (typeof sendMessage === 'function') sendMessage(message); setState(next); setConsumed(true); setSent(message); setText(''); setDrop(false); }
-    catch (e) { setToast('전송 실패: ' + e.message); }
+    // 전송 함수가 없으면 보낼 문장을 직접 보여 준다. 실패하면(비동기 포함) 잠금을 풀고 원래 상태로 돌린다.
+    if (typeof sendMessage !== 'function') { setManual(message); return; }
+    const prev = { state, consumed };
+    const fail = err => { setState(prev.state); setConsumed(prev.consumed); setSent(''); setToast('전송 실패: ' + ((err && err.message) || '알 수 없는 오류') + ' · 다시 보내 주세요'); };
+    try {
+      const r = sendMessage(message);
+      setState(next); setConsumed(true); setSent(message); setText(''); setDrop(false);
+      if (r && typeof r.then === 'function') r.then(v => { if (v === false) fail(); }, fail);
+    } catch (e) { fail(e); }
   }
   function endTalk() {
     if (!consumed) { setState(applyReply('T')); setConsumed(true); }
     setTalk(null); setText(''); setDrop(false);
   }
   function talkAction(type) {
-    let next = applyReply('T'); setConsumed(true);
+    let next = applyReply(talk.cut ? 'I' : 'T'); setConsumed(true);
     if (type === 'LOOK') { setState(next); setTalk(v => ({ ...v, done: true })); setToast(trNpc(talk.npc).name + ' · ' + TR_IMP[next.npcs.find(n => n.id === talk.npc).mode]); setDrop(false); return; }
     next = TroemereiNPC.dispatch(TN_WORLD, next, { type, npcId: talk.npc });
     setState(next); setTalk(null); setDrop(false); setToast((next.logs[next.logs.length - 1] || {}).text || '');
@@ -170,14 +220,19 @@ function Troemerei({ s = '', t = '', d = '', e = '' }) {
     const n = talk.npc ? state.npcs.find(v => v.id === talk.npc) : null;
     const def = n ? trNpc(talk.npc) : { name: '상황', color: '#6b7a8c', symbol: '…' };
     const sp = line && !line.narration ? (TN_WORLD.npcs.find(x => x.name === line.speaker) || null) : null;
-    const pic = trImg((sp && sp.portrait) || (lastSpeaker.current && lastSpeaker.current.portrait) || def.portrait);
-    if (sp) lastSpeaker.current = sp;
+    // 지금 보일 인물: 이 줄까지 마지막으로 말한 사람(서술 줄은 직전 화자 유지). 없으면 대화 상대.
+    let who = n ? { npc: trNpc(talk.npc), id: talk.npc, expr: '' } : null;
+    if (line) for (let i = talk.idx; i >= 0; i--) { const L = lines[i]; if (!L.narration) { const m = TN_WORLD.npcs.find(x => x.name === L.speaker); who = { npc: m || { name: L.speaker, color: '#6b7a8c', symbol: '?' }, id: m ? m.id : '', expr: L.expression }; break; } }
+    const ch = who && who.id && (TR_A.chars || {})[who.id];
+    const face = ch ? trFace(ch, who.expr) : '';
+    const bg = trUrl((TR_A.bg || {})[trArea(state.player.x, state.player.y)]);
     const boxBottom = canInput ? 92 : 5;
     return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
       <div className="tr-card" style={{ transform: `scale(${scale})`, background: TR_BG[Math.max(0, area)] }}>
         <div className="tr-talk">
-          {pic && !badImg[pic] ? <img src={pic} alt="" onError={() => setBadImg(v => ({ ...v, [pic]: true }))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} /> :
-            <svg viewBox="0 0 360 540" style={{ position: 'absolute', inset: 0 }} aria-hidden="true"><ellipse cx="180" cy="520" rx="150" ry="230" fill={def.color} opacity=".55" /><circle cx="180" cy="190" r="78" fill={def.color} opacity=".9" /><text x="180" y="212" textAnchor="middle" fontSize="64" fontWeight="700" fill="#14212c">{def.symbol}</text></svg>}
+          {bg && !badImg[bg] ? <img src={bg} alt="" onError={() => setBadImg(v => ({ ...v, [bg]: true }))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+          {ch && !badImg[trUrl(ch.src)] ? trSprite(ch, face, u => setBadImg(v => ({ ...v, [u]: true })), badImg) : who ?
+            <svg viewBox="0 0 360 540" style={{ position: 'absolute', inset: 0 }} aria-hidden="true"><ellipse cx="180" cy="520" rx="150" ry="230" fill={who.npc.color} opacity=".55" /><circle cx="180" cy="190" r="78" fill={who.npc.color} opacity=".9" /><text x="180" y="212" textAnchor="middle" fontSize="64" fontWeight="700" fill="#14212c">{who.npc.symbol}</text></svg> : null}
           <div className="tr-hud"><span className="tr-pill">{def.name} · {trArea(n ? n.x : state.player.x, n ? n.y : state.player.y)}</span><span style={{ flex: 1 }} /><span className="tr-pill tr-time">{TroemereiNPC.clock(state.clock)}</span></div>
           <div className="tr-toast" style={{ right: 'auto' }}>{toast || (n ? TR_IMP[n.mode] : '행동의 결과')}</div>
           {line ? <div className="tr-box" style={{ bottom: boxBottom }} onClick={() => { if (talk.cut) return; if (!full) setTalk(v => ({ ...v, shown: chars.length })); else if (!lastLine) setTalk(v => ({ ...v, idx: v.idx + 1, shown: 0 })); }}>
@@ -204,6 +259,8 @@ function Troemerei({ s = '', t = '', d = '', e = '' }) {
               <button className="tr-send" disabled={!text.trim()} onClick={() => send(talk.cut ? 'I' : 'T')}>보내기</button></div>
           </div> : null}
           {sent ? <div className="tr-box" style={{ bottom: 5 }}><div className="tr-line" style={{ height: 'auto' }}>전달했습니다. AI 응답의 새 화면에서 이어집니다.</div></div> : null}
+          {manual ? <div className="tr-box" style={{ bottom: 5 }}><div className="tr-mut">자동 전송을 쓸 수 없는 환경입니다. 아래 내용을 복사해 채팅 입력창에 보내 주세요.</div>
+            <textarea className="tr-ta" readOnly rows={5} value={manual} onFocus={e => e.target.select()} /><button style={{ height: 28 }} onClick={() => setManual('')}>닫기</button></div> : null}
         </div></div></div>;
   }
 
@@ -242,7 +299,7 @@ function Troemerei({ s = '', t = '', d = '', e = '' }) {
       {ml ? <div className="tr-menu"><div className="tr-menu-h"><b>{ml.name}</b><span>{Math.abs(p.x - ml.x) + Math.abs(p.y - ml.y)}칸</span></div>
         <div className="tr-menu-g"><button onClick={() => menuDo('LOOK')}>관찰 0초</button><button onClick={() => menuDo('SEARCH')}>조사</button><button onClick={() => menuDo('GO')}>여기로 이동</button><button onClick={() => setMenu(null)}>닫기</button></div></div> : null}
       {sent ? <div className="tr-preview" style={{ left: 112 }}>전달했습니다. 새 화면에서 이어집니다.</div> : null}
-      {sheet ? trSheet({ ev: boot.ev, tab: sheet, setTab: setSheet, state, debug, setDebug, busy,
+      {sheet ? trSheet({ ev: boot.ev, heard: boot.heard, free, tab: sheet, setTab: setSheet, state, debug, setDebug, busy,
         onWait: sec => { act({ type: 'WAIT', seconds: sec }); setSheet(''); }, codeText, setCodeText,
         onRestore: () => { try { const v = TroemereiCodec.unpack(TN_WORLD, codeText.trim()); setState(TroemereiNPC.applyTalk(TN_WORLD, v, 0)); setSheet(''); setToast('상태 코드를 복원했습니다'); } catch (e) { setToast('복원 실패: ' + e.message); } },
         onFree: () => { setSheet('free'); setText(''); }, text, setText, send, sent }) : null}
@@ -263,7 +320,7 @@ const trStaticLayer = (() => {
   };
 })();
 
-function trSheet({ ev, tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
+function trSheet({ ev, heard, free, tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
   const tabs = [['clue', '단서'], ['people', '인물'], ['log', '기록'], ['set', '설정']];
   const mem = (state.player.mem || []).slice().reverse();
   return <div className="tr-sheet">
@@ -279,6 +336,8 @@ function trSheet({ ev, tab, setTab, state, debug, setDebug, busy, onWait, codeTe
         <div className="tr-mut">상태 코드</div><div className="tr-mono">{TroemereiCodec.pack(TN_WORLD, state)}</div>
         <textarea className="tr-ta" rows={2} value={codeText} onChange={e => setCodeText(e.target.value)} placeholder="복원할 상태 코드" />
         <button style={{ height: 30 }} disabled={busy} onClick={onRestore}>이 코드로 복원</button>
+        {free ? <div className="tr-mut">이 화면: 화면 밖 대화의 응답(시간 변화 없음)</div> : null}
+        {heard ? <div className="tr-mut">받은 증언 코드: {heard.raw} · 인정 {heard.accepted.join(',') || '없음'}{heard.rejected.length ? ' · 거부 ' + heard.rejected.map(r => r[0] + '(' + r[1] + ')').join(', ') : ''}</div> : null}
         {ev ? <div className="tr-mut">받은 사건 코드: {ev.code} · {ev.accepted ? '인정' : '거부(' + (ev.reason || '조건 불일치') + ')'}</div> : null}
         <div className="tr-mut">표식: {TroemereiNPC.markers(TN_WORLD, state).join(' ')}</div>
         <div className="tr-mut">시험판 v0.4 · 임시 인물·장소(본편 아님)</div></div> : null}

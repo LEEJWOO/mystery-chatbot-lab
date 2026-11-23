@@ -296,12 +296,15 @@
  "chapter": 1,
  "events": {
   "TRUE": {
-   "kind": "T",
    "npcs": [
     "companion"
    ],
    "flag": "true_route",
-   "log": "(시험) 진엔딩 루트 표식이 인정되었다."
+   "log": "(시험) 진엔딩 루트 표식이 인정되었다.",
+   "kinds": [
+    "T",
+    "I"
+   ]
   }
  },
  "markers": [

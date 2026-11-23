@@ -5,7 +5,7 @@ const TroemereiCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 2;
+  const VERSION = 3;
   const KINDS = ['', 'T', 'I', 'A', 'P'];
 
   function hash32(text) { let h = 0x811c9dc5; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
@@ -85,8 +85,8 @@ const TroemereiCodec = (() => {
   const putList = (o, ids, m) => { const set = [...new Set(ids)].filter(id => m.index.has(id)); o.uint(set.length); for (const id of set) o.uint(m.index.get(id)); };
   const getList = (r, m) => { const n = r.uint(), out = []; for (let i = 0; i < n; i++) out.push(task(m, r.uint()).id); return out; };
   const task = (m, i) => { if (!m.tasks[i]) throw Error('상태 코드의 행동 번호가 세계 데이터에 없습니다'); return m.tasks[i]; };
-  const putMem = (o, mem, m, clock) => { const list = (mem || []).filter(x => m.fidx.has(x[0])); o.uint(list.length); for (const [f, role, t] of list) { o.uint(m.fidx.get(f) * 2 + (role ? 1 : 0)); o.uint(Math.max(0, clock - t)); } };
-  const getMem = (r, m, clock) => { const n = r.uint(), out = []; for (let i = 0; i < n; i++) { const v = r.uint(), f = m.facts[v >> 1]; if (f === undefined) throw Error('상태 코드의 사실 번호가 세계 데이터에 없습니다'); out.push([f, v & 1, clock - r.uint()]); } return out; };
+  const putMem = (o, mem, m, clock) => { const list = (mem || []).filter(x => m.fidx.has(x[0])); o.uint(list.length); for (const [f, role, t] of list) { o.uint(m.fidx.get(f)); o.uint(role | 0); o.uint(Math.max(0, clock - t)); } };
+  const getMem = (r, m, clock) => { const n = r.uint(), out = []; for (let i = 0; i < n; i++) { const f = m.facts[r.uint()]; if (f === undefined) throw Error('상태 코드의 사실 번호가 세계 데이터에 없습니다'); const role = r.uint(); out.push([f, role, clock - r.uint()]); } return out; };
 
   function pack(w, s) {
     const m = meta(w), o = writer(), clock = s.clock;

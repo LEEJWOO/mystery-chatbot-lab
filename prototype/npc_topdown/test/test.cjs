@@ -75,10 +75,20 @@ test('대사 해석: 이름·표정·서술 구분, 숫자 시각은 화자로 �
   assert.deepEqual([l[0].speaker, l[0].expression, l[0].narration], ['유태윤', '긴장', false]);
   assert.equal(l[1].narration, true); assert.equal(l[2].text, '9시 7분이었어요!'); assert.equal(l[3].narration, true);
 });
-test('끼어들기: 본 글자 비율만큼만 시간 반영', () => {
+test('끼어들기: 내 말은 전부, 상대 대사는 읽은 위치까지만 시간 반영', () => {
   const l = T.parse('가:1234567890|나:1234567890');
-  assert.equal(T.partialSeconds(l, 0, 5, 40), 10);
-  assert.equal(T.partialSeconds(l, 1, 10, 40), 40);
+  assert.equal(T.partialSeconds(l, 0, 0, 500), Math.ceil(500 / 6) + 4, '응답을 0자 보고 끊어도 내 말 시간은 남음');
+  assert.equal(T.partialSeconds(l, 1, 10, 10), Math.ceil(30 / 6) + 4);
+  assert.equal(T.partialSeconds(l, 0, 0, 0), 5, '최소 5초');
+});
+test('긴 대사: 3줄(54칸)을 넘으면 같은 화자의 여러 페이지로 나눔, 글자 수는 그대로', () => {
+  const long = '가'.repeat(30) + ' ' + '나'.repeat(40) + '. ' + '다'.repeat(50);
+  const l = T.paginate(T.parse('유리(놀람):' + long + '|*짧은 서술'));
+  assert.ok(l.length >= 4, '페이지가 나뉘어야 함');
+  assert.ok(l.slice(0, -1).every(x => x.speaker === '유리' && x.expression === '놀람'));
+  assert.equal(l.slice(0, -1).map(x => x.text).join('').replace(/\s/g, ''), long.replace(/\s/g, ''));
+  assert.ok(l.every(x => Array.from(x.text).length <= 54));
+  assert.equal(T.paginate(T.parse('a:' + 'x'.repeat(90))).length, 1, '반각 90자는 한 페이지(0.55칸)');
 });
 test('인계 메시지 형식: 한 줄 머리말 + 입력 + 상태 코드', () => {
   const msg = T.handoff({ kind: 'I', target: '유리', cut: '2/3:15', where: '정원', time: '09:01', ctx: ['유리 상태: 한가함', ''], text: '잠깐만요', code: 'AbC' });
@@ -180,6 +190,48 @@ test('로어북 표식: 장 표식은 항상, 진엔딩 표식은 플래그가 �
   assert.deepEqual(E.markers(W, s), ['#장1']);
   s.flags.true_route = true; assert.deepEqual(E.markers(W, s), ['#장1', '#진루트']);
   assert.equal(T.handoff({ kind: 'T', target: '유리', where: '정원', time: '1일 09:00', marks: ['#장1', '#진루트'], text: 'x', code: 'A' }).split('\n')[0], 'TRM1 T 유리 | 1일 09:00 정원 #장1 #진루트');
+});
+
+test('만남: 도중에 상대를 데려가면 성립하지 않고, 성립 안 한 일은 기억에도 없음', () => {
+  let s = E.createWorld(W), guard = 0;
+  while (guard++ < 400) { s = E.advance(W, s, 1); if (s.npcs.find(n => n.id === 'companion').mode === 'busy') break; }
+  const c = s.npcs.find(n => n.id === 'companion'), d = s.npcs.find(n => n.id === 'contact');
+  assert.equal(c.mode, 'busy'); assert.equal(d.mode, 'paused', '상대도 만남 동안 붙잡힘');
+  s.player.x = d.x; s.player.y = d.y + 1; if (!E.walkable(W, s.player.x, s.player.y)) { s.player.x = d.x + 1; s.player.y = d.y; }
+  s = E.dispatch(W, s, { type: 'ACCOMPANY', npcId: 'contact' });
+  assert.equal(s.npcs.find(n => n.id === 'contact').mode, 'accompany');
+  s = E.dispatch(W, s, { type: 'MOVE_TO', x: 20, y: 12 }); s = E.advance(W, s, 200);
+  assert.equal(s.flags.meeting_occurred, false, '데려갔으므로 만남 불성립');
+  assert.ok(!s.npcs.some(n => (n.mem || []).some(m => m[0] === 'met_doyun')), '아무도 만남을 기억하지 않음');
+});
+test('로그 공개: 다른 구역에서 일어난 일은 보이지 않음(시야 판정과 같은 기준)', () => {
+  let s = E.createWorld(W); s = E.advance(W, s, 900);
+  assert.equal(s.flags.meeting_occurred, true);
+  const done = s.logs.filter(l => /만남을 마쳤다/.test(l.text));
+  assert.ok(done.length && done.every(l => !l.visible), '정원에서 작업실 만남은 안 보임');
+});
+test('증언(k): 대상이 아는 기억만 「들음」 단서로 기록, 모르는 일·없는 번호는 거부, 코드 왕복 보존', () => {
+  let s = E.createWorld(W); s = E.advance(W, s, 900);
+  const c = s.npcs.find(n => n.id === 'companion');
+  s.player.x = c.x; s.player.y = c.y + 1; if (!E.walkable(W, s.player.x, s.player.y)) { s.player.x = c.x + 1; s.player.y = c.y; }
+  s = E.dispatch(W, s, { type: 'TALK_REQUEST', npcId: 'companion', kind: 'T', chars: 5 });
+  assert.equal(s.pend, 'companion');
+  assert.equal(E.factCode(W, 'met_doyun'), '기억001');
+  const r = E.hearFacts(W, s, '기억001,기억002, 9');
+  assert.deepEqual(r.accepted, [1]);
+  assert.deepEqual(r.rejected.map(x => x[0]), [2, 9]);
+  const heard = r.state.player.mem.find(m => m[0] === 'met_doyun');
+  assert.equal(heard[1], 2 + W.npcs.findIndex(n => n.id === 'companion'), '역할 = 2 + 말한 인물 번호');
+  const back = C.unpack(W, C.pack(W, r.state));
+  assert.deepEqual(back.player.mem.map(m => m.slice(0, 2)), r.state.player.mem.map(m => m.slice(0, 2)));
+  assert.equal(E.hearFacts(W, E.createWorld(W), '기억001').accepted.length, 0, '대화 상대가 없으면 거부');
+});
+test('사건 코드: 끼어들기(I)도 일반 대화(T)와 같이 인정, 자유 행동(P)은 거부', () => {
+  let s = E.createWorld(W);
+  const i = E.dispatch(W, s, { type: 'TALK_REQUEST', npcId: 'companion', kind: 'I', chars: 5 });
+  assert.equal(E.applyEvent(W, i, 'TRUE').accepted, true);
+  const p = { ...E.clone(s), pend: 'companion', pk: 'P' };
+  assert.equal(E.applyEvent(W, p, 'TRUE').accepted, false);
 });
 
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }

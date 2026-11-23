@@ -1,4 +1,4 @@
-/* Troemerei NPC simulation core v0.3 — 결정적 NPC 일정·경로·기억. DOM/네트워크/LLM 의존 없음. */
+/* Troemerei NPC simulation core v0.5 — 결정적 NPC 일정·경로·기억. DOM/네트워크/LLM 의존 없음. */
 const TroemereiNPC = (() => {
   const abs = Math.abs;
   const posKey = (x,y) => x+','+y;
@@ -15,7 +15,7 @@ const TroemereiNPC = (() => {
   // 방 번호(-1은 통로). 같은 방이고 6칸 이내면 서로 보인다(통로끼리는 3칸).
   function areaOf(w,x,y){return w.map.areas.findIndex(a=>x>=a.x0&&x<=a.x1&&y>=a.y0&&y<=a.y1);}
   function sees(w,a,b){const ra=areaOf(w,a.x,a.y),rb=areaOf(w,b.x,b.y);if(ra!==rb)return false;return manhattan(a,b)<=(ra<0?3:6);}
-  // 기억: [사실ID, 역할(0 직접 1 목격), 시각]. 인물당 최근 12개.
+  // 기억: [사실ID, 역할, 시각]. 역할 0 직접 · 1 목격 · 2+i 인물 i에게 들음(증언). 인물당 최근 12개.
   function learn(target,factId,role,time){
     if(!target.mem)target.mem=[];
     if(target.mem.some(m=>m[0]===factId&&m[1]===role))return;
@@ -29,8 +29,9 @@ const TroemereiNPC = (() => {
   function updateSeen(w,s){
     for(const n of s.npcs)if(sees(w,s.player,n))s.player.seen[n.id]=[areaOf(w,n.x,n.y),s.clock];
   }
-  function addLog(s,text,type='world',at=null) {
-    const visible=type==='player'||!at||manhattan(s.player,at)<=5;
+  // 로그 공개는 시야 판정(sees)과 같은 기준을 쓴다.
+  function addLog(w,s,text,type='world',at=null) {
+    const visible=type==='player'||!at||sees(w,s.player,at);
     s.logs.push({time:s.clock,text,type,visible});
     if(s.logs.length>100)s.logs.shift();
   }
@@ -42,7 +43,7 @@ const TroemereiNPC = (() => {
         excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:[]})),
       flags:Object.fromEntries((w.flagNames||[]).map(f=>[f,false])),
       logs:[],revision:0,pend:null,pk:'',pc:0};
-    addLog(s,'시뮬레이션이 시작되었다. NPC들은 각자의 일정에 따라 행동한다.','player');
+    addLog(w,s,'시뮬레이션이 시작되었다. NPC들은 각자의 일정에 따라 행동한다.','player');
     // Decisions exist from the first frame; the player can cancel a planned visit before movement.
     for(const n of s.npcs)decide(w,s,n);
     updateSeen(w,s);
@@ -119,7 +120,7 @@ const TroemereiNPC = (() => {
       n.nextMoveAt=s.clock+20;return;
     }
     n.intent=task;n.mode='moving';n.route=way;n.nextMoveAt=s.clock+(spec.stepSeconds||7);n.blockedSince=null;
-    addLog(s,spec.name+'이(가) 새로운 목적지를 향해 움직이기 시작했다.','npc',n);
+    addLog(w,s,spec.name+'이(가) 새로운 목적지를 향해 움직이기 시작했다.','npc',n);
     if(!way.length)arrive(w,s,n);
   }
   function hasReached(w,s,n,task){
@@ -136,20 +137,35 @@ const TroemereiNPC = (() => {
     if(!hasReached(w,s,n,task)){
       const r=routeFor(w,s,n,task);n.route=r||[];n.nextMoveAt=s.clock+6;return;
     }
+    if(task.targetNpc){
+      // 만남: 상대가 동행 중이거나 다른 일에 묶여 있으면 시작하지 않고 잠시 뒤 다시 본다.
+      const m=node(s,task.targetNpc);
+      if(!m||m.mode==='accompany'||m.mode==='busy'){n.route=[];n.nextMoveAt=s.clock+20;return;}
+      // 상대도 만남이 끝날 때까지 붙잡아 둔다(멈춤). 일정은 유지되므로 끝나면 하던 일을 계속한다.
+      m.mode='paused';m.busyUntil=Math.max(m.busyUntil||0,s.clock+(task.durationSeconds||30));m.nextMoveAt=m.busyUntil;m.route=[];
+    }
     n.mode='busy';n.route=[];n.busyUntil=s.clock+(task.durationSeconds||30);n.nextMoveAt=n.busyUntil;
-    addLog(s,spec.name+'이(가) '+(task.kind==='meet'?'다른 인물과 대화를 시작했다.':'목적지에서 행동을 시작했다.'),'npc',n);
+    addLog(w,s,spec.name+'이(가) '+(task.kind==='meet'?'다른 인물과 대화를 시작했다.':'목적지에서 행동을 시작했다.'),'npc',n);
   }
   function complete(w,s,n){
     const task=n.intent;if(!task){n.mode='idle';return;}
     const spec=w.npcs.find(x=>x.id===n.id);
+    if(task.targetNpc){
+      // 끝나는 순간에도 상대가 곁에 있어야 만남이 성립한다(도중에 데려가면 무산 → 다시 찾아간다).
+      const m=node(s,task.targetNpc);
+      if(!m||m.mode==='accompany'||manhattan(n,m)!==1){
+        n.mode='moving';n.route=[];n.busyUntil=0;n.nextMoveAt=s.clock+5;
+        addLog(w,s,spec.name+'의 만남이 중간에 끊겼다.','npc',n);return;
+      }
+    }
     n.completed.push(task.id);n.lastCompleted[task.id]=s.clock;n.lastTask=task.id;
     n.queued=n.queued.filter(t=>t.id!==task.id);
-    addLog(s,spec.name+'이(가) '+(task.kind==='meet'?'만남':'활동')+'을 마쳤다.','npc',n);
+    addLog(w,s,spec.name+'이(가) '+(task.kind==='meet'?'만남':'활동')+'을 마쳤다.','npc',n);
     for(const r of w.onComplete||[]){
       if(r.when.npc===n.id&&r.when.task===task.id&&(!r.when.targetNpc||r.when.targetNpc===task.targetNpc)){
         if(r.setFlag)s.flags[r.setFlag]=true;
         if(r.queueTask)n.queued.push(clone(r.queueTask));
-        if(r.publicLog)addLog(s,r.publicLog,'world',n);
+        if(r.publicLog)addLog(w,s,r.publicLog,'world',n);
         if(r.fact)witness(w,s,n,r.fact,[n.id,r.when.targetNpc].filter(Boolean));
       }
     }
@@ -183,10 +199,10 @@ const TroemereiNPC = (() => {
         const alternate=routeFor(w,s,n,n.intent);
         if(alternate&&alternate.length&&posKey(alternate[0].x,alternate[0].y)!==blocker){
           n.route=alternate;n.blockedSince=null;
-          addLog(s,w.npcs.find(x=>x.id===n.id).name+'이(가) 막힌 통로를 피해 우회했다.','npc',n);
+          addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 막힌 통로를 피해 우회했다.','npc',n);
         }else if(s.clock-n.blockedSince>=35){
           n.intent=null;n.mode='idle';n.route=[];n.nextMoveAt=s.clock+30;n.blockedSince=null;
-          addLog(s,w.npcs.find(x=>x.id===n.id).name+'이(가) 이동 계획을 잠시 보류했다.','npc',n);
+          addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 이동 계획을 잠시 보류했다.','npc',n);
         }
       }
       n.nextMoveAt=s.clock+4;return;
@@ -254,13 +270,32 @@ const TroemereiNPC = (() => {
     if(!code)return {state,accepted:false,reason:''};
     const rule=(w.events||{})[code];
     if(!rule)return {state,accepted:false,reason:'알 수 없는 사건 코드'};
-    if(rule.kind&&rule.kind!==state.pk)return {state,accepted:false,reason:'대화 종류가 맞지 않음'};
+    const kinds=rule.kinds||(rule.kind?[rule.kind]:null);
+    if(kinds&&!kinds.includes(state.pk))return {state,accepted:false,reason:'대화 종류가 맞지 않음'};
     if(rule.npcs&&!rule.npcs.includes(state.pend))return {state,accepted:false,reason:'이 인물에게는 인정되지 않음'};
     if(rule.flag&&state.flags[rule.flag])return {state,accepted:false,reason:'이미 기록됨'};
     const s=clone(state);
     if(rule.flag)s.flags[rule.flag]=true;
-    addLog(s,rule.log||('사건 '+code+' 기록'),'world');
+    addLog(w,s,rule.log||('사건 '+code+' 기록'),'world');
     return {state:s,accepted:true,reason:''};
+  }
+  // 증언(k): AI가 '대상이 대사로 말한 기억'의 코드를 적으면, 대상이 정말 그 기억을 가졌을 때만
+  // 플레이어 단서에 '○○에게 들음'으로 기록한다. 사실이 참이라고 확정하지는 않는다(주장으로만 보관).
+  function factCode(w,id){const i=(w.facts||[]).findIndex(f=>f.id===id);return i<0?'':'기억'+String(i+1).padStart(3,'0');}
+  function hearFacts(w,state,k){
+    const out={state,accepted:[],rejected:[]};
+    const codes=[...new Set((String(k||'').match(/\d{1,3}/g)||[]).map(Number))];
+    if(!codes.length)return out;
+    const n=state.pend&&node(state,state.pend);
+    if(!n){out.rejected=codes.map(c=>[c,'대화 상대가 없음']);return out;}
+    const s=clone(state),m=node(s,n.id),idx=w.npcs.findIndex(x=>x.id===n.id);
+    for(const c of codes){
+      const f=(w.facts||[])[c-1];
+      if(!f){out.rejected.push([c,'없는 기억 번호']);continue;}
+      if(!(m.mem||[]).some(x=>x[0]===f.id)){out.rejected.push([c,'이 인물은 모르는 일']);continue;}
+      learn(s.player,f.id,2+idx,s.clock);out.accepted.push(c);
+    }
+    out.state=s;return out;
   }
   // 로어북을 켜는 표식. 화면이 매 메시지 머리말에 붙인다(검색 범위 '현재 유저 입력만' 항목용).
   function markers(w,s){
@@ -272,16 +307,16 @@ const TroemereiNPC = (() => {
     let s=clone(state);const player=s.player;
     if(action.type==='MOVE_TO'||action.type==='MOVE_ONE'){
       const target=action.type==='MOVE_ONE'?{x:player.x+action.dx,y:player.y+action.dy}:{x:action.x,y:action.y};
-      if(!walkable(w,target.x,target.y)){addLog(s,'그곳으로는 이동할 수 없다.','player');return s;}
+      if(!walkable(w,target.x,target.y)){addLog(w,s,'그곳으로는 이동할 수 없다.','player');return s;}
       const p=route(w,s,player,target,{ignorePlayer:true});
-      if(!p.length&&manhattan(player,target)>0){addLog(s,'갈 수 있는 경로가 없다.','player');return s;}
+      if(!p.length&&manhattan(player,target)>0){addLog(w,s,'갈 수 있는 경로가 없다.','player');return s;}
       player.route=p;player.nextMoveAt=s.clock+(w.player.moveSeconds||4);
-      addLog(s,p.length?'목적지로 이동을 시작했다.':'이미 그곳에 있다.','player');
+      addLog(w,s,p.length?'목적지로 이동을 시작했다.':'이미 그곳에 있다.','player');
     }else if(action.type==='ACCOMPANY'){
       const n=node(s,action.npcId);
-      if(!n||manhattan(player,n)>1){addLog(s,'동행하려면 해당 인물 가까이 있어야 한다.','player');return s;}
+      if(!n||manhattan(player,n)>1){addLog(w,s,'동행하려면 해당 인물 가까이 있어야 한다.','player');return s;}
       if(n.mode==='busy'||n.mode==='accompany'||(n.intent&&!n.intent.interruptible)){
-        addLog(s,'지금은 동행할 수 없다.','player');return s;
+        addLog(w,s,'지금은 동행할 수 없다.','player');return s;
       }
       if(n.intent){
         // onAccompany: 'cancel'(기본, 이번 일정은 다시 고르지 않음) / 'postpone'(동행이 끝나면 다시 고를 수 있음)
@@ -290,19 +325,19 @@ const TroemereiNPC = (() => {
         if(n.intent.onInterruptFact)learn(n,n.intent.onInterruptFact,0,s.clock);
       }
       n.mode='accompany';n.intent=null;n.route=[];n.nextMoveAt=0;n.busyUntil=0;n.blockedSince=null;
-      addLog(s,w.npcs.find(x=>x.id===n.id).name+'이(가) 동행을 수락했다. 기존 방문 일정은 취소됐다.','player');
+      addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 동행을 수락했다. 기존 방문 일정은 취소됐다.','player');
     }else if(action.type==='RELEASE'){
       const n=node(s,action.npcId);
       if(n&&n.mode==='accompany'){n.mode='idle';n.nextMoveAt=s.clock+5; n.route=[];
-        addLog(s,w.npcs.find(x=>x.id===n.id).name+'이(가) 다시 독립 행동을 시작했다.','player');}
+        addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 다시 독립 행동을 시작했다.','player');}
     }else if(action.type==='TALK_REQUEST'){
       // 대화는 AI가 응답한 뒤 applyTalk()로 시간을 반영한다. 여기서는 대상만 잠근다.
       const n=node(s,action.npcId);
-      if(!n||manhattan(player,n)>1){addLog(s,'대화하려면 인물에게 접근해야 한다.','player');return s;}
-      if(n.mode==='busy'){addLog(s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
+      if(!n||manhattan(player,n)>1){addLog(w,s,'대화하려면 인물에게 접근해야 한다.','player');return s;}
+      if(n.mode==='busy'){addLog(w,s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
       s.pend=n.id;s.pk=action.kind||'T';s.pc=Math.max(0,Math.min(2000,action.chars|0));player.route=[];player.nextMoveAt=0;
     }else if(action.type==='WAIT')return advance(w,s,action.seconds||60);
-    else if(action.type==='CLEAR_ROUTE'){s.player.route=[];s.player.nextMoveAt=0;addLog(s,'이동을 멈췄다.','player');}
+    else if(action.type==='CLEAR_ROUTE'){s.player.route=[];s.player.nextMoveAt=0;addLog(w,s,'이동을 멈췄다.','player');}
     s.revision++;return s;
   }
   // AI 응답의 경과 시간(초)을 반영한다. 같은 체크포인트에서 다시 마운트해도 결과가 같다.
@@ -313,7 +348,7 @@ const TroemereiNPC = (() => {
     const n=s.pend?node(s,s.pend):null;
     if(n&&n.mode!=='accompany'){n.mode='paused';n.busyUntil=s.clock+sec;n.nextMoveAt=n.busyUntil;}
     s.player.route=[];s.player.nextMoveAt=0;s.pend=null;s.pk='';s.pc=0;
-    if(sec>0){addLog(s,(n?w.npcs.find(x=>x.id===n.id).name+'와(과) ':'')+'대화하며 '+sec+'초가 지났다.','player');s=advance(w,s,sec);}
+    if(sec>0){addLog(w,s,(n?w.npcs.find(x=>x.id===n.id).name+'와(과) ':'')+'대화하며 '+sec+'초가 지났다.','player');s=advance(w,s,sec);}
     else s.revision++;
     return s;
   }
@@ -337,6 +372,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, advance, advanceSlow, applyEvent, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, advance, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;

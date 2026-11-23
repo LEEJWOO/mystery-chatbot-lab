@@ -6,7 +6,7 @@
   window.sendMessage = function (msg) { document.getElementById('sentBox').textContent = '[전송된 인계]\n' + msg; window.__lastSent = msg; };
   window.__mountTag = function (tag) {
     const get = name => { const m = new RegExp(name + "='([^']*)'").exec(tag); return m ? m[1] : ''; };
-    mount({ s: get('s'), t: get('t'), d: get('d'), e: get('e') });
+    mount({ s: get('s'), t: get('t'), d: get('d'), e: get('e'), k: get('k'), f: get('f') });
   };
   document.getElementById('apply').onclick = () => window.__mountTag(document.getElementById('reply').value);
   mount({});

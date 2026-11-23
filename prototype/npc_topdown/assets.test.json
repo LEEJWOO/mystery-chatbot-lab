@@ -1,0 +1,11 @@
+{
+ "url": "https://raw.githubusercontent.com/LEEJWOO/mystery-chatbot-lab/refs/heads/troemerei/prototype-v0.2/assets/pub/",
+ "out_dir": "../../assets/pub",
+ "table": "src/assets.web.json",
+ "height": 960,
+ "chars": {
+  "companion": {"def": "평상시", "faces": {"평상시": "assets_src/test/yuri_평상시.png", "놀람": "assets_src/test/yuri_놀람.png", "웃음": "assets_src/test/yuri_웃음.png"}},
+  "librarian": {"def": "웃음", "faces": {"웃음": "assets_src/test/serin_웃음.png", "불만": "assets_src/test/serin_불만.png", "놀람": "assets_src/test/serin_놀람.png"}}
+ },
+ "bg": {"정원": "assets_src/test/bg_classroom.webp", "자료실": "assets_src/test/bg_library.webp"}
+}
