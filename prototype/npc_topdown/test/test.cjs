@@ -178,8 +178,8 @@ test('사건 코드: 조건이 맞을 때만 인정(대상 인물·대화 종류
 test('로어북 표식: 장 표식은 항상, 진엔딩 표식은 플래그가 있을 때만', () => {
   const s = E.createWorld(W);
   assert.deepEqual(E.markers(W, s), ['#장1']);
-  s.flags.true_route = true; assert.deepEqual(E.markers(W, s), ['#장1', '#진']);
-  assert.equal(T.handoff({ kind: 'T', target: '유리', where: '정원', time: '1일 09:00', marks: ['#장1', '#진'], text: 'x', code: 'A' }).split('\n')[0], 'TRM1 T 유리 | 1일 09:00 정원 #장1 #진');
+  s.flags.true_route = true; assert.deepEqual(E.markers(W, s), ['#장1', '#진루트']);
+  assert.equal(T.handoff({ kind: 'T', target: '유리', where: '정원', time: '1일 09:00', marks: ['#장1', '#진루트'], text: 'x', code: 'A' }).split('\n')[0], 'TRM1 T 유리 | 1일 09:00 정원 #장1 #진루트');
 });
 
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
