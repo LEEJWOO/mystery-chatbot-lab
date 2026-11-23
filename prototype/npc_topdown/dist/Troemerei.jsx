@@ -651,7 +651,7 @@ function Troemerei({ s = '', t = '', d = '' }) {
         <div className="tr-talk">
           {def.portrait ? <img src={def.portrait} alt="" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: '88%', objectFit: 'contain', objectPosition: 'center bottom' }} /> :
             <svg viewBox="0 0 360 540" style={{ position: 'absolute', inset: 0 }} aria-hidden="true"><ellipse cx="180" cy="520" rx="150" ry="230" fill={def.color} opacity=".55" /><circle cx="180" cy="190" r="78" fill={def.color} opacity=".9" /><text x="180" y="212" textAnchor="middle" fontSize="64" fontWeight="700" fill="#14212c">{def.symbol}</text></svg>}
-          <div className="tr-hud"><span className="tr-pill">{def.name} · {trArea(n ? n.x : state.player.x, n ? n.y : state.player.y)}</span><span style={{ flex: 1 }} /><span className="tr-pill tr-time">{trHM(state.clock)}</span></div>
+          <div className="tr-hud"><span className="tr-pill">{def.name} · {trArea(n ? n.x : state.player.x, n ? n.y : state.player.y)}</span><span style={{ flex: 1 }} /><span className="tr-pill tr-time">{TroemereiNPC.clock(state.clock)}</span></div>
           <div className="tr-toast" style={{ right: 'auto' }}>{toast || (n ? TR_IMP[n.mode] : '행동의 결과')}</div>
           {line ? <div className="tr-box" style={{ bottom: boxBottom }} onClick={() => { if (talk.cut) return; if (!full) setTalk(v => ({ ...v, shown: chars.length })); else if (!lastLine) setTalk(v => ({ ...v, idx: v.idx + 1, shown: 0 })); }}>
             <div className="tr-name"><b style={{ color: sp ? sp.color : '#b9c9d6' }}>{line.narration ? '서술' : line.speaker}{line.expression ? ' · ' + line.expression : ''}</b><span>{talk.idx + 1}/{lines.length}{talk.cut ? ' · 멈춤' : full ? ' ▼' : ''}</span></div>
@@ -700,7 +700,7 @@ function Troemerei({ s = '', t = '', d = '' }) {
           {n.mode === 'accompany' ? <circle cx={cx + 11} cy={cy - 11} r="4" fill="#f7d47c" /> : null}</g>; })}
         <g pointerEvents="none"><circle cx={(p.x + .5) * TR_CELL} cy={(p.y + .5) * TR_CELL} r="15" fill="#f6dfab" stroke="#1b2a39" strokeWidth="3" /><text x={(p.x + .5) * TR_CELL} y={(p.y + .5) * TR_CELL + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#1b2a39">나</text></g>
       </svg>
-      <div className="tr-hud"><span className="tr-pill">{trArea(p.x, p.y)}</span><span className="tr-pill tr-time">{state.day}일 {trHM(state.clock)}</span><span style={{ flex: 1 }} />
+      <div className="tr-hud"><span className="tr-pill">{trArea(p.x, p.y)}</span><span className="tr-pill tr-time">{state.day}일 {TroemereiNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
         <button onClick={() => setSheet('clue')}>노트</button><button onClick={() => setSheet('set')}>≡</button></div>
       <div className="tr-toast">{toast || (recent ? trHM(recent.time) + ' ' + recent.text : '인물·물건을 누르면 행동을 고를 수 있다')}</div>
       {[[0, -1, 41, 436, '↑'], [-1, 0, 6, 471, '←'], [1, 0, 76, 471, '→'], [0, 1, 41, 506, '↓']].map(([dx, dy, x, y, k]) => <button key={k} className="tr-pad" style={{ left: x, top: y - 5 }} disabled={busy} onPointerDown={e => { e.preventDefault(); padDown(dx, dy); }} onPointerUp={padUp} onPointerLeave={padUp} onPointerCancel={padUp}>{k}</button>)}
