@@ -12,6 +12,7 @@ const TroemereiNPC = (() => {
   const node = (s,id) => s.npcs.find(n=>n.id===id);
   const landmark = (w,id) => w.map.landmarks.find(x=>x.id===id);
   const DAY=86400;
+  const josa=(w,a,b)=>{const c=String(w).charCodeAt(String(w).length-1)-0xac00;return w+(c>=0&&c<11172&&c%28?a:b);};
   // 방 번호(-1은 통로). 같은 방이고 6칸 이내면 서로 보인다(통로끼리는 3칸).
   function areaOf(w,x,y){return w.map.areas.findIndex(a=>x>=a.x0&&x<=a.x1&&y>=a.y0&&y<=a.y1);}
   function sees(w,a,b){const ra=areaOf(w,a.x,a.y),rb=areaOf(w,b.x,b.y);if(ra!==rb)return false;return manhattan(a,b)<=(ra<0?3:6);}
@@ -37,7 +38,7 @@ const TroemereiNPC = (() => {
   }
   function createWorld(w,seed=246813579){
     const s={schema:'TROEMEREI_NPC_V1',version:1,worldId:w.map.id,day:1,clock:9*3600,
-      rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{}},
+      rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{},items:{}},
       npcs:w.npcs.map((n,i)=>({id:n.id,x:n.x,y:n.y,mode:'idle',intent:null,route:[],
         nextMoveAt:9*3600+10+i*4,busyUntil:0,blockedSince:null,completed:[],
         excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:[]})),
@@ -251,6 +252,36 @@ const TroemereiNPC = (() => {
     s.revision++;
     return s;
   }
+  // 시간 건너뛰기: 최대 2일. stop(s)가 참이 되는 순간(사건 단위) 멈춘다 → {state, stopped}.
+  function advanceUntil(w,state,seconds,stop){
+    const s=clone(state),end=s.clock+Math.max(0,Math.min(2*DAY,Math.floor(seconds)));let stopped=false;
+    while(s.clock<end){
+      const t=nextDue(s);
+      if(t>end){s.clock=end;updateSeen(w,s);break;}
+      if(t-1>s.clock){s.clock=t-1;updateSeen(w,s);}
+      s.clock=t;
+      if(s.player.route.length&&s.player.nextMoveAt<=s.clock)stepPlayer(w,s);
+      for(const n of s.npcs){if(n.mode!=='accompany'&&n.nextMoveAt<=s.clock)npcStep(w,s,n);}
+      updateSeen(w,s);
+      if(stop&&stop(s)){stopped=true;break;}
+    }
+    s.day=1+Math.floor(s.clock/DAY);s.revision++;
+    return {state:s,stopped};
+  }
+  // 절대 시각(초) ← '2일 06:00' 또는 '06:00'(1일)
+  function absTime(v){if(typeof v==='number')return v;const m=/^(?:(\d+)일\s*)?(\d{1,2}):(\d{2})$/.exec(String(v||'').trim());return m?((+(m[1]||1))-1)*DAY+(+m[2])*3600+(+m[3])*60:0;}
+  // 물건: 등장 조건(시각 from·플래그 flag)이 맞고 아직 아무도 가져가지 않았을 때만 그 자리에 있다.
+  function itemsAt(w,s,lmId){
+    return (w.items||[]).filter(it=>it.at===lmId&&!(s.player.items||{})[it.id]&&(!it.from||s.clock>=absTime(it.from))&&(!it.flag||s.flags[it.flag]));
+  }
+  // 시간대(아침·오후·저녁·밤)와 날짜. 첫 시간대 이전(새벽)은 전날 밤으로 본다.
+  function slotOf(w,s){
+    const slots=w.slots||[];if(!slots.length)return null;
+    const tod=s.clock%DAY;let day=1+Math.floor(s.clock/DAY),i=-1;
+    slots.forEach((sl,k)=>{if(tod>=absTime(sl.from))i=k;});
+    if(i<0){i=slots.length-1;day--;}
+    return {day,index:i,name:slots[i].name,start:(day-1)*DAY+absTime(slots[i].from)};
+  }
   // 이전 방식(1초씩). 테스트에서 결과 동일성 비교용.
   function advanceSlow(w,state,seconds){
     const s=clone(state),end=s.clock+Math.max(0,Math.min(7200,Math.floor(seconds)));
@@ -300,6 +331,9 @@ const TroemereiNPC = (() => {
   // 로어북을 켜는 표식. 화면이 매 메시지 머리말에 붙인다(검색 범위 '현재 유저 입력만' 항목용).
   function markers(w,s){
     const out=['#장'+(w.chapter||1)];
+    // 시간대 갈래 표식: #1일저녁A. A는 인라인(메인), 조건이 맞으면 B·C…(어느 갈래인지는 화면이 판정)
+    const sl=slotOf(w,s);
+    if(sl){const b=(w.branches||[]).find(b=>(!b.flag||s.flags[b.flag])&&(!b.slot||b.slot===sl.day+'일'+sl.name));out.push('#'+sl.day+'일'+sl.name+(b?b.letter:'A'));}
     for(const m of w.markers||[])if(s.flags[m.flag])out.push(m.token);
     return out;
   }
@@ -337,6 +371,25 @@ const TroemereiNPC = (() => {
       if(n.mode==='busy'){addLog(w,s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
       s.pend=n.id;s.pk=action.kind||'T';s.pc=Math.max(0,Math.min(2000,action.chars|0));player.route=[];player.nextMoveAt=0;
     }else if(action.type==='WAIT')return advance(w,s,action.seconds||60);
+    else if(action.type==='SEARCH'){
+      // 조사: 랜드마크 자리나 그 가구 칸 바로 옆에서. 시간이 든다. 있으면 소지품으로.
+      const l=landmark(w,action.landmark);
+      if(!l)return s;
+      const spots=[{x:l.x,y:l.y},...(l.hit||[]).map(h=>({x:h[0],y:h[1]}))];
+      if(!spots.some(p=>manhattan(player,p)<=1)){addLog(w,s,'조사하려면 '+l.name+' 가까이 가야 한다.','player');return s;}
+      const t=advance(w,s,w.searchSeconds||20);s=t;
+      const found=itemsAt(w,s,l.id);
+      if(!s.player.items)s.player.items={};
+      for(const it of found)s.player.items[it.id]=s.clock;
+      addLog(w,s,found.length?l.name+'에서 '+josa(found.map(i=>i.name).join(', '),'을','를')+' 찾았다.':l.name+' 주변을 뒤졌지만 아무것도 없었다.','player');
+      return s;
+    }else if(action.type==='GO_HOME'){
+      // 객실로 귀환: 꿈(노멀 루트)에서만. 현실(진엔딩)에서는 쓸 수 없다.
+      if(s.flags[w.realityFlag||'true_route']){addLog(w,s,'지금은 쓸 수 없다.','player');return s;}
+      const h=w.player.home||w.player;player.x=h.x;player.y=h.y;player.route=[];player.nextMoveAt=0;
+      for(const n of s.npcs.filter(n=>n.mode==='accompany')){n.mode='idle';n.nextMoveAt=s.clock+5;}
+      addLog(w,s,'눈을 감았다 뜨니 객실이었다.','player');
+    }
     else if(action.type==='CLEAR_ROUTE'){s.player.route=[];s.player.nextMoveAt=0;addLog(w,s,'이동을 멈췄다.','player');}
     s.revision++;return s;
   }
@@ -372,6 +425,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, advance, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;

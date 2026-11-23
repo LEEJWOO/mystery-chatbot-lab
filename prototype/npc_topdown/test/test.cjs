@@ -187,8 +187,11 @@ test('사건 코드: 조건이 맞을 때만 인정(대상 인물·대화 종류
 });
 test('로어북 표식: 장 표식은 항상, 진엔딩 표식은 플래그가 있을 때만', () => {
   const s = E.createWorld(W);
-  assert.deepEqual(E.markers(W, s), ['#장1']);
-  s.flags.true_route = true; assert.deepEqual(E.markers(W, s), ['#장1', '#진루트']);
+  assert.deepEqual(E.markers(W, s), ['#장1', '#1일아침A']);
+  s.flags.true_route = true; assert.deepEqual(E.markers(W, s), ['#장1', '#1일아침A', '#진루트']);
+  s.flags.meeting_prevented = true; assert.equal(E.markers(W, s)[1], '#1일아침B', '조건이 맞으면 갈래 B');
+  const night = { ...E.clone(s), clock: 86400 + 2 * 3600 }; assert.equal(E.markers(W, night)[1], '#1일밤B', '새벽은 전날 밤');
+  const eve = { ...E.clone(E.createWorld(W)), clock: 18 * 3600 + 5 }; assert.equal(E.markers(W, eve)[1], '#1일저녁A');
   assert.equal(T.handoff({ kind: 'T', target: '유리', where: '정원', time: '1일 09:00', marks: ['#장1', '#진루트'], text: 'x', code: 'A' }).split('\n')[0], 'TRM1 T 유리 | 1일 09:00 정원 #장1 #진루트');
 });
 
@@ -232,6 +235,37 @@ test('사건 코드: 끼어들기(I)도 일반 대화(T)와 같이 인정, 자�
   assert.equal(E.applyEvent(W, i, 'TRUE').accepted, true);
   const p = { ...E.clone(s), pend: 'companion', pk: 'P' };
   assert.equal(E.applyEvent(W, p, 'TRUE').accepted, false);
+});
+
+test('물건: 등장 조건 전에는 없고, 조건 뒤 조사하면 소지품(발견 시각 보존), 두 번은 못 가져감', () => {
+  let s = E.createWorld(W);
+  s.player.x = 7; s.player.y = 13; // 정원 벤치 자리
+  let r = E.dispatch(W, s, { type: 'SEARCH', landmark: 'garden' });
+  assert.equal(r.player.items.button, undefined, '09:30 전에는 없음');
+  assert.ok(r.clock > s.clock, '조사에 시간이 듦');
+  s = E.advance(W, r, 1800); s.player.x = 7; s.player.y = 13; s.player.route = [];
+  r = E.dispatch(W, s, { type: 'SEARCH', landmark: 'garden' });
+  assert.ok(r.player.items.button >= 9 * 3600 + 1800);
+  const back = C.unpack(W, C.pack(W, r)); assert.equal(back.player.items.button, r.player.items.button);
+  assert.equal(E.itemsAt(W, r, 'garden').length, 0, '이미 가져감');
+  assert.equal(E.itemsAt(W, E.createWorld(W), 'archive').length, 0, '메모 사본은 전달 전엔 없음');
+  assert.equal(r.flags.delivery_done, true); assert.equal(E.itemsAt(W, r, 'archive').length, 1, '전달(플래그) 뒤에는 있음');
+  const far = E.dispatch(W, E.createWorld(W), { type: 'SEARCH', landmark: 'archive' });
+  assert.ok(/가까이/.test(far.logs[far.logs.length - 1].text), '멀면 조사 불가');
+});
+test('시간 건너뛰기: 조건이 참이 되는 순간 멈추고, 아니면 끝까지(하루 넘게도)', () => {
+  const s = E.createWorld(W);
+  const all = E.advanceUntil(W, s, 30 * 3600, null);
+  assert.equal(all.stopped, false); assert.equal(all.state.clock, s.clock + 30 * 3600); assert.equal(all.state.day, 2);
+  const seen0 = new Set(s.npcs.filter(n => E.sees(W, s.player, n)).map(n => n.id));
+  const r = E.advanceUntil(W, s, 6 * 3600, x => x.npcs.some(n => E.sees(W, x.player, n) && !seen0.has(n.id)));
+  assert.equal(r.stopped, true); assert.ok(r.state.clock < s.clock + 6 * 3600);
+  assert.equal(pk(E.advanceUntil(W, s, 600, null).state), pk(E.advance(W, s, 600)), '멈춤 없으면 일반 진행과 같음');
+});
+test('객실로 귀환: 꿈(노멀)에서는 즉시 이동, 현실(진엔딩 플래그)에서는 불가', () => {
+  let s = E.createWorld(W); s.player.x = 20; s.player.y = 12;
+  const a = E.dispatch(W, s, { type: 'GO_HOME' }); assert.deepEqual([a.player.x, a.player.y], [7, 12]); assert.equal(a.clock, s.clock);
+  s.flags.true_route = true; const b = E.dispatch(W, s, { type: 'GO_HOME' }); assert.deepEqual([b.player.x, b.player.y], [20, 12]);
 });
 
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }

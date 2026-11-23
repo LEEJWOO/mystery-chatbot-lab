@@ -1,8 +1,8 @@
-// 몽환의 트로이메라이 · 탑다운 시험판 v0.6 (TRM1) — UUMMAI에 컴포넌트 1개로 등록: 이름 Troemerei
+// 몽환의 트로이메라이 · 탑다운 시험판 v0.7 (TRM1) — UUMMAI에 컴포넌트 1개로 등록: 이름 Troemerei
 // import·fetch·외부 에셋·브라우저 저장소 없음. useState/useEffect/useRef/useMemo/sendMessage는 호스트 제공.
 // AI 출력 형식: <Troemerei s='상태코드' d='이름(표정):대사|*서술' />  (자유 행동 t='초', 사건 e='…', 증언 k='기억001', 화면 밖 대화 f='1')
-const TN_WORLD = {"version":3,"kind":"prototype-world-not-canon","title":"트로메라 · 일상 행동 샌드박스","notes":"인물/장소/사건은 동작 검증용 임시 데이터이며 본편 설정이 아니다.","map":{"id":"prototype","width":30,"height":18,"rows":["##############################","#.####...#####.#.####......###","#..............#.............#","#.....##.......#..#.....##...#","#...#..........#.............#","#..........................#.#","#.........#....#.............#","#..............#.............#","########.###########.#########","##.............#.............#","#............#.#......##.....#","#..........#...#......##.....#","#............................#","#..............#.........#...#","#......##....#.#.............#","#...#..........#.#...........#","#..............#.............#","##############################"],"tileSeconds":4,"areas":[{"name":"자료실","x0":1,"y0":1,"x1":14,"y1":7},{"name":"작업실","x0":16,"y0":1,"x1":28,"y1":7},{"name":"정원","x0":1,"y0":9,"x1":14,"y1":16},{"name":"광장","x0":16,"y0":9,"x1":28,"y1":16}],"landmarks":[{"id":"archive","name":"자료실 선반","x":6,"y":4,"icon":"▣","hit":[[6,3],[7,3]]},{"id":"desk","name":"작업실 탁자","x":24,"y":4,"icon":"◇","hit":[[24,3],[25,3]]},{"id":"fountain","name":"광장 분수","x":22,"y":12,"icon":"◉","hit":[[22,10],[23,10],[22,11],[23,11]]},{"id":"garden","name":"정원 벤치","x":7,"y":13,"icon":"▤","hit":[[7,14],[8,14]]},{"id":"notice","name":"게시판","x":11,"y":12,"icon":"▥","hit":[[11,11]]}],"props":[{"t":"shelf","x":2,"y":1,"w":4,"h":1},{"t":"shelf","x":9,"y":1,"w":5,"h":1},{"t":"shelf","x":6,"y":3,"w":2,"h":1},{"t":"table","x":4,"y":4,"w":1,"h":1},{"t":"pot","x":10,"y":6,"w":1,"h":1},{"t":"cabinet","x":17,"y":1,"w":4,"h":1},{"t":"cabinet","x":27,"y":1,"w":2,"h":1},{"t":"crate","x":18,"y":3,"w":1,"h":1},{"t":"desk","x":24,"y":3,"w":2,"h":1},{"t":"crate","x":27,"y":5,"w":1,"h":1},{"t":"tree","x":13,"y":14,"w":1,"h":1},{"t":"tree","x":4,"y":15,"w":1,"h":1},{"t":"tree","x":13,"y":10,"w":1,"h":1},{"t":"tree","x":1,"y":9,"w":1,"h":1},{"t":"bench","x":7,"y":14,"w":2,"h":1},{"t":"board","x":11,"y":11,"w":1,"h":1},{"t":"fountain","x":22,"y":10,"w":2,"h":2},{"t":"lamp","x":25,"y":13,"w":1,"h":1},{"t":"planter","x":17,"y":15,"w":1,"h":1}],"floors":["parquet","tile","grass","cobble"],"decor":[{"t":"rug","x":8,"y":4,"w":4,"h":2},{"t":"path","cells":[[8,9],[8,10],[8,11],[8,12],[9,12],[10,12],[11,12],[12,12],[13,12],[14,12]]},{"t":"flowers","cells":[[2,12],[3,13],[10,15],[11,16],[5,10],[12,15],[2,16]]},{"t":"mat","cells":[[8,8],[20,8],[15,5],[15,12]]}]},"player":{"x":7,"y":12,"moveSeconds":4},"npcs":[{"id":"companion","name":"유리","symbol":"유","color":"#de9f68","x":8,"y":12,"stepSeconds":5,"agenda":[{"id":"meet_contact","kind":"meet","targetNpc":"contact","from":"09:00","until":"09:25","durationSeconds":45,"priority":90,"weight":5,"once":true,"interruptible":true,"onComplete":"meeting_created","onInterrupt":"meeting_prevented","onInterruptFact":"missed_doyun","onAccompany":"cancel"},{"id":"garden_break","kind":"visit","landmark":"garden","from":"09:00","until":"18:30","durationSeconds":100,"priority":10,"weight":3,"cooldownSeconds":180,"interruptible":true},{"id":"fountain_walk","kind":"visit","landmark":"fountain","from":"09:00","until":"18:30","durationSeconds":80,"priority":10,"weight":2,"cooldownSeconds":150,"interruptible":true}],"portrait":"yuri_default"},{"id":"contact","name":"도윤","symbol":"도","color":"#7aaddd","x":24,"y":4,"stepSeconds":8,"agenda":[]},{"id":"librarian","name":"세린","symbol":"세","color":"#a49ad8","x":5,"y":5,"stepSeconds":9,"agenda":[{"id":"archive_patrol","kind":"visit","landmark":"archive","from":"09:00","until":"18:00","durationSeconds":90,"priority":10,"weight":4,"cooldownSeconds":120,"interruptible":true},{"id":"notice_review","kind":"visit","landmark":"notice","from":"09:00","until":"18:00","durationSeconds":40,"priority":10,"weight":1,"cooldownSeconds":180,"interruptible":true}],"portrait":"serin_default"},{"id":"courier","name":"태수","symbol":"태","color":"#88bfa6","x":21,"y":14,"stepSeconds":7,"agenda":[{"id":"post_delivery","kind":"visit","landmark":"notice","from":"09:00","until":"18:30","durationSeconds":40,"priority":10,"weight":4,"cooldownSeconds":140,"interruptible":true},{"id":"fetch_material","kind":"visit","landmark":"desk","from":"09:00","until":"18:30","durationSeconds":90,"priority":10,"weight":2,"cooldownSeconds":150,"interruptible":true}]}],"onComplete":[{"id":"meeting_created","when":{"npc":"companion","task":"meet_contact","targetNpc":"contact"},"setFlag":"meeting_occurred","queueTask":{"id":"deliver_request","kind":"visit","landmark":"archive","durationSeconds":70,"priority":100,"interruptible":false,"once":true,"onCompleteFlag":"delivery_done","onCompleteFact":"delivered"},"publicLog":"두 사람이 대화를 마쳤고, 유리에게 자료실 방문 일정이 새로 생겼다.","fact":"met_doyun"}],"flagNames":["meeting_occurred","meeting_prevented","delivery_done","true_route"],"facts":[{"id":"met_doyun","self":{"companion":"도윤에게 업무 메모를 전했다","contact":"유리에게 업무 메모를 받았다"},"seen":"유리와 도윤이 작업실에서 짧게 이야기하는 걸 봤다","player":"유리와 도윤이 작업실에서 이야기했다"},{"id":"missed_doyun","self":{"companion":"플레이어와 동행하느라 도윤에게 메모를 전하지 못했다"},"seen":"","player":""},{"id":"delivered","self":{"companion":"자료실 선반에 메모 사본을 두었다"},"seen":"유리가 자료실 선반에 무언가 두는 걸 봤다","player":"유리가 자료실 선반에 무언가를 두었다"}],"chapter":1,"events":{"TRUE":{"npcs":["companion"],"flag":"true_route","log":"(시험) 진엔딩 루트 표식이 인정되었다.","kinds":["T","I"]}},"markers":[{"flag":"true_route","token":"#진루트"}]};
-const TN_CSS = ".tr-out{width:100%;position:relative;font-family:system-ui,-apple-system,\"Malgun Gothic\",sans-serif;color:#e7edf5;-webkit-tap-highlight-color:transparent}\n.tr-card{position:absolute;left:0;top:0;width:360px;height:540px;overflow:hidden;background:#0c1421;border-radius:8px;transform-origin:0 0;user-select:none}\n.tr-card *{box-sizing:border-box}.tr-card button{font:inherit;color:inherit;cursor:pointer;background:#0b1522e0;border:1px solid #3d5368;border-radius:7px;padding:0 8px;line-height:1}\n.tr-card button:disabled{opacity:.38;cursor:default}\n.tr-map{position:absolute;inset:0;overflow:hidden;touch-action:manipulation;background:#120d0b}\n.tr-world{position:absolute;left:0;top:0;transition:transform .18s linear;will-change:transform}\n.tr-px{image-rendering:pixelated;image-rendering:crisp-edges}\n.tr-fog{position:absolute;background:#070b12;pointer-events:none}\n.tr-ch{position:absolute;left:0;top:0;width:36px;height:36px;transition:transform .18s linear;pointer-events:none}\n.tr-shadow{position:absolute;left:7px;right:7px;bottom:0;height:8px;border-radius:50%;background:#0000004d}\n.tr-shadow.sel{background:#f6d48a55;box-shadow:0 0 0 2px #f6d48a}\n.tr-tok{position:absolute;left:4px;top:4px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#14212c;border:2px solid #f4efdf}\n.tr-tag{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);font-size:9px;line-height:12px;padding:0 4px;border-radius:6px;background:#0d1522d9;color:#f3ead6;border:1px solid;white-space:nowrap}\n.tr-hud{position:absolute;left:4px;right:4px;top:4px;display:flex;gap:4px;align-items:center;font-size:12px;pointer-events:none}\n.tr-hud>*{pointer-events:auto}\n.tr-pill{background:#0e1624e0;border:1px solid #e9c98c55;border-radius:999px;padding:3px 10px;line-height:16px;white-space:nowrap;box-shadow:0 1px 4px #0009}\n.tr-area{display:flex;align-items:center;gap:5px;font-weight:600;color:#f6ead2}.tr-area i{width:7px;height:7px;border-radius:50%;background:#f2c46d;box-shadow:0 0 6px #f2c46d}\n.tr-card .tr-hbtn{height:26px;min-width:30px;border-radius:999px;background:#0e1624e0;border-color:#e9c98c55;box-shadow:0 1px 4px #0009;font-size:12px}\n.tr-time{color:#e7c894;font-variant-numeric:tabular-nums}\n.tr-hud button{height:24px;font-size:12px}\n.tr-toast{position:absolute;left:6px;max-width:348px;top:34px;font-size:11px;line-height:15px;padding:2px 9px;background:#0b1522c8;border-radius:999px;color:#c9d5e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}\n.tr-padbase{position:absolute;left:0;top:421px;width:110px;height:110px;border-radius:50%;background:radial-gradient(#0e162440,#0e1624a8);border:1px solid #e9c98c33;pointer-events:none}\n.tr-card .tr-pad{position:absolute;width:34px;height:34px;display:grid;place-items:center;padding:0;touch-action:none;border-radius:50%;background:#16233ae6;border-color:#e9c98c66;color:#f2d79e;box-shadow:0 2px 4px #0008}\n.tr-card .tr-pad:active{background:#2c4a63}\n.tr-menu{position:absolute;left:116px;right:6px;bottom:6px;padding:6px;background:#0a1220f2;border:1px solid #e9c98c66;border-radius:12px;box-shadow:0 4px 12px #000a}\n.tr-menu-g button:first-child{background:#6b4f26;border-color:#e2bb73}\n.tr-menu-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;line-height:15px;margin:0 2px 4px}\n.tr-menu-h b{font-weight:600;color:#f2c48f}.tr-menu-h span{color:#93adc2;font-size:11px}\n.tr-menu-g{display:grid;grid-template-columns:1fr 1fr;gap:4px}.tr-menu-g button{height:34px;font-size:13px}\n.tr-menu-why{font-size:10px;color:#93adc2;margin:3px 2px 0;line-height:13px}\n.tr-preview{position:absolute;left:116px;right:6px;bottom:6px;box-shadow:0 3px 8px #0008;padding:4px 7px;font-size:12px;line-height:16px;background:#f3e6c8;color:#3d2c14;border-radius:8px}\n.tr-sheet{position:absolute;inset:0;background:#0c1421;display:flex;flex-direction:column}\n.tr-tabs{display:flex;gap:3px;padding:4px}.tr-tabs button{flex:1;height:28px;font-size:12px}.tr-tabs .on{background:#2c4a63;border-color:#7ea0bc}\n.tr-body{flex:1;overflow-y:auto;padding:2px 8px 8px;font-size:13px;line-height:18px}\n.tr-row{padding:4px 0;border-bottom:1px solid #22344a}.tr-row time{color:#c6a572;margin-right:6px;font-variant-numeric:tabular-nums}\n.tr-mut{color:#93adc2;font-size:11px;line-height:15px}\n.tr-mono{font:11px ui-monospace,monospace;word-break:break-all;color:#cfe0ee}\n.tr-ta{width:100%;resize:none;padding:5px 7px;background:#08121c;border:1px solid #3d5368;color:#e6eef7;border-radius:6px;font:inherit;font-size:16px;line-height:20px;user-select:text}\n.tr-talk{position:absolute;inset:0}\n.tr-box{position:absolute;left:5px;right:5px;padding:3px 8px 4px;background:#08111ef2;border:1px solid #8a7550;border-radius:8px}\n.tr-name{display:flex;justify-content:space-between;font-size:12px;line-height:16px}.tr-name b{color:#f2c48f;font-weight:600}.tr-name span{color:#93adc2;font-size:11px}\n.tr-line{font-size:14px;line-height:19px;height:57px;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}\n.tr-line.narr{color:#b9c9d6;font-style:italic}\n.tr-ctl{display:flex;gap:4px;margin-top:2px}.tr-ctl button{height:22px;font-size:11px;padding:0 7px}\n.tr-in{position:absolute;left:5px;right:5px;bottom:5px;padding:4px;background:#0e1a29f5;border:1px solid #3d5368;border-radius:8px}\n.tr-in-top{display:flex;gap:4px;margin-bottom:3px;align-items:center}.tr-in-top button{height:22px;font-size:11px}\n.tr-send{width:52px;flex:none;white-space:nowrap;padding:0 4px!important;background:#907040!important;border-color:#c1a06a!important;font-size:13px!important}\n.tr-drop{position:absolute;left:4px;bottom:100%;margin-bottom:3px;display:grid;gap:3px;padding:4px;background:#08111ef7;border:1px solid #6d7f92;border-radius:8px;width:150px}\n.tr-drop button{height:30px;font-size:12px;text-align:left}\n.tr-err{position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:19px}\n";
+const TN_WORLD = {"version":3,"kind":"prototype-world-not-canon","title":"트로메라 · 일상 행동 샌드박스","notes":"인물/장소/사건은 동작 검증용 임시 데이터이며 본편 설정이 아니다.","map":{"id":"prototype","width":30,"height":18,"rows":["##############################","#.####...#####.#.####......###","#..............#.............#","#.....##.......#..#.....##...#","#...#..........#.............#","#..........................#.#","#.........#....#.............#","#..............#.............#","########.###########.#########","##.............#.............#","#............#.#......##.....#","#..........#...#......##.....#","#............................#","#..............#.........#...#","#......##....#.#.............#","#...#..........#.#...........#","#..............#.............#","##############################"],"tileSeconds":4,"areas":[{"name":"자료실","x0":1,"y0":1,"x1":14,"y1":7},{"name":"작업실","x0":16,"y0":1,"x1":28,"y1":7},{"name":"정원","x0":1,"y0":9,"x1":14,"y1":16},{"name":"광장","x0":16,"y0":9,"x1":28,"y1":16}],"landmarks":[{"id":"archive","name":"자료실 선반","x":6,"y":4,"icon":"▣","hit":[[6,3],[7,3]]},{"id":"desk","name":"작업실 탁자","x":24,"y":4,"icon":"◇","hit":[[24,3],[25,3]]},{"id":"fountain","name":"광장 분수","x":22,"y":12,"icon":"◉","hit":[[22,10],[23,10],[22,11],[23,11]]},{"id":"garden","name":"정원 벤치","x":7,"y":13,"icon":"▤","hit":[[7,14],[8,14]]},{"id":"notice","name":"게시판","x":11,"y":12,"icon":"▥","hit":[[11,11]]}],"props":[{"t":"shelf","x":2,"y":1,"w":4,"h":1},{"t":"shelf","x":9,"y":1,"w":5,"h":1},{"t":"shelf","x":6,"y":3,"w":2,"h":1},{"t":"table","x":4,"y":4,"w":1,"h":1},{"t":"pot","x":10,"y":6,"w":1,"h":1},{"t":"cabinet","x":17,"y":1,"w":4,"h":1},{"t":"cabinet","x":27,"y":1,"w":2,"h":1},{"t":"crate","x":18,"y":3,"w":1,"h":1},{"t":"desk","x":24,"y":3,"w":2,"h":1},{"t":"crate","x":27,"y":5,"w":1,"h":1},{"t":"tree","x":13,"y":14,"w":1,"h":1},{"t":"tree","x":4,"y":15,"w":1,"h":1},{"t":"tree","x":13,"y":10,"w":1,"h":1},{"t":"tree","x":1,"y":9,"w":1,"h":1},{"t":"bench","x":7,"y":14,"w":2,"h":1},{"t":"board","x":11,"y":11,"w":1,"h":1},{"t":"fountain","x":22,"y":10,"w":2,"h":2},{"t":"lamp","x":25,"y":13,"w":1,"h":1},{"t":"planter","x":17,"y":15,"w":1,"h":1}],"floors":["parquet","tile","grass","cobble"],"decor":[{"t":"rug","x":8,"y":4,"w":4,"h":2},{"t":"path","cells":[[8,9],[8,10],[8,11],[8,12],[9,12],[10,12],[11,12],[12,12],[13,12],[14,12]]},{"t":"flowers","cells":[[2,12],[3,13],[10,15],[11,16],[5,10],[12,15],[2,16]]},{"t":"mat","cells":[[8,8],[20,8],[15,5],[15,12]]}]},"player":{"x":7,"y":12,"moveSeconds":4,"home":{"x":7,"y":12}},"npcs":[{"id":"companion","name":"유리","symbol":"유","color":"#de9f68","x":8,"y":12,"stepSeconds":5,"agenda":[{"id":"meet_contact","kind":"meet","targetNpc":"contact","from":"09:00","until":"09:25","durationSeconds":45,"priority":90,"weight":5,"once":true,"interruptible":true,"onComplete":"meeting_created","onInterrupt":"meeting_prevented","onInterruptFact":"missed_doyun","onAccompany":"cancel"},{"id":"garden_break","kind":"visit","landmark":"garden","from":"09:00","until":"18:30","durationSeconds":100,"priority":10,"weight":3,"cooldownSeconds":180,"interruptible":true},{"id":"fountain_walk","kind":"visit","landmark":"fountain","from":"09:00","until":"18:30","durationSeconds":80,"priority":10,"weight":2,"cooldownSeconds":150,"interruptible":true}],"portrait":"yuri_default"},{"id":"contact","name":"도윤","symbol":"도","color":"#7aaddd","x":24,"y":4,"stepSeconds":8,"agenda":[]},{"id":"librarian","name":"세린","symbol":"세","color":"#a49ad8","x":5,"y":5,"stepSeconds":9,"agenda":[{"id":"archive_patrol","kind":"visit","landmark":"archive","from":"09:00","until":"18:00","durationSeconds":90,"priority":10,"weight":4,"cooldownSeconds":120,"interruptible":true},{"id":"notice_review","kind":"visit","landmark":"notice","from":"09:00","until":"18:00","durationSeconds":40,"priority":10,"weight":1,"cooldownSeconds":180,"interruptible":true}],"portrait":"serin_default"},{"id":"courier","name":"태수","symbol":"태","color":"#88bfa6","x":21,"y":14,"stepSeconds":7,"agenda":[{"id":"post_delivery","kind":"visit","landmark":"notice","from":"09:00","until":"18:30","durationSeconds":40,"priority":10,"weight":4,"cooldownSeconds":140,"interruptible":true},{"id":"fetch_material","kind":"visit","landmark":"desk","from":"09:00","until":"18:30","durationSeconds":90,"priority":10,"weight":2,"cooldownSeconds":150,"interruptible":true}]}],"onComplete":[{"id":"meeting_created","when":{"npc":"companion","task":"meet_contact","targetNpc":"contact"},"setFlag":"meeting_occurred","queueTask":{"id":"deliver_request","kind":"visit","landmark":"archive","durationSeconds":70,"priority":100,"interruptible":false,"once":true,"onCompleteFlag":"delivery_done","onCompleteFact":"delivered"},"publicLog":"두 사람이 대화를 마쳤고, 유리에게 자료실 방문 일정이 새로 생겼다.","fact":"met_doyun"}],"flagNames":["meeting_occurred","meeting_prevented","delivery_done","true_route"],"facts":[{"id":"met_doyun","self":{"companion":"도윤에게 업무 메모를 전했다","contact":"유리에게 업무 메모를 받았다"},"seen":"유리와 도윤이 작업실에서 짧게 이야기하는 걸 봤다","player":"유리와 도윤이 작업실에서 이야기했다"},{"id":"missed_doyun","self":{"companion":"플레이어와 동행하느라 도윤에게 메모를 전하지 못했다"},"seen":"","player":""},{"id":"delivered","self":{"companion":"자료실 선반에 메모 사본을 두었다"},"seen":"유리가 자료실 선반에 무언가 두는 걸 봤다","player":"유리가 자료실 선반에 무언가를 두었다"}],"chapter":1,"events":{"TRUE":{"npcs":["companion"],"flag":"true_route","log":"(시험) 진엔딩 루트 표식이 인정되었다.","kinds":["T","I"]}},"markers":[{"flag":"true_route","token":"#진루트"}],"items":[{"id":"memo_copy","name":"메모 사본","at":"archive","flag":"delivery_done","desc":"유리의 글씨. 「도윤 씨, 오후 작업 순서 변경」"},{"id":"button","name":"떨어진 단추","at":"garden","from":"1일 09:30","desc":"짙은 남색 단추 하나. 벤치 밑에 떨어져 있었다."}],"notices":[{"time":"12:00","text":"점심 식사","place":"광장"},{"time":"19:00","text":"저녁 식사","place":"광장"}],"slots":[{"name":"아침","from":"06:00"},{"name":"오후","from":"12:00"},{"name":"저녁","from":"18:00"},{"name":"밤","from":"22:00"}],"branches":[{"flag":"meeting_prevented","letter":"B"}],"searchSeconds":20};
+const TN_CSS = ".tr-out{width:100%;position:relative;font-family:system-ui,-apple-system,\"Malgun Gothic\",sans-serif;color:#e7edf5;-webkit-tap-highlight-color:transparent}\n.tr-card{position:absolute;left:0;top:0;width:360px;height:540px;overflow:hidden;background:#0c1421;border-radius:8px;transform-origin:0 0;user-select:none}\n.tr-card *{box-sizing:border-box}.tr-card button{font:inherit;color:inherit;cursor:pointer;background:#0b1522e0;border:1px solid #3d5368;border-radius:7px;padding:0 8px;line-height:1}\n.tr-card button:disabled{opacity:.38;cursor:default}\n.tr-map{position:absolute;inset:0;overflow:hidden;touch-action:manipulation;background:#120d0b}\n.tr-world{position:absolute;left:0;top:0;transition:transform .18s linear;will-change:transform}\n.tr-px{image-rendering:pixelated;image-rendering:crisp-edges}\n.tr-fog{position:absolute;background:#070b12;pointer-events:none}\n.tr-ch{position:absolute;left:0;top:0;width:36px;height:36px;transition:transform .18s linear;pointer-events:none}\n.tr-shadow{position:absolute;left:7px;right:7px;bottom:0;height:8px;border-radius:50%;background:#0000004d}\n.tr-shadow.sel{background:#f6d48a55;box-shadow:0 0 0 2px #f6d48a}\n.tr-tok{position:absolute;left:4px;top:4px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#14212c;border:2px solid #f4efdf}\n.tr-tag{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);font-size:9px;line-height:12px;padding:0 4px;border-radius:6px;background:#0d1522d9;color:#f3ead6;border:1px solid;white-space:nowrap}\n.tr-hud{position:absolute;left:4px;right:4px;top:4px;display:flex;gap:4px;align-items:center;font-size:12px;pointer-events:none}\n.tr-hud>*{pointer-events:auto}\n.tr-pill{background:#0e1624e0;border:1px solid #e9c98c55;border-radius:999px;padding:3px 10px;line-height:16px;white-space:nowrap;box-shadow:0 1px 4px #0009}\n.tr-area{display:flex;align-items:center;gap:5px;font-weight:600;color:#f6ead2}.tr-area i{width:7px;height:7px;border-radius:50%;background:#f2c46d;box-shadow:0 0 6px #f2c46d}\n.tr-card .tr-hbtn{height:26px;min-width:30px;border-radius:999px;background:#0e1624e0;border-color:#e9c98c55;box-shadow:0 1px 4px #0009;font-size:12px}\n.tr-time{color:#e7c894;font-variant-numeric:tabular-nums}\n.tr-hud button{height:24px;font-size:12px}\n.tr-toast{position:absolute;left:6px;max-width:348px;top:34px;font-size:11px;line-height:15px;padding:2px 9px;background:#0b1522c8;border-radius:999px;color:#c9d5e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}\n.tr-padbase{position:absolute;left:0;top:421px;width:110px;height:110px;border-radius:50%;background:radial-gradient(#0e162440,#0e1624a8);border:1px solid #e9c98c33;pointer-events:none}\n.tr-card .tr-pad{position:absolute;width:34px;height:34px;display:grid;place-items:center;padding:0;touch-action:none;border-radius:50%;background:#16233ae6;border-color:#e9c98c66;color:#f2d79e;box-shadow:0 2px 4px #0008}\n.tr-card .tr-pad:active{background:#2c4a63}\n.tr-menu{position:absolute;left:116px;right:6px;bottom:6px;padding:6px;background:#0a1220f2;border:1px solid #e9c98c66;border-radius:12px;box-shadow:0 4px 12px #000a}\n.tr-menu-g button:first-child{background:#6b4f26;border-color:#e2bb73}\n.tr-menu-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;line-height:15px;margin:0 2px 4px}\n.tr-menu-h b{font-weight:600;color:#f2c48f}.tr-menu-h span{color:#93adc2;font-size:11px}\n.tr-menu-g{display:grid;grid-template-columns:1fr 1fr;gap:4px}.tr-menu-g button{height:34px;font-size:13px}\n.tr-menu-why{font-size:10px;color:#93adc2;margin:3px 2px 0;line-height:13px}\n.tr-preview{position:absolute;left:116px;right:6px;bottom:6px;box-shadow:0 3px 8px #0008;padding:4px 7px;font-size:12px;line-height:16px;background:#f3e6c8;color:#3d2c14;border-radius:8px}\n.tr-sheet{position:absolute;inset:0;background:#0c1421;display:flex;flex-direction:column}\n.tr-tabs{display:flex;gap:3px;padding:4px}.tr-tabs button{flex:1;height:28px;font-size:12px}.tr-tabs .on{background:#2c4a63;border-color:#7ea0bc}\n.tr-body{flex:1;overflow-y:auto;padding:2px 8px 8px;font-size:13px;line-height:18px}\n.tr-row{padding:4px 0;border-bottom:1px solid #22344a}.tr-row time{color:#c6a572;margin-right:6px;font-variant-numeric:tabular-nums}\n.tr-mut{color:#93adc2;font-size:11px;line-height:15px}\n.tr-mono{font:11px ui-monospace,monospace;word-break:break-all;color:#cfe0ee}\n.tr-ta{width:100%;resize:none;padding:5px 7px;background:#08121c;border:1px solid #3d5368;color:#e6eef7;border-radius:6px;font:inherit;font-size:16px;line-height:20px;user-select:text}\n.tr-talk{position:absolute;inset:0}\n.tr-box{position:absolute;left:5px;right:5px;padding:3px 8px 4px;background:#08111ef2;border:1px solid #8a7550;border-radius:8px}\n.tr-name{display:flex;justify-content:space-between;font-size:12px;line-height:16px}.tr-name b{color:#f2c48f;font-weight:600}.tr-name span{color:#93adc2;font-size:11px}\n.tr-line{font-size:14px;line-height:19px;height:57px;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}\n.tr-line.narr{color:#b9c9d6;font-style:italic}\n.tr-ctl{display:flex;gap:4px;margin-top:2px}.tr-ctl button{height:22px;font-size:11px;padding:0 7px}\n.tr-in{position:absolute;left:5px;right:5px;bottom:5px;padding:4px;background:#0e1a29f5;border:1px solid #3d5368;border-radius:8px}\n.tr-in-top{display:flex;gap:4px;margin-bottom:3px;align-items:center}.tr-in-top button{height:22px;font-size:11px}\n.tr-send{width:52px;flex:none;white-space:nowrap;padding:0 4px!important;background:#907040!important;border-color:#c1a06a!important;font-size:13px!important}\n.tr-drop{position:absolute;left:4px;bottom:100%;margin-bottom:3px;display:grid;gap:3px;padding:4px;background:#08111ef7;border:1px solid #6d7f92;border-radius:8px;width:150px}\n.tr-drop button{height:30px;font-size:12px;text-align:left}\n.tr-err{position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:19px}\n\n.tr-fade{position:absolute;inset:0;background:#000;pointer-events:none;animation:trfade .28s ease-out forwards}\n@keyframes trfade{from{opacity:1}to{opacity:0}}\n.tr-found{position:absolute;left:30px;right:30px;top:150px;padding:10px 12px;background:#f6ecd6;color:#3a2a14;border:2px solid #b98c4a;border-radius:10px;box-shadow:0 6px 18px #000b;display:grid;gap:6px;font-size:13px}\n.tr-found .tr-mut{color:#7a5a30}.tr-found-h{font-size:11px;letter-spacing:.1em;color:#9a6a2a;font-weight:700}\n.tr-card .tr-big{min-height:40px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:4px 10px;font-size:13px;text-align:left;background:#1b2a3d;border-color:#e9c98c66}\n.tr-big small{font-size:11px;color:#c9a86c}\n.tr-grid{display:grid;gap:3px}.tr-grid.h{grid-template-columns:repeat(8,1fr)}.tr-grid.m{grid-template-columns:repeat(6,1fr)}\n.tr-card .tr-grid button{height:26px;font-size:12px;padding:0}.tr-card .tr-grid .on{background:#6b4f26;border-color:#e2bb73}\n.tr-prev{border:1px dashed #e9c98c66;border-radius:8px;padding:6px 8px;font-size:12px}\n.tr-lock{height:40px;display:grid;place-items:center;background:#000;color:#555;border-radius:7px;font-size:12px;letter-spacing:.05em}\n";
 const TN_ASSETS = {"url":"https://raw.githubusercontent.com/LEEJWOO/mystery-chatbot-lab/refs/heads/troemerei/prototype-v0.2/assets/pub/","chars":{"companion":{"src":"b0f6630913be.webp","w":618,"h":960,"def":"평상시","faces":{"놀람":{"src":"9ed06bff46d8.webp","x":249,"y":217,"w":117,"h":106},"웃음":{"src":"43f98406dd35.webp","x":252,"y":220,"w":115,"h":72}}},"librarian":{"src":"ac98b7e2672f.webp","w":613,"h":960,"def":"웃음","faces":{"불만":{"src":"ac1f51ec65d2.webp","x":282,"y":246,"w":51,"h":51},"놀람":{"src":"35ca8f5fd7c8.webp","x":287,"y":246,"w":46,"h":51}}}},"bg":{"정원":"63dade8b9031.webp","자료실":"f5c86e3b9ab1.webp"},"map":{"src":"f5ed4b431122.webp","w":1080,"h":648},"sprites":{"src":"8f70a6ea1613.webp","w":720,"h":270,"ids":["player","companion","contact","librarian","courier"],"cw":36,"ch":54,"dirs":{"down":{"idle":0,"walk":[1,2,3,4]},"up":{"idle":5,"walk":[6,7,8,9]},"left":{"idle":10,"walk":[11,12,13,14]},"right":{"idle":15,"walk":[16,17,18,19]}}}};
 /* Troemerei NPC simulation core v0.5 — 결정적 NPC 일정·경로·기억. DOM/네트워크/LLM 의존 없음. */
 const trNPC = (() => {
@@ -18,6 +18,7 @@ const trNPC = (() => {
   const node = (s,id) => s.npcs.find(n=>n.id===id);
   const landmark = (w,id) => w.map.landmarks.find(x=>x.id===id);
   const DAY=86400;
+  const josa=(w,a,b)=>{const c=String(w).charCodeAt(String(w).length-1)-0xac00;return w+(c>=0&&c<11172&&c%28?a:b);};
   // 방 번호(-1은 통로). 같은 방이고 6칸 이내면 서로 보인다(통로끼리는 3칸).
   function areaOf(w,x,y){return w.map.areas.findIndex(a=>x>=a.x0&&x<=a.x1&&y>=a.y0&&y<=a.y1);}
   function sees(w,a,b){const ra=areaOf(w,a.x,a.y),rb=areaOf(w,b.x,b.y);if(ra!==rb)return false;return manhattan(a,b)<=(ra<0?3:6);}
@@ -43,7 +44,7 @@ const trNPC = (() => {
   }
   function createWorld(w,seed=246813579){
     const s={schema:'TROEMEREI_NPC_V1',version:1,worldId:w.map.id,day:1,clock:9*3600,
-      rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{}},
+      rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{},items:{}},
       npcs:w.npcs.map((n,i)=>({id:n.id,x:n.x,y:n.y,mode:'idle',intent:null,route:[],
         nextMoveAt:9*3600+10+i*4,busyUntil:0,blockedSince:null,completed:[],
         excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:[]})),
@@ -257,6 +258,36 @@ const trNPC = (() => {
     s.revision++;
     return s;
   }
+  // 시간 건너뛰기: 최대 2일. stop(s)가 참이 되는 순간(사건 단위) 멈춘다 → {state, stopped}.
+  function advanceUntil(w,state,seconds,stop){
+    const s=clone(state),end=s.clock+Math.max(0,Math.min(2*DAY,Math.floor(seconds)));let stopped=false;
+    while(s.clock<end){
+      const t=nextDue(s);
+      if(t>end){s.clock=end;updateSeen(w,s);break;}
+      if(t-1>s.clock){s.clock=t-1;updateSeen(w,s);}
+      s.clock=t;
+      if(s.player.route.length&&s.player.nextMoveAt<=s.clock)stepPlayer(w,s);
+      for(const n of s.npcs){if(n.mode!=='accompany'&&n.nextMoveAt<=s.clock)npcStep(w,s,n);}
+      updateSeen(w,s);
+      if(stop&&stop(s)){stopped=true;break;}
+    }
+    s.day=1+Math.floor(s.clock/DAY);s.revision++;
+    return {state:s,stopped};
+  }
+  // 절대 시각(초) ← '2일 06:00' 또는 '06:00'(1일)
+  function absTime(v){if(typeof v==='number')return v;const m=/^(?:(\d+)일\s*)?(\d{1,2}):(\d{2})$/.exec(String(v||'').trim());return m?((+(m[1]||1))-1)*DAY+(+m[2])*3600+(+m[3])*60:0;}
+  // 물건: 등장 조건(시각 from·플래그 flag)이 맞고 아직 아무도 가져가지 않았을 때만 그 자리에 있다.
+  function itemsAt(w,s,lmId){
+    return (w.items||[]).filter(it=>it.at===lmId&&!(s.player.items||{})[it.id]&&(!it.from||s.clock>=absTime(it.from))&&(!it.flag||s.flags[it.flag]));
+  }
+  // 시간대(아침·오후·저녁·밤)와 날짜. 첫 시간대 이전(새벽)은 전날 밤으로 본다.
+  function slotOf(w,s){
+    const slots=w.slots||[];if(!slots.length)return null;
+    const tod=s.clock%DAY;let day=1+Math.floor(s.clock/DAY),i=-1;
+    slots.forEach((sl,k)=>{if(tod>=absTime(sl.from))i=k;});
+    if(i<0){i=slots.length-1;day--;}
+    return {day,index:i,name:slots[i].name,start:(day-1)*DAY+absTime(slots[i].from)};
+  }
   // 이전 방식(1초씩). 테스트에서 결과 동일성 비교용.
   function advanceSlow(w,state,seconds){
     const s=clone(state),end=s.clock+Math.max(0,Math.min(7200,Math.floor(seconds)));
@@ -306,6 +337,9 @@ const trNPC = (() => {
   // 로어북을 켜는 표식. 화면이 매 메시지 머리말에 붙인다(검색 범위 '현재 유저 입력만' 항목용).
   function markers(w,s){
     const out=['#장'+(w.chapter||1)];
+    // 시간대 갈래 표식: #1일저녁A. A는 인라인(메인), 조건이 맞으면 B·C…(어느 갈래인지는 화면이 판정)
+    const sl=slotOf(w,s);
+    if(sl){const b=(w.branches||[]).find(b=>(!b.flag||s.flags[b.flag])&&(!b.slot||b.slot===sl.day+'일'+sl.name));out.push('#'+sl.day+'일'+sl.name+(b?b.letter:'A'));}
     for(const m of w.markers||[])if(s.flags[m.flag])out.push(m.token);
     return out;
   }
@@ -343,6 +377,25 @@ const trNPC = (() => {
       if(n.mode==='busy'){addLog(w,s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
       s.pend=n.id;s.pk=action.kind||'T';s.pc=Math.max(0,Math.min(2000,action.chars|0));player.route=[];player.nextMoveAt=0;
     }else if(action.type==='WAIT')return advance(w,s,action.seconds||60);
+    else if(action.type==='SEARCH'){
+      // 조사: 랜드마크 자리나 그 가구 칸 바로 옆에서. 시간이 든다. 있으면 소지품으로.
+      const l=landmark(w,action.landmark);
+      if(!l)return s;
+      const spots=[{x:l.x,y:l.y},...(l.hit||[]).map(h=>({x:h[0],y:h[1]}))];
+      if(!spots.some(p=>manhattan(player,p)<=1)){addLog(w,s,'조사하려면 '+l.name+' 가까이 가야 한다.','player');return s;}
+      const t=advance(w,s,w.searchSeconds||20);s=t;
+      const found=itemsAt(w,s,l.id);
+      if(!s.player.items)s.player.items={};
+      for(const it of found)s.player.items[it.id]=s.clock;
+      addLog(w,s,found.length?l.name+'에서 '+josa(found.map(i=>i.name).join(', '),'을','를')+' 찾았다.':l.name+' 주변을 뒤졌지만 아무것도 없었다.','player');
+      return s;
+    }else if(action.type==='GO_HOME'){
+      // 객실로 귀환: 꿈(노멀 루트)에서만. 현실(진엔딩)에서는 쓸 수 없다.
+      if(s.flags[w.realityFlag||'true_route']){addLog(w,s,'지금은 쓸 수 없다.','player');return s;}
+      const h=w.player.home||w.player;player.x=h.x;player.y=h.y;player.route=[];player.nextMoveAt=0;
+      for(const n of s.npcs.filter(n=>n.mode==='accompany')){n.mode='idle';n.nextMoveAt=s.clock+5;}
+      addLog(w,s,'눈을 감았다 뜨니 객실이었다.','player');
+    }
     else if(action.type==='CLEAR_ROUTE'){s.player.route=[];s.player.nextMoveAt=0;addLog(w,s,'이동을 멈췄다.','player');}
     s.revision++;return s;
   }
@@ -378,7 +431,7 @@ const trNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, advance, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 
 /* Troemerei 상태 압축 코덱 v2 — AI가 매 턴 그대로 복사하는 문자열을 최소화한다.
@@ -388,7 +441,7 @@ const trCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 3;
+  const VERSION = 4;
   const KINDS = ['', 'T', 'I', 'A', 'P'];
 
   function hash32(text) { let h = 0x811c9dc5; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
@@ -396,7 +449,8 @@ const trCodec = (() => {
   // 세계 지문: 맵·일정·후속 규칙·사실·플래그 정의가 하나라도 바뀌면 달라진다 → 옛 코드를 조용히 잘못 읽지 않는다.
   function fingerprint(w) {
     return hash32(JSON.stringify({ id: w.map.id, v: w.version || 1, rows: w.map.rows, areas: w.map.areas, lm: w.map.landmarks.map(l => [l.id, l.x, l.y]),
-      npcs: w.npcs.map(n => [n.id, n.agenda]), rules: w.onComplete || [], facts: (w.facts || []).map(f => f.id), flags: w.flagNames || [] }));
+      npcs: w.npcs.map(n => [n.id, n.agenda]), rules: w.onComplete || [], facts: (w.facts || []).map(f => f.id), flags: w.flagNames || [],
+      items: (w.items || []).map(i => [i.id, i.at, i.from || '', i.flag || '']), speed: [w.player.moveSeconds, ...w.npcs.map(n => n.stepSeconds || 0)] }));
   }
   function taskTable(w) {
     const list = [];
@@ -481,6 +535,7 @@ const trCodec = (() => {
     o.byte(Math.max(0, KINDS.indexOf(s.pk || ''))); o.uint(s.pc || 0);
     o.byte(s.player.x); o.byte(s.player.y); putRoute(o, s.player, s.player.route); putTime(o, s.player.route.length ? s.player.nextMoveAt : 0, clock);
     putMem(o, s.player.mem, m, clock);
+    for (const it of w.items || []) { const v = (s.player.items || {})[it.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 0 = 아직 안 가짐
     for (const spec of w.npcs) { const v = (s.player.seen || {})[spec.id]; if (!v) o.uint(0); else { o.uint(v[0] + 2); o.uint(Math.max(0, clock - v[1])); } }
     for (const spec of w.npcs) {
       const n = s.npcs.find(x => x.id === spec.id);
@@ -514,7 +569,8 @@ const trCodec = (() => {
     const pend = r.uint(); s.pk = KINDS[r.byte()] || ''; s.pc = r.uint();
     const px = r.byte(), py = r.byte();
     s.player = { x: px, y: py }; s.player.route = getRoute(r, s.player); s.player.nextMoveAt = getTime(r, clock);
-    s.player.mem = getMem(r, m, clock); s.player.seen = {};
+    s.player.mem = getMem(r, m, clock); s.player.seen = {}; s.player.items = {};
+    for (const it of w.items || []) { const v = r.uint(); if (v) s.player.items[it.id] = clock - (v - 1); }
     for (const spec of w.npcs) { const a = r.uint(); if (a) s.player.seen[spec.id] = [a - 2, clock - r.uint()]; }
     s.npcs = w.npcs.map(() => {
       const n = { x: r.byte(), y: r.byte() };
@@ -600,6 +656,10 @@ const trFact = (id, role, who) => {
 };
 // 대상 기억은 코드로만 보낸다(채팅에 비밀이 그대로 보이지 않게). 내용은 같은 코드를 키워드로 켜지는 로어북 항목에 있다.
 const trMemCode = (id, role) => trNPC.factCode(TN_WORLD, id) + (role === 0 ? '직' : role === 1 ? '목' : '들');
+// 공지(매일 반복) 중 (from, to] 사이의 것들. [{t: 절대 시각, n: 공지}]
+const trNotices = (from, to) => { const out = []; for (let d = Math.floor(from / 86400); d <= Math.floor(to / 86400); d++) for (const n of TN_WORLD.notices || []) { const t = d * 86400 + trNPC.absTime(n.time); if (t > from && t <= to) out.push({ t, n }); } return out.sort((a, b) => a.t - b.t); };
+// 받침에 따라 조사 고르기(이/가, 을/를)
+const trJosa = (w, a, b) => { const c = String(w).charCodeAt(String(w).length - 1) - 0xac00; return w + (c >= 0 && c < 11172 && c % 28 ? a : b); };
 const trVisible = (s, n) => trNPC.sees(TN_WORLD, s.player, n);
 const trChars = lines => lines.reduce((k, l) => k + Array.from(l.text).length, 0);
 
@@ -702,7 +762,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
   const [badImg, setBadImg] = useState({}); // 불러오지 못한 그림은 임시 그림으로 대체
   const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null), farRef = useRef([0, 0]);
   // 걷기 연출: 인물별 직전 칸·방향·걸음 수. 칸이 바뀌면 그쪽을 보고 한 걸음 걷는다(우는 좌 그림을 뒤집음).
-  const animRef = useRef({}), movedRef = useRef(false);
+  const animRef = useRef({}), movedRef = useRef(false), roomRef = useRef(-1);
+  const [found, setFound] = useState(null), [restH, setRestH] = useState(-1), [restM, setRestM] = useState(0);
   const [, setTick] = useState(0);
   // 걷는 인물이 있으면 걷기 칸이 넘어가도록 짧게 다시 그린다(걸음이 끝나면 멈춤).
   useEffect(() => { if (!movedRef.current) return; movedRef.current = false; const id = setTimeout(() => setTick(v => v + 1), TR_FRAME_MS); return () => clearTimeout(id); });
@@ -753,8 +814,14 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
       {toast ? <div className="tr-mut">{toast}</div> : null}</div></div></div>;
 
   const p = state.player, area = trNPC.areaOf(TN_WORLD, p.x, p.y);
-  const camX = Math.max(0, Math.min(TN_WORLD.map.width * TR_CELL - TR_W, (p.x + .5) * TR_CELL - TR_W / 2));
-  const camY = Math.max(0, Math.min(TN_WORLD.map.height * TR_CELL - TR_H, (p.y + .5) * TR_CELL - TR_H / 2 + 40));
+  // 방 하나 = 한 화면. 문 칸(통로)에 서 있으면 직전 방을 계속 보여 준다. 계산은 층 전체 격자 그대로.
+  let room = area >= 0 ? area : roomRef.current; if (room < 0) room = 0;
+  const roomChanged = roomRef.current >= 0 && roomRef.current !== room; roomRef.current = room;
+  const RM = TN_WORLD.map.areas[room], rx0 = (RM.x0 - 1) * TR_CELL, ry0 = (RM.y0 - 1) * TR_CELL, rx1 = (RM.x1 + 2) * TR_CELL, ry1 = (RM.y1 + 2) * TR_CELL;
+  const HUD_H = 56, fitAxis = (lo, hi, view, c, off) => hi - lo <= view ? lo - (view - (hi - lo)) / 2 - off : Math.max(lo - off, Math.min(hi - view, c - view / 2));
+  const camX = fitAxis(rx0, rx1, TR_W, (p.x + .5) * TR_CELL, 0);
+  const camY = fitAxis(ry0, ry1, TR_H - HUD_H, (p.y + .5) * TR_CELL + 20, HUD_H);
+  const inRoom = (x, y) => x >= RM.x0 - 1 && x <= RM.x1 + 1 && y >= RM.y0 - 1 && y <= RM.y1 + 1;
   const busy = !!sent;
 
   function act(a) { if (busy) return; setState(v => trNPC.dispatch(TN_WORLD, v, a)); }
@@ -772,11 +839,12 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
     // 인물 그림은 1.5칸 높이라 머리 쪽(한 칸 위)을 눌러도 그 인물로 본다.
     const who = state.npcs.find(n => n.x === x && (n.y === y || n.y === y + 1) && (debug || trVisible(state, n)));
     if (who) { setPreview(null); setMenu({ kind: 'npc', id: who.id }); return; }
-    const lm = TN_WORLD.map.landmarks.find(l => (l.x === x && l.y === y || (l.hit || []).some(h => h[0] === x && h[1] === y)) && trNPC.areaOf(TN_WORLD, l.x, l.y) === area);
+    const lm = TN_WORLD.map.landmarks.find(l => (l.x === x && l.y === y || (l.hit || []).some(h => h[0] === x && h[1] === y)) && trNPC.areaOf(TN_WORLD, l.x, l.y) === room);
     if (lm) { setPreview(null); setMenu({ kind: 'lm', id: lm.id }); return; }
     setMenu(null);
     if (!trNPC.walkable(TN_WORLD, x, y)) { setPreview(null); return; }
-    if (trNPC.areaOf(TN_WORLD, x, y) !== area) { setPreview(null); setToast('다른 구역은 방향키로 이동하세요'); return; }
+    const ta = trNPC.areaOf(TN_WORLD, x, y);
+    if (ta !== room && !(ta < 0 && inRoom(x, y))) { setPreview(null); return; }
     if (preview && preview.x === x && preview.y === y) { setPreview(null); act({ type: 'MOVE_TO', x, y }); return; }
     const path = trNPC.route(TN_WORLD, state, p, { x, y }, { ignorePlayer: true });
     if (!path.length) { setPreview(null); return; }
@@ -831,9 +899,23 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
     next = trNPC.dispatch(TN_WORLD, next, { type, npcId: talk.npc });
     setState(next); setTalk(null); setDrop(false); setToast((next.logs[next.logs.length - 1] || {}).text || '');
   }
+  // 시간 건너뛰기: 공지 시각, 새로 보이는 인물, 보이는 사건 기록에서 멈춘다.
+  function skipTo(target) {
+    if (busy) return;
+    const start = trNPC.dispatch(TN_WORLD, state, { type: 'CLEAR_ROUTE' });
+    const note = trNotices(start.clock, target)[0], end = note ? note.t : target;
+    // 지나가는 사람(이동 중)은 무시하고, 누군가 내 곁(1칸)에 멈춰 서면 멈춘다.
+    const near = x => x.npcs.filter(n => n.mode !== 'accompany' && n.mode !== 'moving' && Math.abs(n.x - x.player.x) + Math.abs(n.y - x.player.y) <= 1 && trVisible(x, n)).map(n => n.id);
+    const seen0 = new Set(near(start));
+    const r = trNPC.advanceUntil(TN_WORLD, start, end - start.clock, x => near(x).some(id => !seen0.has(id)) || x.logs.some(l => l.visible && l.type === 'world' && l.time > start.clock));
+    const s2 = r.state, who = near(s2).filter(id => !seen0.has(id)).map(id => trNpc(id).name);
+    const lg = s2.logs.filter(l => l.visible && l.type === 'world' && l.time > start.clock).slice(-1)[0];
+    setState(s2); setSheet(''); setPreview(null); setMenu(null);
+    setToast(r.stopped ? (who.length ? trJosa(who.join('·'), '이', '가') + ' 다가와서 쉬던 것을 멈췄다' : lg ? lg.text : '무슨 일이 생겨 멈췄다') : note ? '공지 · ' + trHM(note.t) + ' ' + note.n.text + (note.n.place ? ' (' + note.n.place + ')' : '') : trNPC.clock(s2.clock).slice(0, 5) + '까지 쉬었다');
+  }
   function menuDo(kind) {
     const m = menu; setMenu(null);
-    if (m.kind === 'lm') { const lm = TN_WORLD.map.landmarks.find(l => l.id === m.id); if (kind === 'LOOK') setToast(lm.name + '을(를) 살펴봤다 (0초)'); if (kind === 'GO') act({ type: 'MOVE_TO', x: lm.x, y: lm.y }); if (kind === 'SEARCH') setToast('조사는 다음 시험판에서 구현됩니다'); return; }
+    if (m.kind === 'lm') { const lm = TN_WORLD.map.landmarks.find(l => l.id === m.id); if (kind === 'LOOK') setToast(lm.name + '을(를) 살펴봤다 (0초)'); if (kind === 'GO') act({ type: 'MOVE_TO', x: lm.x, y: lm.y }); if (kind === 'SEARCH') { if (busy) return; const next = trNPC.dispatch(TN_WORLD, state, { type: 'SEARCH', landmark: lm.id }); const got = (TN_WORLD.items || []).filter(it => next.player.items[it.id] !== undefined && (state.player.items || {})[it.id] === undefined); setState(next); setToast((next.logs[next.logs.length - 1] || {}).text || ''); if (got.length) setFound(got); } return; }
     const n = state.npcs.find(v => v.id === m.id);
     if (kind === 'TALK') { setTalk({ npc: m.id, idx: 0, shown: 0, cut: false, fresh: true }); setText(''); return; }
     if (kind === 'LOOK') { setToast(trNpc(m.id).name + ' · ' + TR_IMP[n.mode] + ' (0초)'); return; }
@@ -895,24 +977,28 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
   const ml = menu && menu.kind === 'lm' ? TN_WORLD.map.landmarks.find(l => l.id === menu.id) : null;
   const dist = mn ? Math.abs(p.x - mn.x) + Math.abs(p.y - mn.y) : 0;
   const near = dist <= 1, canAcc = near && mn && mn.mode !== 'busy' && mn.mode !== 'accompany' && (!mn.intent || mn.intent.interruptible);
-  const recent = state.logs.filter(e => e.visible && e.type === 'world').slice(-1)[0];
+  const recent = state.logs.filter(e => e.visible && e.type === 'world' && state.clock - e.time < 600).slice(-1)[0];
+  const nextNote = trNotices(state.clock, state.clock + 86400)[0];
   return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
     <div className="tr-card" style={{ transform: `scale(${scale})` }}>
       <div ref={svgRef} className="tr-map" onClick={tapMap}>
-        <div className="tr-world" style={{ width: TN_WORLD.map.width * TR_CELL, height: TN_WORLD.map.height * TR_CELL, transform: `translate(${-camX}px,${-camY}px)` }}>
+        <div className="tr-world" style={{ width: TN_WORLD.map.width * TR_CELL, height: TN_WORLD.map.height * TR_CELL, transform: `translate(${-camX}px,${-camY}px)`, transition: roomChanged ? 'none' : undefined,
+          clipPath: debug ? 'none' : `inset(${ry0}px ${TN_WORLD.map.width * TR_CELL - rx1}px ${TN_WORLD.map.height * TR_CELL - ry1}px ${rx0}px)` }}>
           {TR_A.map && !badImg[trUrl(TR_A.map.src)] ? <img className="tr-px" src={trUrl(TR_A.map.src)} alt="" onError={() => setBadImg(v => ({ ...v, [trUrl(TR_A.map.src)]: true }))} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} />
             : <svg style={{ position: 'absolute', inset: 0 }} width="100%" height="100%">{trStaticLayer()}</svg>}
-          {TN_WORLD.map.areas.map((a, i) => i === area && !debug ? null : <div key={'f' + i} className="tr-fog" style={{ left: a.x0 * TR_CELL, top: a.y0 * TR_CELL - 18, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL + 18, opacity: debug ? .3 : .74 }} />)}
+          {TN_WORLD.map.areas.map((a, i) => i === room || !debug ? null : <div key={'f' + i} className="tr-fog" style={{ left: a.x0 * TR_CELL, top: a.y0 * TR_CELL - 18, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL + 18, opacity: debug ? .3 : .74 }} />)}
           <svg style={{ position: 'absolute', inset: 0, overflow: 'visible' }} width="100%" height="100%" pointerEvents="none">
             {(preview ? preview.path : p.route).map((q, i) => <circle key={i} cx={(q.x + .5) * TR_CELL} cy={(q.y + .5) * TR_CELL} r={i === (preview ? preview.path : p.route).length - 1 ? 7 : 3.5} fill={preview ? '#f6e3b4' : '#f2c46d'} opacity={preview ? .9 : .75} stroke="#3a2a14" strokeWidth="1" />)}
             {ml ? [[ml.x, ml.y], ...(ml.hit || [])].map(([hx, hy], i) => <rect key={i} x={hx * TR_CELL + 2} y={hy * TR_CELL + 2} width={TR_CELL - 4} height={TR_CELL - 4} rx="6" fill="none" stroke="#f6d48a" strokeWidth="2" strokeDasharray={i ? '4 3' : ''} />) : null}
           </svg>
           {[...vis.map(n => ({ id: n.id, x: n.x, y: n.y, n })), { id: 'player', x: p.x, y: p.y, n: null }].sort((a, b) => a.y - b.y).map(c => trCharSprite(c, animRef, movedRef, menu && menu.id === c.id, badImg))}
         </div>
+        <div key={'fade' + room} className="tr-fade" />
       </div>
-      <div className="tr-hud"><span className="tr-pill tr-area"><i />{trArea(p.x, p.y)}</span><span className="tr-pill tr-time">{state.day}일 {trNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
-        <button className="tr-hbtn" onClick={() => setSheet('clue')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>
-      <div className="tr-toast">{toast || (recent ? trHM(recent.time) + ' ' + recent.text : '인물·물건을 누르면 행동을 고를 수 있다')}</div>
+      <div className="tr-hud"><span className="tr-pill tr-area"><i />{RM.name}</span><span className="tr-pill tr-time">{state.day}일 {trNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
+        <button className="tr-hbtn" onClick={() => setSheet('rest')}>휴식</button><button className="tr-hbtn" onClick={() => setSheet('clue')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>
+      <div className="tr-toast">{toast || (recent ? trHM(recent.time) + ' ' + recent.text : nextNote ? '다음 공지 ' + trHM(nextNote.t) + ' ' + nextNote.n.text + (nextNote.n.place ? ' · ' + nextNote.n.place : '') : '인물·물건을 누르면 행동을 고를 수 있다')}</div>
+      {found ? <div className="tr-found" onClick={() => setFound(null)}><div className="tr-found-h">증거 획득</div>{found.map(it => <div key={it.id}><b>{it.name}</b><div className="tr-mut">{it.desc}</div></div>)}<div className="tr-mut" style={{ textAlign: 'right' }}>눌러서 닫기 · 노트 › 증거</div></div> : null}
       <div className="tr-padbase" />
       {[[0, -1, 38, 425, 0], [-1, 0, 4, 459, 270], [1, 0, 72, 459, 90], [0, 1, 38, 493, 180]].map(([dx, dy, x, y, r]) => <button key={r} className="tr-pad" style={{ left: x, top: y }} disabled={busy} onPointerDown={e => { e.preventDefault(); padDown(dx, dy); }} onPointerUp={padUp} onPointerLeave={padUp} onPointerCancel={padUp}>
         <svg width="14" height="14" viewBox="0 0 14 14" style={{ transform: `rotate(${r}deg)` }}><path d="M7 2 L12.5 11 L1.5 11 Z" fill="currentColor" /></svg></button>)}
@@ -927,7 +1013,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
       {ml ? <div className="tr-menu"><div className="tr-menu-h"><b>{ml.name}</b><span>{Math.abs(p.x - ml.x) + Math.abs(p.y - ml.y)}칸</span></div>
         <div className="tr-menu-g"><button onClick={() => menuDo('LOOK')}>관찰 0초</button><button onClick={() => menuDo('SEARCH')}>조사</button><button onClick={() => menuDo('GO')}>여기로 이동</button><button onClick={() => setMenu(null)}>닫기</button></div></div> : null}
       {sent ? <div className="tr-preview" style={{ left: 112 }}>전달했습니다. 새 화면에서 이어집니다.</div> : null}
-      {sheet ? trSheet({ ev: boot.ev, heard: boot.heard, free, tab: sheet, setTab: setSheet, state, debug, setDebug, busy,
+      {sheet ? trSheet({ ev: boot.ev, heard: boot.heard, free, tab: sheet, setTab: setSheet, state, debug, setDebug, busy, rest: { h: restH, setH: setRestH, mi: restM, setMi: setRestM }, onSkip: skipTo, onHome: () => { act({ type: 'GO_HOME' }); setSheet(''); },
         onWait: sec => { act({ type: 'WAIT', seconds: sec }); setSheet(''); }, codeText, setCodeText,
         onRestore: () => { try { const v = trCodec.unpack(TN_WORLD, codeText.trim()); setState(trNPC.applyTalk(TN_WORLD, v, 0)); setSheet(''); setToast('상태 코드를 복원했습니다'); } catch (e) { setToast('복원 실패: ' + e.message); } },
         onFree: () => { setSheet('free'); setText(''); }, text, setText, send, sent }) : null}
@@ -948,17 +1034,19 @@ const trStaticLayer = (() => {
   };
 })();
 
-function trSheet({ ev, heard, free, tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
-  const tabs = [['clue', '단서'], ['people', '인물'], ['log', '기록'], ['set', '설정']];
+function trSheet({ ev, heard, free, tab, setTab, state, debug, setDebug, busy, onSkip, onHome, rest, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
+  const tabs = [['clue', '단서'], ['item', '증거'], ['people', '인물'], ['log', '기록'], ['rest', '휴식'], ['set', '설정']];
   const mem = (state.player.mem || []).slice().reverse();
   return <div className="tr-sheet">
     <div className="tr-tabs">{tabs.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}<button style={{ flex: 'none', width: 34 }} onClick={() => setTab('')}>✕</button></div>
     <div className="tr-body">
       {tab === 'clue' ? (mem.length ? mem.map((m, i) => <div className="tr-row" key={i}><time>{trHM(m[2])}</time>{trFact(m[0], m[1], 'player')}</div>) : <div className="tr-mut">아직 직접 보거나 들은 단서가 없다.</div>) : null}
+      {tab === 'item' ? (() => { const its = (TN_WORLD.items || []).filter(it => (state.player.items || {})[it.id] !== undefined).sort((a, b) => state.player.items[b.id] - state.player.items[a.id]);
+        return its.length ? its.map(it => { const l = TN_WORLD.map.landmarks.find(x => x.id === it.at); return <div className="tr-row" key={it.id}><b>{it.name}</b> <span className="tr-mut">{Math.floor(state.player.items[it.id] / 86400) + 1}일 {trHM(state.player.items[it.id])} · {l ? l.name : ''}에서 발견</span><div className="tr-mut">{it.desc}</div></div>; }) : <div className="tr-mut">아직 찾은 증거가 없다. 물건을 눌러 「조사」하면 찾을 수 있다.</div>; })() : null}
+      {tab === 'rest' ? trRest({ state, busy, onSkip, onHome, ...rest }) : null}
       {tab === 'people' ? TN_WORLD.npcs.map(n => { const v = (state.player.seen || {})[n.id]; return <div className="tr-row" key={n.id}><b style={{ color: n.color }}>{n.name}</b> <span className="tr-mut">{v ? '마지막으로 본 곳: ' + (v[0] < 0 ? '통로' : TN_WORLD.map.areas[v[0]].name) + ' · ' + trHM(v[1]) : '아직 보지 못했다'}</span></div>; }) : null}
       {tab === 'log' ? state.logs.filter(e => debug || e.visible).slice(-30).reverse().map((e, i) => <div className="tr-row" key={i}><time>{trHM(e.time)}</time>{e.text}</div>) : null}
       {tab === 'set' ? <div style={{ display: 'grid', gap: 6, paddingTop: 4 }}>
-        <div style={{ display: 'flex', gap: 4 }}><button style={{ flex: 1, height: 32 }} disabled={busy} onClick={() => onWait(60)}>1분 대기</button><button style={{ flex: 1, height: 32 }} disabled={busy} onClick={() => onWait(300)}>5분 대기</button></div>
         <button style={{ height: 32 }} disabled={busy} onClick={onFree}>자유 행동 · 추리 입력</button>
         <label className="tr-mut"><input type="checkbox" checked={debug} onChange={e => setDebug(e.target.checked)} /> 디버그 (숨은 인물·기록 표시)</label>
         <div className="tr-mut">상태 코드</div><div className="tr-mono">{trCodec.pack(TN_WORLD, state)}</div>
@@ -975,4 +1063,27 @@ function trSheet({ ev, heard, free, tab, setTab, state, debug, setDebug, busy, o
         <div style={{ display: 'flex', gap: 4 }}><button style={{ flex: 1, height: 34 }} disabled={!text.trim() || !!sent} onClick={() => send('P')}>행동 전달</button><button style={{ flex: 1, height: 34 }} disabled={!text.trim() || !!sent} onClick={() => send('A')}>추리 제시</button></div>
         {sent ? <div className="tr-mut">전달했습니다. 새 화면에서 이어집니다.</div> : null}</div> : null}
     </div></div>;
+}
+
+// 휴식 패널: 다음 시간대까지 / 자고 아침으로 / 시각 지정. 미리보기는 공지 일정만(남의 계획은 보이지 않는다).
+function trRest({ state, busy, onSkip, onHome, h, setH, mi, setMi }) {
+  const now = state.clock, D = 86400, sl = trNPC.slotOf(TN_WORLD, state), slots = TN_WORLD.slots || [];
+  const nextSlot = (() => { for (let d = Math.floor(now / D); d <= Math.floor(now / D) + 1; d++) for (const x of slots) { const t = d * D + trNPC.absTime(x.from); if (t > now) return { t, name: x.name }; } return null; })();
+  const morning = (() => { const t = Math.floor(now / D) * D + 7 * 3600; return t > now + 3600 ? t : t + D; })();
+  const pick = h >= 0 ? (() => { const t = Math.floor(now / D) * D + h * 3600 + mi * 60; return t > now ? t : t + D; })() : 0;
+  const label = t => (Math.floor(t / D) + 1) + '일 ' + trHM(t), dur = t => { const m = Math.round((t - now) / 60); return (m >= 60 ? Math.floor(m / 60) + '시간 ' : '') + (m % 60) + '분 뒤'; };
+  const real = !!state.flags[TN_WORLD.realityFlag || 'true_route'];
+  const notes = pick ? trNotices(now, pick) : [];
+  return <div style={{ display: 'grid', gap: 6, paddingTop: 4 }}>
+    <div className="tr-mut">지금 {label(now)}{sl ? ' · ' + sl.name : ''} · 쉬는 동안에도 다른 사람들은 움직인다. 누가 나타나거나 공지가 있으면 멈춘다.</div>
+    {nextSlot ? <button className="tr-big" disabled={busy} onClick={() => onSkip(nextSlot.t)}>다음 시간대까지 쉬기<small>{nextSlot.name} {label(nextSlot.t)} · {dur(nextSlot.t)}</small></button> : null}
+    <button className="tr-big" disabled={busy} onClick={() => onSkip(morning)}>자고 아침으로<small>{label(morning)} · {dur(morning)}</small></button>
+    <div className="tr-mut" style={{ marginTop: 4 }}>시각 지정</div>
+    <div className="tr-grid h">{Array.from({ length: 24 }, (_, i) => <button key={i} className={h === i ? 'on' : ''} onClick={() => setH(i)}>{String(i).padStart(2, '0')}</button>)}</div>
+    <div className="tr-grid m">{[0, 10, 20, 30, 40, 50].map(m => <button key={m} className={mi === m ? 'on' : ''} onClick={() => setMi(m)}>:{String(m).padStart(2, '0')}</button>)}</div>
+    {pick ? <div className="tr-prev"><b>{label(pick)}</b> · {dur(pick)}{notes.length ? notes.map((x, i) => <div key={i} className="tr-mut">{trHM(x.t)} 공지 · {x.n.text}{x.n.place ? ' (' + x.n.place + ')' : ''} — 여기서 멈춤</div>) : <div className="tr-mut">그 사이 공지 없음</div>}</div> : null}
+    <button className="tr-big" disabled={busy || !pick} onClick={() => onSkip(pick)}>{pick ? trHM(pick) + '까지 건너뛰기' : '시각을 고르세요'}</button>
+    <div className="tr-mut" style={{ marginTop: 4 }}>꿈의 편의</div>
+    {real ? <div className="tr-lock">■■■■ · 지금은 쓸 수 없다</div> : <button className="tr-big" disabled={busy} onClick={onHome}>객실로 귀환<small>어디서든 내 방으로. 시간은 흐르지 않는다</small></button>}
+  </div>;
 }

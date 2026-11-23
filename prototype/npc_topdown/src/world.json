@@ -402,7 +402,11 @@
  "player": {
   "x": 7,
   "y": 12,
-  "moveSeconds": 4
+  "moveSeconds": 4,
+  "home": {
+   "x": 7,
+   "y": 12
+  }
  },
  "npcs": [
   {
@@ -615,5 +619,58 @@
    "flag": "true_route",
    "token": "#진루트"
   }
- ]
+ ],
+ "items": [
+  {
+   "id": "memo_copy",
+   "name": "메모 사본",
+   "at": "archive",
+   "flag": "delivery_done",
+   "desc": "유리의 글씨. 「도윤 씨, 오후 작업 순서 변경」"
+  },
+  {
+   "id": "button",
+   "name": "떨어진 단추",
+   "at": "garden",
+   "from": "1일 09:30",
+   "desc": "짙은 남색 단추 하나. 벤치 밑에 떨어져 있었다."
+  }
+ ],
+ "notices": [
+  {
+   "time": "12:00",
+   "text": "점심 식사",
+   "place": "광장"
+  },
+  {
+   "time": "19:00",
+   "text": "저녁 식사",
+   "place": "광장"
+  }
+ ],
+ "slots": [
+  {
+   "name": "아침",
+   "from": "06:00"
+  },
+  {
+   "name": "오후",
+   "from": "12:00"
+  },
+  {
+   "name": "저녁",
+   "from": "18:00"
+  },
+  {
+   "name": "밤",
+   "from": "22:00"
+  }
+ ],
+ "branches": [
+  {
+   "flag": "meeting_prevented",
+   "letter": "B"
+  }
+ ],
+ "searchSeconds": 20
 }

@@ -48,3 +48,14 @@
 .tr-drop{position:absolute;left:4px;bottom:100%;margin-bottom:3px;display:grid;gap:3px;padding:4px;background:#08111ef7;border:1px solid #6d7f92;border-radius:8px;width:150px}
 .tr-drop button{height:30px;font-size:12px;text-align:left}
 .tr-err{position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:19px}
+
+.tr-fade{position:absolute;inset:0;background:#000;pointer-events:none;animation:trfade .28s ease-out forwards}
+@keyframes trfade{from{opacity:1}to{opacity:0}}
+.tr-found{position:absolute;left:30px;right:30px;top:150px;padding:10px 12px;background:#f6ecd6;color:#3a2a14;border:2px solid #b98c4a;border-radius:10px;box-shadow:0 6px 18px #000b;display:grid;gap:6px;font-size:13px}
+.tr-found .tr-mut{color:#7a5a30}.tr-found-h{font-size:11px;letter-spacing:.1em;color:#9a6a2a;font-weight:700}
+.tr-card .tr-big{min-height:40px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:4px 10px;font-size:13px;text-align:left;background:#1b2a3d;border-color:#e9c98c66}
+.tr-big small{font-size:11px;color:#c9a86c}
+.tr-grid{display:grid;gap:3px}.tr-grid.h{grid-template-columns:repeat(8,1fr)}.tr-grid.m{grid-template-columns:repeat(6,1fr)}
+.tr-card .tr-grid button{height:26px;font-size:12px;padding:0}.tr-card .tr-grid .on{background:#6b4f26;border-color:#e2bb73}
+.tr-prev{border:1px dashed #e9c98c66;border-radius:8px;padding:6px 8px;font-size:12px}
+.tr-lock{height:40px;display:grid;place-items:center;background:#000;color:#555;border-radius:7px;font-size:12px;letter-spacing:.05em}
