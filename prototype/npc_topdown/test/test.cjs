@@ -283,6 +283,18 @@ test('목격 장면·말 건 인물: 조건이 맞을 때만 해금, 증언으�
   if (r.accepted.length) assert.equal(r.state.player.scenes.meet, undefined, '증언은 목격 장면이 아님');
   console.log('   세린 게시판 장면:', sb === undefined ? '이번 실행에선 안 봄' : '해금');
 });
+test('먼저 말 걸기: 정해진 시간에 플레이어를 찾아와 곁에서 기다리고, 대화하면 끝·거절하면 돌아감·안 받으면 지쳐 돌아감', () => {
+  let s = E.createWorld(W); s = E.advance(W, s, 40 * 60); // 09:40
+  let c = E.caller(W, s), guard = 0;
+  while (!c && guard++ < 40) { s = E.advance(W, s, 30); c = E.caller(W, s); }
+  assert.ok(c, '태수가 찾아와야 함'); assert.equal(c.id, 'courier');
+  const talk = E.dispatch(W, s, { type: 'TALK_REQUEST', npcId: 'courier', kind: 'T', chars: 3 });
+  assert.equal(talk.pend, 'courier'); assert.equal(E.caller(W, talk), null);
+  const no = E.dispatch(W, s, { type: 'DISMISS_CALL', npcId: 'courier' }); assert.equal(E.caller(W, no), null);
+  assert.ok(no.npcs.find(n => n.id === 'courier').completed.includes('call_player'), '한 번만');
+  const wait = E.advance(W, s, 200); assert.equal(E.caller(W, wait), null, '기다리다 돌아감');
+  const back = C.unpack(W, C.pack(W, s)); assert.ok(E.caller(W, back), '상태 코드 왕복 후에도 기다리는 중');
+});
 
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
 console.log(`${pass}/${tests.length} 통과`);

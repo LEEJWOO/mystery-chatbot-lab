@@ -5,19 +5,35 @@
  "height": 960,
  "chars": {
   "companion": {
-   "def": "평상시",
+   "def": "웃음",
    "faces": {
-    "평상시": "assets_src/test/yuri_평상시.png",
-    "놀람": "assets_src/test/yuri_놀람.png",
-    "웃음": "assets_src/test/yuri_웃음.png"
+    "웃음": "assets_src/test/pink_웃음.png",
+    "불만": "assets_src/test/pink_불만.png",
+    "놀람": "assets_src/test/pink_놀람.png"
    }
   },
   "librarian": {
-   "def": "웃음",
+   "def": "평상시",
    "faces": {
-    "웃음": "assets_src/test/serin_웃음.png",
-    "불만": "assets_src/test/serin_불만.png",
-    "놀람": "assets_src/test/serin_놀람.png"
+    "평상시": "assets_src/test/white_평상시.png",
+    "놀람": "assets_src/test/white_놀람.png",
+    "웃음": "assets_src/test/white_웃음.png"
+   }
+  },
+  "contact": {
+   "def": "평상시",
+   "faces": {
+    "평상시": "assets_src/test/doyun_평상시.png",
+    "웃음": "assets_src/test/doyun_웃음.png",
+    "놀람": "assets_src/test/doyun_놀람.png"
+   }
+  },
+  "courier": {
+   "def": "평상시",
+   "faces": {
+    "평상시": "assets_src/test/taesu_평상시.png",
+    "놀람": "assets_src/test/taesu_놀람.png",
+    "웃음": "assets_src/test/taesu_웃음.png"
    }
   }
  },

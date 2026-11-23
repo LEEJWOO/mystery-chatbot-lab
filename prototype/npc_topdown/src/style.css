@@ -73,3 +73,6 @@
 .tr-scene span{font-size:11px;padding:3px 5px;line-height:14px;text-align:left}
 .tr-scene.lock{height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:8px;background:repeating-linear-gradient(45deg,#2a3240 0 8px,#26303d 8px 16px);color:#8fa0b3;border:1px dashed #4a5566}
 .tr-scene.lock b{letter-spacing:.2em}
+
+.tr-call{position:absolute;left:116px;right:6px;bottom:6px;padding:7px 9px;background:#f6ecd6;color:#3a2a14;border:2px solid #b98c4a;border-radius:11px;box-shadow:0 4px 12px #000a;font-size:13px;line-height:18px}
+.tr-call b{color:#8a3b2b}.tr-card .tr-call button{flex:1;height:32px;background:#e9dcc0;color:#3a2a14;border-color:#b98c4a}.tr-card .tr-call .tr-callyes{background:#6b4f26;color:#f6ead2;border-color:#e2bb73}

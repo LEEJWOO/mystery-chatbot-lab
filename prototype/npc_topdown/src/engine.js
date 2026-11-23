@@ -83,6 +83,7 @@ const TroemereiNPC = (() => {
     return [];
   }
   function goalOf(w,s,task){
+    if(task.targetPlayer)return {target:s.player,goal:{x:s.player.x,y:s.player.y}}; // 플레이어를 찾아가 먼저 말 걸기
     if(task.targetNpc){const n=node(s,task.targetNpc);return n?{target:n,goal:{x:n.x,y:n.y}}:null;}
     const p=landmark(w,task.landmark);return p?{target:null,goal:{x:p.x,y:p.y}}:null;
   }
@@ -161,11 +162,13 @@ const TroemereiNPC = (() => {
       m.mode='paused';m.busyUntil=Math.max(m.busyUntil||0,s.clock+(task.durationSeconds||30));m.nextMoveAt=m.busyUntil;m.route=[];
     }
     n.mode='busy';n.route=[];n.busyUntil=s.clock+(task.durationSeconds||30);n.nextMoveAt=n.busyUntil;
+    if(task.targetPlayer){addLog(w,s,spec.name+'이(가) 다가와 말을 걸었다.','call',n);return;}
     addLog(w,s,spec.name+'이(가) '+(task.kind==='meet'?'다른 인물과 대화를 시작했다.':'목적지에서 행동을 시작했다.'),'npc',n);
   }
   function complete(w,s,n){
     const task=n.intent;if(!task){n.mode='idle';return;}
     const spec=w.npcs.find(x=>x.id===n.id);
+    if(task.targetPlayer){finishCall(s,n);addLog(w,s,spec.name+'이(가) 대답을 기다리다 돌아갔다.','npc',n);return;}
     if(task.targetNpc){
       // 끝나는 순간에도 상대가 곁에 있어야 만남이 성립한다(도중에 데려가면 무산 → 다시 찾아간다).
       const m=node(s,task.targetNpc);
@@ -227,6 +230,9 @@ const TroemereiNPC = (() => {
     n.nextMoveAt=s.clock+(w.npcs.find(x=>x.id===n.id).stepSeconds||7);
     if(hasReached(w,s,n,n.intent))arrive(w,s,n);
   }
+  // 먼저 말 걸기 일정 끝내기(대화를 받았거나, 거절했거나, 기다리다 지침)
+  function finishCall(s,n){const t=n.intent;if(t){n.completed.push(t.id);n.lastCompleted[t.id]=s.clock;n.lastTask=t.id;}n.mode='idle';n.intent=null;n.route=[];n.busyUntil=0;n.nextMoveAt=s.clock+5;}
+  function caller(w,s){return s.npcs.find(n=>n.mode==='busy'&&n.intent&&n.intent.targetPlayer&&manhattan(n,s.player)===1)||null;}
   const isStepNext=(n,to)=>manhattan(n,to)===1;
   function stepPlayer(w,s){
     if(!s.player.route.length)return;
@@ -383,7 +389,8 @@ const TroemereiNPC = (() => {
       // 대화는 AI가 응답한 뒤 applyTalk()로 시간을 반영한다. 여기서는 대상만 잠근다.
       const n=node(s,action.npcId);
       if(!n||manhattan(player,n)>1){addLog(w,s,'대화하려면 인물에게 접근해야 한다.','player');return s;}
-      if(n.mode==='busy'){addLog(w,s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
+      if(n.mode==='busy'&&n.intent&&n.intent.targetPlayer)finishCall(s,n);
+      else if(n.mode==='busy'){addLog(w,s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
       if(!player.talked)player.talked={};player.talked[n.id]=s.clock;
       s.pend=n.id;s.pk=action.kind||'T';s.pc=Math.max(0,Math.min(2000,action.chars|0));player.route=[];player.nextMoveAt=0;
     }else if(action.type==='WAIT')return advance(w,s,action.seconds||60);
@@ -399,6 +406,9 @@ const TroemereiNPC = (() => {
       for(const it of found)s.player.items[it.id]=s.clock;
       addLog(w,s,found.length?l.name+'에서 '+josa(found.map(i=>i.name).join(', '),'을','를')+' 찾았다.':l.name+' 주변을 뒤졌지만 아무것도 없었다.','player');
       return s;
+    }else if(action.type==='DISMISS_CALL'){
+      const n=node(s,action.npcId);
+      if(n&&n.mode==='busy'&&n.intent&&n.intent.targetPlayer){finishCall(s,n);addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 아쉬운 얼굴로 돌아갔다.','player');}
     }else if(action.type==='UNSTUCK'){
       // 끼임 탈출: 지금 칸에서 한 칸도 못 움직일 때만, 가장 가까운 '빠져나갈 수 있는 빈칸'으로 옮긴다(시간 0).
       const occ=new Set(s.npcs.filter(n=>n.mode!=='accompany').map(n=>posKey(n.x,n.y)));
@@ -448,6 +458,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, caller, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;

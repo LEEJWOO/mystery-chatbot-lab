@@ -462,22 +462,19 @@
      "text": "오전에 도윤에게 업무 메모를 전할 일이 있다",
      "unlock": {
       "talked": true
-     },
-     "hint": "말을 걸어 보면"
+     }
     },
     {
      "text": "자료실 선반에 메모 사본을 둔다",
      "unlock": {
       "fact": "delivered"
-     },
-     "hint": "유리가 하는 일을 지켜보면"
+     }
     },
     {
      "text": "부탁하면 하던 일을 미루고 따라와 준다",
      "unlock": {
       "flag": "meeting_prevented"
-     },
-     "hint": "함께 다녀 보면"
+     }
     }
    ]
   },
@@ -496,15 +493,13 @@
      "text": "작업실 탁자를 거의 떠나지 않는다",
      "unlock": {
       "seen": true
-     },
-     "hint": "작업실에 가 보면"
+     }
     },
     {
      "text": "오전에 유리에게 업무 메모를 받는다",
      "unlock": {
       "fact": "met_doyun"
-     },
-     "hint": "오전의 작업실을 지켜보면"
+     }
     }
    ]
   },
@@ -549,15 +544,13 @@
      "text": "자료실 선반과 정원 게시판을 오간다",
      "unlock": {
       "scene": "serin_board"
-     },
-     "hint": "게시판 근처에서 보면"
+     }
     },
     {
      "text": "조용하지만 묻는 말에는 정확히 답한다",
      "unlock": {
       "talked": true
-     },
-     "hint": "말을 걸어 보면"
+     }
     }
    ]
   },
@@ -593,6 +586,18 @@
      "weight": 2,
      "cooldownSeconds": 150,
      "interruptible": true
+    },
+    {
+     "id": "call_player",
+     "kind": "call",
+     "targetPlayer": true,
+     "from": "09:40",
+     "until": "10:30",
+     "durationSeconds": 120,
+     "priority": 50,
+     "weight": 1,
+     "once": true,
+     "interruptible": false
     }
    ],
    "profile": "30대 · 배달 담당",
@@ -601,8 +606,7 @@
      "text": "게시판과 작업실을 오가며 물건을 나른다",
      "unlock": {
       "seen": true
-     },
-     "hint": "한 번 마주치면"
+     }
     }
    ]
   }
@@ -742,8 +746,7 @@
    "id": "meet",
    "title": "작업실의 짧은 대화",
    "fact": "met_doyun",
-   "caption": "유리와 도윤이 작업실에서 메모를 주고받았다.",
-   "hint": "오전의 작업실"
+   "caption": "유리와 도윤이 작업실에서 메모를 주고받았다."
   },
   {
    "id": "serin_board",
@@ -752,15 +755,13 @@
    "area": "정원",
    "from": "09:00",
    "to": "12:00",
-   "caption": "세린이 정원 게시판 앞을 지나가며 무언가를 확인했다.",
-   "hint": "오전의 정원"
+   "caption": "세린이 정원 게시판 앞을 지나가며 무언가를 확인했다."
   },
   {
    "id": "yuri_shelf",
    "title": "선반 앞의 유리",
    "fact": "delivered",
-   "caption": "유리가 자료실 선반에 무언가를 두고 갔다.",
-   "hint": "자료실 선반"
+   "caption": "유리가 자료실 선반에 무언가를 두고 갔다."
   }
  ]
 }

@@ -176,12 +176,14 @@ def build_map(world):
     return img.resize((W * T * UP, H * T * UP), Image.NEAREST)
 
 # ---------------------------------------------------------------- 인물
-LOOKS = {   # 머리색, 머리 모양, 윗옷, 아래옷
-    'player':    ('#2b3350', 'short', '#2f3f5f', '#3a3a48'),
-    'companion': ('#e8ecf2', 'bob',   '#3a3550', '#2c2a38'),
-    'contact':   ('#4a3326', 'short', '#4f7fb0', '#3b3f4a'),
-    'librarian': ('#ef9a6a', 'long',  '#e8d6a8', '#3c3a44'),
-    'courier':   ('#6b4a2e', 'cap',   '#5f9a6a', '#5a4a3a'),
+# 대화 그림(인물 이미지)의 머리색·머리 모양·복장을 참고한 시험용 외형
+#  hair, style(short/bob/long/messy), top, bottom, legs(치마일 때 다리 색, None이면 바지), inner(앞트임 안쪽 색), collar(깃·후드 색)
+LOOKS = {
+    'player':    dict(hair='#2b3350', style='short', top='#2f3f5f', bottom='#3a3a48'),
+    'companion': dict(hair='#f0956c', style='long',  top='#ecdcb4', bottom='#3a3a46', legs='#f4f1ec', collar='#f6f2ea', tie='#8c2a2a', tip='#e86b8f'),
+    'librarian': dict(hair='#eef0f4', style='bob',   top='#34314a', bottom='#2c2a38', legs='#1e1c26', collar='#f6f2ea', tie='#3fa58c'),
+    'contact':   dict(hair='#e3dccb', style='short', top='#eee8dc', bottom='#26252b', inner='#2a292f'),
+    'courier':   dict(hair='#9a6644', style='messy', top='#efe2cf', bottom='#2a3040', inner='#c0505a', collar='#2a292f'),
 }
 SKIN = '#f6d7c0'
 
@@ -190,57 +192,69 @@ DIRS = ['down', 'up', 'left', 'right']
 
 def chibi(look, view, phase):
     """view: down/up/left, phase: PHASES. 16x24를 18x27 칸 아래쪽 가운데에 그린다. 우(right)는 좌를 그린 뒤 뒤집는다."""
-    hair, style, top, bottom = (hexc(c) if c.startswith('#') else c for c in look)
+    L = {k: (hexc(v) if isinstance(v, str) and v.startswith('#') else v) for k, v in look.items()}
+    hair, style, top, bottom = L['hair'], L['style'], L['top'], L['bottom']
+    legs, inner, collar, tie, tip = L.get('legs'), L.get('inner'), L.get('collar'), L.get('tie'), L.get('tip')
     skin = hexc(SKIN); im = Image.new('RGBA', (CW, CH)); d = ImageDraw.Draw(im)
     bob = 1 if phase == 'pass' else 0
-    ox, oy = 1, CH - 25 - bob    # 원점(16x24 영역의 왼쪽 위). 발을 모으는 순간 1px 들린다.
+    ox, oy = 1, CH - 25 - bob
     P = lambda x0, y0, x1, y1, c: d.rectangle([ox + x0, oy + y0, ox + x1, oy + y1], fill=c)
-    dark, far = shade(bottom, .7), shade(bottom, .78)
-    # 다리
+    shoe = hexc('#2a2026'); legc = legs or bottom; far = shade(legc, .8)
+    # 다리(치마면 다리색=스타킹, 바지면 바지색)
     if view in ('down', 'up'):
-        L, R = (23, 22) if phase == 'stepA' else (22, 23) if phase == 'stepB' else (23 + bob, 23 + bob)
-        P(5, 19, 6, L - 1, bottom); P(5, L, 6, L, dark); P(9, 19, 10, R - 1, bottom); P(9, R, 10, R, dark)
+        Ly, Ry = (23, 22) if phase == 'stepA' else (22, 23) if phase == 'stepB' else (23 + bob, 23 + bob)
+        P(5, 19, 6, Ly - 1, legc); P(5, Ly, 6, Ly, shoe); P(9, 19, 10, Ry - 1, legc); P(9, Ry, 10, Ry, shoe)
     else:
-        if phase == 'stepA': P(9, 19, 10, 22, far); P(9, 23, 11, 23, shade(dark, .85)); P(4, 19, 5, 22, bottom); P(3, 23, 5, 23, dark)
-        elif phase == 'stepB': P(4, 19, 5, 22, far); P(3, 23, 5, 23, shade(dark, .85)); P(9, 19, 10, 22, bottom); P(9, 23, 11, 23, dark)
-        else: P(6, 19, 9, 22 + bob, bottom); P(5, 23 + bob, 9, 23 + bob, dark)
-    # 긴 머리는 몸 뒤에(뒷모습은 등을 덮는다)
+        if phase == 'stepA': P(9, 19, 10, 22, far); P(9, 23, 11, 23, shade(shoe, .9)); P(4, 19, 5, 22, legc); P(3, 23, 5, 23, shoe)
+        elif phase == 'stepB': P(4, 19, 5, 22, far); P(3, 23, 5, 23, shade(shoe, .9)); P(9, 19, 10, 22, legc); P(9, 23, 11, 23, shoe)
+        else: P(6, 19, 9, 22 + bob, legc); P(5, 23 + bob, 9, 23 + bob, shoe)
+    # 긴 머리는 몸 뒤에
     if style == 'long' and view != 'up':
-        if view == 'left': P(8, 6, 13, 16, shade(hair, .9))
-        else: P(2, 6, 13, 16, shade(hair, .9))
-    # 몸통·팔(팔은 걸음과 반대로 흔든다)
+        hc = shade(hair, .9)
+        if view == 'left': P(8, 6, 13, 16, hc); tip and P(9, 15, 13, 16, tip)
+        else: P(2, 6, 13, 16, hc); tip and (P(2, 15, 3, 16, tip), P(12, 15, 13, 16, tip))
+    # 몸통
     if view in ('down', 'up'):
-        P(4, 12, 11, 18, top); P(4, 18, 11, 18, shade(top, .8))
+        P(4, 12, 11, 18, top); P(4, 18, 11, 18, shade(top, .82))
+        if legs: P(3, 17, 12, 19, bottom); P(3, 19, 12, 19, shade(bottom, .8))   # 치마
+        else: P(4, 18, 11, 18, bottom)
+        if view == 'down':
+            if inner: P(7, 13, 8, 17, inner)                 # 앞트임(코트·후드 지퍼 안쪽)
+            if collar: P(5, 12, 10, 12, collar)
+            if tie: P(7, 13, 8, 14, tie)
+        elif collar and style == 'messy': P(4, 12, 11, 13, collar)   # 후드 뒤쪽
         la, ra = (-1, 1) if phase == 'stepA' else (1, -1) if phase == 'stepB' else (0, 0)
         if view == 'up': la, ra = ra, la
-        P(3, 12 + la, 3, 16 + la, shade(top, .9)); P(12, 12 + ra, 12, 16 + ra, shade(top, .9))
-        if view == 'down': P(3, 17 + la, 3, 17 + la, skin); P(12, 17 + ra, 12, 17 + ra, skin); P(7, 12, 8, 13, hexc('#f3ead6'))
+        P(3, 12 + la, 3, 16 + la, shade(top, .88)); P(12, 12 + ra, 12, 16 + ra, shade(top, .88))
+        P(3, 17 + la, 3, 17 + la, skin); P(12, 17 + ra, 12, 17 + ra, skin)
     else:
-        P(5, 12, 10, 18, top); P(5, 18, 10, 18, shade(top, .8))
-        if phase == 'stepA': P(9, 13, 10, 15, shade(top, .9)); P(10, 16, 10, 16, skin)
-        elif phase == 'stepB': P(4, 13, 5, 15, shade(top, .9)); P(4, 16, 4, 16, skin)
-        else: P(7, 13, 8, 16, shade(top, .9)); P(7, 17, 8, 17, skin)
+        P(5, 12, 10, 18, top); P(5, 18, 10, 18, shade(top, .82))
+        if legs: P(4, 17, 11, 19, bottom)
+        if inner: P(5, 13, 5, 17, inner)
+        if collar: P(5, 12, 8, 12, collar)
+        if phase == 'stepA': P(9, 13, 10, 15, shade(top, .88)); P(10, 16, 10, 16, skin)
+        elif phase == 'stepB': P(4, 13, 5, 15, shade(top, .88)); P(4, 16, 4, 16, skin)
+        else: P(7, 13, 8, 16, shade(top, .88)); P(7, 17, 8, 17, skin)
     # 머리
     d.ellipse([ox + 2, oy + 0, ox + 13, oy + 12], fill=hair)
+    hl = shade(hair, 1.12)
     if view == 'down':
-        P(4, 5, 11, 10, skin); P(4, 11, 11, 11, skin); P(5, 12, 10, 12, skin)
-        P(3, 3, 12, 5, hair); P(4, 6, 4, 6, hair); P(11, 6, 11, 6, hair)
-        P(5, 7, 5, 8, hexc('#2a2230')); P(10, 7, 10, 8, hexc('#2a2230')); P(5, 7, 5, 7, hexc('#6f8fd0')); P(10, 7, 10, 7, hexc('#6f8fd0'))
+        P(4, 5, 11, 10, skin); P(4, 11, 11, 11, skin); P(5, 12, 10, 12, skin) if not collar else None
+        P(3, 3, 12, 5, hair); P(4, 6, 4, 6, hair); P(11, 6, 11, 6, hair); P(5, 2, 8, 2, hl)
+        eye = hexc('#2a2230'); P(5, 7, 5, 8, eye); P(10, 7, 10, 8, eye); P(5, 7, 5, 7, hexc('#6f8fd0')); P(10, 7, 10, 7, hexc('#6f8fd0'))
         P(4, 10, 4, 10, hexc('#f2a8a0')); P(11, 10, 11, 10, hexc('#f2a8a0'))
         if style in ('bob', 'long'): P(2, 6, 3, 11, hair); P(12, 6, 13, 11, hair)
+        if style == 'messy': P(2, 1, 3, 2, hair); P(12, 1, 13, 3, hair); P(7, -1, 8, 0, hair)
     elif view == 'up':
-        P(3, 10, 12, 12, shade(hair, .85))
+        P(3, 10, 12, 12, shade(hair, .85)); P(5, 2, 9, 3, hl)
         if style == 'bob': P(2, 6, 13, 12, hair)
-        if style == 'long': P(2, 6, 13, 16, hair); P(3, 16, 12, 16, shade(hair, .85))
+        if style == 'long': P(2, 6, 13, 16, hair); P(3, 16, 12, 16, shade(hair, .85)); tip and P(2, 14, 13, 16, tip)
+        if style == 'messy': P(2, 1, 3, 2, hair); P(12, 1, 13, 3, hair); P(7, -1, 8, 0, hair)
     else:
-        P(2, 5, 7, 10, skin); P(3, 11, 7, 11, skin); P(2, 3, 9, 5, hair); P(8, 4, 13, 11, hair)
+        P(2, 5, 7, 10, skin); P(3, 11, 7, 11, skin); P(2, 3, 9, 5, hair); P(8, 4, 13, 11, hair); P(4, 2, 8, 2, hl)
         P(3, 7, 3, 8, hexc('#2a2230')); P(3, 7, 3, 7, hexc('#6f8fd0')); P(4, 10, 4, 10, hexc('#f2a8a0'))
         if style in ('bob', 'long'): P(8, 6, 12, 12, hair)
-    if style == 'cap':
-        cap = hexc('#c0503f')
-        if view == 'left': P(1, 1, 11, 3, cap); P(0, 4, 4, 4, shade(cap, .8))
-        else: P(3, 0, 12, 3, cap)
-        if view == 'down': P(4, 4, 11, 4, shade(cap, .8))
+        if style == 'messy': P(11, 1, 13, 2, hair); P(1, 3, 2, 4, hair)
     return outline(im)
 
 def build_sprites(ids):
