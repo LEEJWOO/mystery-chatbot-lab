@@ -26,9 +26,9 @@ DIFF = 24      # 이 값보다 크게 달라진 픽셀만 '바뀐 부분'으로 
 PAD = 6        # 조각 가장자리 여유(경계선 이음매 방지)
 
 
-def save(im, out_dir, q):
+def save(im, out_dir, q, lossless=False):
     buf = io.BytesIO()
-    im.save(buf, 'WEBP', quality=q, method=6)
+    im.save(buf, 'WEBP', quality=q, method=6, lossless=lossless)
     data = buf.getvalue()
     name = hashlib.sha1(data).hexdigest()[:12] + '.webp'
     with open(os.path.join(out_dir, name), 'wb') as f:
@@ -108,9 +108,18 @@ def main(manifest):
         name, n = background(os.path.join(root, path), out_dir)
         table['bg'][area] = name
         report.append('배경 %s %dKB' % (area, n // 1024))
+    # 탐색 화면: 전체 맵 이미지 + 인물 걷기 스프라이트 묶음(tools/pixelart.py 결과). 도트라 무손실로 저장.
+    if m.get('map'):
+        im = Image.open(os.path.join(root, m['map'])).convert('RGBA'); name, n = save(im, out_dir, 100, True)
+        table['map'] = {'src': name, 'w': im.width, 'h': im.height}; report.append('맵 %dx%d %dKB' % (im.width, im.height, n // 1024))
+    if m.get('sprites'):
+        im = Image.open(os.path.join(root, m['sprites'])).convert('RGBA'); name, n = save(im, out_dir, 100, True)
+        meta = json.load(open(os.path.join(root, m['sprites_meta']), encoding='utf-8'))
+        table['sprites'] = {'src': name, 'w': im.width, 'h': im.height, 'ids': meta['ids'], 'cw': meta['cw'], 'ch': meta['ch']}
+        report.append('스프라이트 %d명 %dKB' % (len(meta['ids']), n // 1024))
     with open(os.path.join(root, m['table']), 'w', encoding='utf-8') as f:
         json.dump(table, f, ensure_ascii=False, indent=1)
-    used = {c['src'] for c in table['chars'].values()} | {f['src'] for c in table['chars'].values() for f in c['faces'].values()} | set(table['bg'].values())
+    used = {c['src'] for c in table['chars'].values()} | {f['src'] for c in table['chars'].values() for f in c['faces'].values()} | set(table['bg'].values()) | {table[k]['src'] for k in ('map', 'sprites') if k in table}
     for name in os.listdir(out_dir):            # 표에서 빠진 옛 파일 정리
         if name.endswith('.webp') and name not in used:
             os.remove(os.path.join(out_dir, name))

@@ -3,8 +3,9 @@ import sys, json, re
 from playwright.sync_api import sync_playwright
 html = 'file://' + sys.argv[1]; out = sys.argv[2]; R = {}; errors = []
 def tile_xy(pg, x, y):
-    return pg.evaluate('''([x,y]) => { const s=document.querySelector('svg.tr-map'); const [cx,cy]=s.getAttribute('viewBox').split(' ').map(Number); const r=s.getBoundingClientRect();
-      return [r.left+((x+.5)*36-cx)*r.width/360, r.top+((y+.5)*36-cy)*r.height/540]; }''', [x, y])
+    # v0.6 탐색 화면: HTML 월드 레이어(translate 카메라) 기준 좌표
+    return pg.evaluate('''([x,y]) => { const m=document.querySelector('.tr-map'), w=document.querySelector('.tr-world'); const r=m.getBoundingClientRect();
+      const t=new DOMMatrix(getComputedStyle(w).transform), s=r.width/360; return [r.left+((x+.5)*36+t.e)*s, r.top+((y+.5)*36+t.f)*s]; }''', [x, y])
 def imgs(pg):
     return pg.evaluate("[...document.querySelectorAll('.tr-talk img')].map(i=>[i.src.split('/').pop(), i.naturalWidth>0])")
 def finish_typing(pg):
@@ -14,7 +15,8 @@ with sync_playwright() as p:
     pg = b.new_page(viewport={'width': 393, 'height': 852}, device_scale_factor=2)
     pg.on('pageerror', lambda e: errors.append(str(e)))
     pg.goto(html); pg.wait_for_timeout(400)
-    pg.mouse.click(*tile_xy(pg, 8, 12)); pg.wait_for_timeout(150)
+    pg.mouse.click(*tile_xy(pg, 8, 11)); pg.wait_for_timeout(150)
+    pg.locator('.tr-card').screenshot(path=out + '/v6_05_menu_headtap.png')
     pg.get_by_role('button', name='대화', exact=True).click()
     pg.fill('textarea.tr-ta', '안녕하세요'); pg.get_by_role('button', name='보내기').click(); pg.wait_for_timeout(150)
     sent = pg.evaluate('window.__lastSent'); code = re.search(r's=([A-Za-z0-9_-]+)', sent).group(1)

@@ -31,6 +31,31 @@ function trFace(c, expr) {
   return c.def || '';
 }
 
+const TR_STEP_MS = 180;
+// 탐색 화면 인물: 스프라이트 묶음(6칸: 하·하걷기·상·상걷기·좌·좌걷기)에서 방향·걸음에 맞는 칸을 고른다.
+function trCharSprite(c, animRef, movedRef, sel, bad) {
+  const now = Date.now(), A = animRef.current;
+  const a = A[c.id] || (A[c.id] = { x: c.x, y: c.y, dir: 'down', step: 0, at: 0 });
+  if (a.x !== c.x || a.y !== c.y) {
+    const dx = c.x - a.x, dy = c.y - a.y;
+    a.dir = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+    a.step++; a.at = now; a.x = c.x; a.y = c.y; movedRef.current = true;
+  }
+  const walking = now - a.at < TR_STEP_MS, sp = TR_A.sprites, row = sp ? sp.ids.indexOf(c.id) : -1;
+  const df = c.n ? trNpc(c.id) : { name: '나', color: '#f6dfab', symbol: '나' };
+  const pos = { transform: `translate(${c.x * TR_CELL}px,${c.y * TR_CELL}px)` };
+  const tag = c.n ? <div className="tr-tag" style={{ borderColor: df.color }}>{df.name}{c.n.mode === 'accompany' ? ' ★' : ''}</div> : null;
+  if (!sp || row < 0 || bad[trUrl(sp.src)]) return <div key={c.id} className="tr-ch" style={pos}>
+    <div className="tr-tok" style={{ background: df.color, outline: sel ? '2px dashed #f0d29a' : 'none' }}>{df.symbol}</div>{tag}</div>;
+  let col, flip = false;
+  if (a.dir === 'down' || a.dir === 'up') { const b = a.dir === 'down' ? 0 : 2; col = walking ? b + 1 : b; flip = walking && a.step % 2 === 0; }
+  else { col = walking && a.step % 2 ? 5 : 4; flip = a.dir === 'right'; }
+  return <div key={c.id} className="tr-ch" style={pos}>
+    <div className={'tr-shadow' + (sel ? ' sel' : '')} />
+    <div className="tr-px" style={{ position: 'absolute', left: (TR_CELL - sp.cw) / 2, bottom: 2, width: sp.cw, height: sp.ch, backgroundImage: `url(${trUrl(sp.src)})`, backgroundSize: `${sp.w}px ${sp.h}px`, backgroundPosition: `${-col * sp.cw}px ${-row * sp.ch}px`, transform: flip ? 'scaleX(-1)' : 'none' }} />
+    {tag}</div>;
+}
+
 // 인물 레이어: 몸(기본 표정 포함) 위에 표정 조각을 같은 비율 좌표로 겹친다. 화면 아래 가운데 정렬.
 function trSprite(c, face, onBad, bad) {
   const H = 528, W = Math.round(H * c.w / c.h), f = face && face !== c.def && (c.faces || {})[face];
@@ -82,6 +107,10 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
   const [scale, setScale] = useState(1);
   const [badImg, setBadImg] = useState({}); // 불러오지 못한 그림은 임시 그림으로 대체
   const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null), farRef = useRef([0, 0]);
+  // 걷기 연출: 인물별 직전 칸·방향·걸음 수. 칸이 바뀌면 그쪽을 보고 한 걸음 걷는다(우는 좌 그림을 뒤집음).
+  const animRef = useRef({}), movedRef = useRef(false);
+  const [, setTick] = useState(0);
+  useEffect(() => { if (!movedRef.current) return; movedRef.current = false; const id = setTimeout(() => setTick(v => v + 1), TR_STEP_MS + 30); return () => clearTimeout(id); });
 
   useEffect(() => {
     // 높이 기준은 화면(screen) 크기로 잡는다. UUMMAI는 컴포넌트를 내용 높이에 맞춘 iframe에 넣으므로
@@ -145,9 +174,10 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
     if (busy) return;
     const r = svgRef.current.getBoundingClientRect();
     const x = Math.floor((camX + (e.clientX - r.left) * TR_W / r.width) / TR_CELL), y = Math.floor((camY + (e.clientY - r.top) * TR_H / r.height) / TR_CELL);
-    const who = state.npcs.find(n => n.x === x && n.y === y && (debug || trVisible(state, n)));
+    // 인물 그림은 1.5칸 높이라 머리 쪽(한 칸 위)을 눌러도 그 인물로 본다.
+    const who = state.npcs.find(n => n.x === x && (n.y === y || n.y === y + 1) && (debug || trVisible(state, n)));
     if (who) { setPreview(null); setMenu({ kind: 'npc', id: who.id }); return; }
-    const lm = TN_WORLD.map.landmarks.find(l => l.x === x && l.y === y && TroemereiNPC.areaOf(TN_WORLD, x, y) === area);
+    const lm = TN_WORLD.map.landmarks.find(l => (l.x === x && l.y === y || (l.hit || []).some(h => h[0] === x && h[1] === y)) && TroemereiNPC.areaOf(TN_WORLD, l.x, l.y) === area);
     if (lm) { setPreview(null); setMenu({ kind: 'lm', id: lm.id }); return; }
     setMenu(null);
     if (!TroemereiNPC.walkable(TN_WORLD, x, y)) { setPreview(null); return; }
@@ -273,21 +303,24 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
   const recent = state.logs.filter(e => e.visible && e.type === 'world').slice(-1)[0];
   return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
     <div className="tr-card" style={{ transform: `scale(${scale})` }}>
-      <svg ref={svgRef} className="tr-map" viewBox={`${camX} ${camY} ${TR_W} ${TR_H}`} onClick={tapMap}>
-        {trStaticLayer()}
-        {TN_WORLD.map.areas.map((a, i) => i === area && !debug ? null : <rect key={'f' + i} x={a.x0 * TR_CELL} y={a.y0 * TR_CELL} width={(a.x1 - a.x0 + 1) * TR_CELL} height={(a.y1 - a.y0 + 1) * TR_CELL} fill="#050b14" opacity={debug ? .35 : .82} pointerEvents="none" />)}
-        {preview ? <polyline points={[p, ...preview.path].map(q => `${(q.x + .5) * TR_CELL},${(q.y + .5) * TR_CELL}`).join(' ')} fill="none" stroke="#f2d99e" strokeWidth="3" strokeDasharray="5 4" pointerEvents="none" /> : null}
-        {p.route.length ? <polyline points={[p, ...p.route].map(q => `${(q.x + .5) * TR_CELL},${(q.y + .5) * TR_CELL}`).join(' ')} fill="none" stroke="#f2d99e" strokeWidth="3" pointerEvents="none" /> : null}
-        {vis.map(n => { const df = trNpc(n.id), cx = (n.x + .5) * TR_CELL, cy = (n.y + .5) * TR_CELL; return <g key={n.id} pointerEvents="none">
-          {menu && menu.id === n.id ? <circle cx={cx} cy={cy} r="18" fill="none" stroke="#f0d29a" strokeWidth="2" strokeDasharray="4 3" /> : null}
-          <circle cx={cx} cy={cy} r="14" fill={df.color} stroke="#f4efdf" strokeWidth="1.6" /><text x={cx} y={cy + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#14212c">{df.symbol}</text>
-          {n.mode === 'accompany' ? <circle cx={cx + 11} cy={cy - 11} r="4" fill="#f7d47c" /> : null}</g>; })}
-        <g pointerEvents="none"><circle cx={(p.x + .5) * TR_CELL} cy={(p.y + .5) * TR_CELL} r="15" fill="#f6dfab" stroke="#1b2a39" strokeWidth="3" /><text x={(p.x + .5) * TR_CELL} y={(p.y + .5) * TR_CELL + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#1b2a39">나</text></g>
-      </svg>
-      <div className="tr-hud"><span className="tr-pill">{trArea(p.x, p.y)}</span><span className="tr-pill tr-time">{state.day}일 {TroemereiNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
-        <button onClick={() => setSheet('clue')}>노트</button><button onClick={() => setSheet('set')}>≡</button></div>
+      <div ref={svgRef} className="tr-map" onClick={tapMap}>
+        <div className="tr-world" style={{ width: TN_WORLD.map.width * TR_CELL, height: TN_WORLD.map.height * TR_CELL, transform: `translate(${-camX}px,${-camY}px)` }}>
+          {TR_A.map && !badImg[trUrl(TR_A.map.src)] ? <img className="tr-px" src={trUrl(TR_A.map.src)} alt="" onError={() => setBadImg(v => ({ ...v, [trUrl(TR_A.map.src)]: true }))} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} />
+            : <svg style={{ position: 'absolute', inset: 0 }} width="100%" height="100%">{trStaticLayer()}</svg>}
+          {TN_WORLD.map.areas.map((a, i) => i === area && !debug ? null : <div key={'f' + i} className="tr-fog" style={{ left: a.x0 * TR_CELL, top: a.y0 * TR_CELL - 18, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL + 18, opacity: debug ? .3 : .74 }} />)}
+          <svg style={{ position: 'absolute', inset: 0, overflow: 'visible' }} width="100%" height="100%" pointerEvents="none">
+            {(preview ? preview.path : p.route).map((q, i) => <circle key={i} cx={(q.x + .5) * TR_CELL} cy={(q.y + .5) * TR_CELL} r={i === (preview ? preview.path : p.route).length - 1 ? 7 : 3.5} fill={preview ? '#f6e3b4' : '#f2c46d'} opacity={preview ? .9 : .75} stroke="#3a2a14" strokeWidth="1" />)}
+            {ml ? [[ml.x, ml.y], ...(ml.hit || [])].map(([hx, hy], i) => <rect key={i} x={hx * TR_CELL + 2} y={hy * TR_CELL + 2} width={TR_CELL - 4} height={TR_CELL - 4} rx="6" fill="none" stroke="#f6d48a" strokeWidth="2" strokeDasharray={i ? '4 3' : ''} />) : null}
+          </svg>
+          {[...vis.map(n => ({ id: n.id, x: n.x, y: n.y, n })), { id: 'player', x: p.x, y: p.y, n: null }].sort((a, b) => a.y - b.y).map(c => trCharSprite(c, animRef, movedRef, menu && menu.id === c.id, badImg))}
+        </div>
+      </div>
+      <div className="tr-hud"><span className="tr-pill tr-area"><i />{trArea(p.x, p.y)}</span><span className="tr-pill tr-time">{state.day}일 {TroemereiNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
+        <button className="tr-hbtn" onClick={() => setSheet('clue')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>
       <div className="tr-toast">{toast || (recent ? trHM(recent.time) + ' ' + recent.text : '인물·물건을 누르면 행동을 고를 수 있다')}</div>
-      {[[0, -1, 41, 436, '↑'], [-1, 0, 6, 471, '←'], [1, 0, 76, 471, '→'], [0, 1, 41, 506, '↓']].map(([dx, dy, x, y, k]) => <button key={k} className="tr-pad" style={{ left: x, top: y - 5 }} disabled={busy} onPointerDown={e => { e.preventDefault(); padDown(dx, dy); }} onPointerUp={padUp} onPointerLeave={padUp} onPointerCancel={padUp}>{k}</button>)}
+      <div className="tr-padbase" />
+      {[[0, -1, 38, 425, 0], [-1, 0, 4, 459, 270], [1, 0, 72, 459, 90], [0, 1, 38, 493, 180]].map(([dx, dy, x, y, r]) => <button key={r} className="tr-pad" style={{ left: x, top: y }} disabled={busy} onPointerDown={e => { e.preventDefault(); padDown(dx, dy); }} onPointerUp={padUp} onPointerLeave={padUp} onPointerCancel={padUp}>
+        <svg width="14" height="14" viewBox="0 0 14 14" style={{ transform: `rotate(${r}deg)` }}><path d="M7 2 L12.5 11 L1.5 11 Z" fill="currentColor" /></svg></button>)}
       {preview && !menu ? <div className="tr-preview" onClick={() => setPreview(null)}>{preview.path.length}칸 · {preview.sec}초 걸림 — 같은 칸을 한 번 더 누르면 출발</div> : null}
       {mn ? <div className="tr-menu"><div className="tr-menu-h"><b>{trNpc(mn.id).name}</b><span>{dist}칸 · {TR_IMP[mn.mode]}</span></div>
         <div className="tr-menu-g">
