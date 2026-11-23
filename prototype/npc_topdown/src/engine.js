@@ -25,10 +25,25 @@ const TroemereiNPC = (() => {
   function witness(w,s,actor,factId,direct){
     for(const id of direct){const m=node(s,id);if(m)learn(m,factId,0,s.clock);}
     for(const o of s.npcs)if(!direct.includes(o.id)&&sees(w,o,actor))learn(o,factId,1,s.clock);
-    if(sees(w,s.player,actor))learn(s.player,factId,1,s.clock);
+    if(sees(w,s.player,actor)){learn(s.player,factId,1,s.clock);checkScenes(w,s);}
   }
   function updateSeen(w,s){
     for(const n of s.npcs)if(sees(w,s.player,n))s.player.seen[n.id]=[areaOf(w,n.x,n.y),s.clock];
+    checkScenes(w,s);
+  }
+  // 목격 장면(앨범): 정해 둔 장면만 해금한다(목격 기록을 글로 쌓지 않는다).
+  //  fact: 플레이어가 그 사실을 직접 보거나 겪었을 때(증언으로 들은 건 제외)
+  //  npc+area(+from/to): 그 인물이 그 방에 있는 걸 그 시간대에 봤을 때
+  function checkScenes(w,s){
+    if(!w.scenes)return;const p=s.player;if(!p.scenes)p.scenes={};
+    for(const sc of w.scenes){
+      if(p.scenes[sc.id]!==undefined)continue;
+      let ok=false;
+      if(sc.fact)ok=(p.mem||[]).some(m=>m[0]===sc.fact&&m[1]<=1);
+      else if(sc.npc){const n=node(s,sc.npc),tod=s.clock%DAY;
+        ok=!!n&&sees(w,p,n)&&(!sc.area||(w.map.areas[areaOf(w,n.x,n.y)]||{}).name===sc.area)&&(!sc.from||tod>=absTime(sc.from))&&(!sc.to||tod<absTime(sc.to));}
+      if(ok)p.scenes[sc.id]=s.clock;
+    }
   }
   // 로그 공개는 시야 판정(sees)과 같은 기준을 쓴다.
   function addLog(w,s,text,type='world',at=null) {
@@ -38,7 +53,7 @@ const TroemereiNPC = (() => {
   }
   function createWorld(w,seed=246813579){
     const s={schema:'TROEMEREI_NPC_V1',version:1,worldId:w.map.id,day:1,clock:9*3600,
-      rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{},items:{}},
+      rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{},items:{},talked:{},scenes:{}},
       npcs:w.npcs.map((n,i)=>({id:n.id,x:n.x,y:n.y,mode:'idle',intent:null,route:[],
         nextMoveAt:9*3600+10+i*4,busyUntil:0,blockedSince:null,completed:[],
         excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:[]})),
@@ -369,6 +384,7 @@ const TroemereiNPC = (() => {
       const n=node(s,action.npcId);
       if(!n||manhattan(player,n)>1){addLog(w,s,'대화하려면 인물에게 접근해야 한다.','player');return s;}
       if(n.mode==='busy'){addLog(w,s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
+      if(!player.talked)player.talked={};player.talked[n.id]=s.clock;
       s.pend=n.id;s.pk=action.kind||'T';s.pc=Math.max(0,Math.min(2000,action.chars|0));player.route=[];player.nextMoveAt=0;
     }else if(action.type==='WAIT')return advance(w,s,action.seconds||60);
     else if(action.type==='SEARCH'){
@@ -383,12 +399,19 @@ const TroemereiNPC = (() => {
       for(const it of found)s.player.items[it.id]=s.clock;
       addLog(w,s,found.length?l.name+'에서 '+josa(found.map(i=>i.name).join(', '),'을','를')+' 찾았다.':l.name+' 주변을 뒤졌지만 아무것도 없었다.','player');
       return s;
-    }else if(action.type==='GO_HOME'){
-      // 객실로 귀환: 꿈(노멀 루트)에서만. 현실(진엔딩)에서는 쓸 수 없다.
-      if(s.flags[w.realityFlag||'true_route']){addLog(w,s,'지금은 쓸 수 없다.','player');return s;}
-      const h=w.player.home||w.player;player.x=h.x;player.y=h.y;player.route=[];player.nextMoveAt=0;
-      for(const n of s.npcs.filter(n=>n.mode==='accompany')){n.mode='idle';n.nextMoveAt=s.clock+5;}
-      addLog(w,s,'눈을 감았다 뜨니 객실이었다.','player');
+    }else if(action.type==='UNSTUCK'){
+      // 끼임 탈출: 지금 칸에서 한 칸도 못 움직일 때만, 가장 가까운 '빠져나갈 수 있는 빈칸'으로 옮긴다(시간 0).
+      const occ=new Set(s.npcs.filter(n=>n.mode!=='accompany').map(n=>posKey(n.x,n.y)));
+      const free=(x,y)=>walkable(w,x,y)&&!occ.has(posKey(x,y));
+      const D4=[[1,0],[-1,0],[0,1],[0,-1]];
+      const canMove=(x,y)=>D4.some(([dx,dy])=>free(x+dx,y+dy));
+      if(walkable(w,player.x,player.y)&&canMove(player.x,player.y)){addLog(w,s,'막혀 있지 않다.','player');return s;}
+      const q=[[player.x,player.y]],seen=new Set([posKey(player.x,player.y)]);let to=null;
+      for(let i=0;i<q.length&&!to;i++){const [x,y]=q[i];
+        for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy,k=posKey(nx,ny);if(!inBounds(w,nx,ny)||seen.has(k))continue;seen.add(k);
+          if(free(nx,ny)&&canMove(nx,ny)){to={x:nx,y:ny};break;}q.push([nx,ny]);}}
+      if(!to){addLog(w,s,'빠져나갈 곳이 없다.','player');return s;}
+      player.x=to.x;player.y=to.y;player.route=[];player.nextMoveAt=0;addLog(w,s,'끼인 곳에서 빠져나왔다.','player');
     }
     else if(action.type==='CLEAR_ROUTE'){s.player.route=[];s.player.nextMoveAt=0;addLog(w,s,'이동을 멈췄다.','player');}
     s.revision++;return s;

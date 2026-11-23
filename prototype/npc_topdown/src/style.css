@@ -59,3 +59,17 @@
 .tr-card .tr-grid button{height:26px;font-size:12px;padding:0}.tr-card .tr-grid .on{background:#6b4f26;border-color:#e2bb73}
 .tr-prev{border:1px dashed #e9c98c66;border-radius:8px;padding:6px 8px;font-size:12px}
 .tr-lock{height:40px;display:grid;place-items:center;background:#000;color:#555;border-radius:7px;font-size:12px;letter-spacing:.05em}
+
+.tr-cards{display:grid;gap:6px;padding-top:4px}
+.tr-card .tr-card2{display:flex;gap:8px;align-items:center;padding:4px;text-align:left;background:#f3ead6;color:#3a2a14;border:1px solid #c9a86c;border-radius:9px;line-height:17px;font-size:13px;overflow:hidden}
+.tr-card2 b{color:#8a3b2b}.tr-mut2{font-size:11px;color:#7a5a30;line-height:15px}
+.tr-nb-detail{display:grid;gap:6px;padding-top:2px}
+.tr-card .tr-back{height:26px;justify-self:start;font-size:12px}
+.tr-slips{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tr-slip{background:#f3ead6;color:#3a2a14;border-radius:4px;padding:7px 8px;font-size:12px;line-height:17px;box-shadow:0 2px 4px #0007;border-top:3px solid #d9a441}
+.tr-slip.lock{background:#2a3240;color:#8fa0b3;border-top-color:#4a5566;text-align:center}.tr-slip.lock b{display:block;letter-spacing:.2em}
+.tr-grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tr-card .tr-scene{padding:0;overflow:hidden;border-radius:8px;display:flex;flex-direction:column;background:#f3ead6;color:#3a2a14;border:1px solid #c9a86c}
+.tr-scene span{font-size:11px;padding:3px 5px;line-height:14px;text-align:left}
+.tr-scene.lock{height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:8px;background:repeating-linear-gradient(45deg,#2a3240 0 8px,#26303d 8px 16px);color:#8fa0b3;border:1px dashed #4a5566}
+.tr-scene.lock b{letter-spacing:.2em}

@@ -5,7 +5,7 @@ const TroemereiCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 4;
+  const VERSION = 5;
   const KINDS = ['', 'T', 'I', 'A', 'P'];
 
   function hash32(text) { let h = 0x811c9dc5; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
@@ -14,7 +14,7 @@ const TroemereiCodec = (() => {
   function fingerprint(w) {
     return hash32(JSON.stringify({ id: w.map.id, v: w.version || 1, rows: w.map.rows, areas: w.map.areas, lm: w.map.landmarks.map(l => [l.id, l.x, l.y]),
       npcs: w.npcs.map(n => [n.id, n.agenda]), rules: w.onComplete || [], facts: (w.facts || []).map(f => f.id), flags: w.flagNames || [],
-      items: (w.items || []).map(i => [i.id, i.at, i.from || '', i.flag || '']), speed: [w.player.moveSeconds, ...w.npcs.map(n => n.stepSeconds || 0)] }));
+      items: (w.items || []).map(i => [i.id, i.at, i.from || '', i.flag || '']), scenes: (w.scenes || []).map(x => x.id), speed: [w.player.moveSeconds, ...w.npcs.map(n => n.stepSeconds || 0)] }));
   }
   function taskTable(w) {
     const list = [];
@@ -100,6 +100,8 @@ const TroemereiCodec = (() => {
     o.byte(s.player.x); o.byte(s.player.y); putRoute(o, s.player, s.player.route); putTime(o, s.player.route.length ? s.player.nextMoveAt : 0, clock);
     putMem(o, s.player.mem, m, clock);
     for (const it of w.items || []) { const v = (s.player.items || {})[it.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 0 = 아직 안 가짐
+    for (const sc of w.scenes || []) { const v = (s.player.scenes || {})[sc.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 목격 장면 해금 시각
+    let tk = 0; w.npcs.forEach((n, i) => { if ((s.player.talked || {})[n.id] !== undefined) tk |= 1 << i; }); o.uint(tk); // 말 걸어 본 인물
     for (const spec of w.npcs) { const v = (s.player.seen || {})[spec.id]; if (!v) o.uint(0); else { o.uint(v[0] + 2); o.uint(Math.max(0, clock - v[1])); } }
     for (const spec of w.npcs) {
       const n = s.npcs.find(x => x.id === spec.id);
@@ -135,6 +137,8 @@ const TroemereiCodec = (() => {
     s.player = { x: px, y: py }; s.player.route = getRoute(r, s.player); s.player.nextMoveAt = getTime(r, clock);
     s.player.mem = getMem(r, m, clock); s.player.seen = {}; s.player.items = {};
     for (const it of w.items || []) { const v = r.uint(); if (v) s.player.items[it.id] = clock - (v - 1); }
+    s.player.scenes = {}; for (const sc of w.scenes || []) { const v = r.uint(); if (v) s.player.scenes[sc.id] = clock - (v - 1); }
+    s.player.talked = {}; const tk = r.uint(); w.npcs.forEach((n, i) => { if (tk & (1 << i)) s.player.talked[n.id] = 0; });
     for (const spec of w.npcs) { const a = r.uint(); if (a) s.player.seen[spec.id] = [a - 2, clock - r.uint()]; }
     s.npcs = w.npcs.map(() => {
       const n = { x: r.byte(), y: r.byte() };

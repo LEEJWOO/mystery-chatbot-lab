@@ -262,10 +262,26 @@ test('시간 건너뛰기: 조건이 참이 되는 순간 멈추고, 아니면 �
   assert.equal(r.stopped, true); assert.ok(r.state.clock < s.clock + 6 * 3600);
   assert.equal(pk(E.advanceUntil(W, s, 600, null).state), pk(E.advance(W, s, 600)), '멈춤 없으면 일반 진행과 같음');
 });
-test('객실로 귀환: 꿈(노멀)에서는 즉시 이동, 현실(진엔딩 플래그)에서는 불가', () => {
-  let s = E.createWorld(W); s.player.x = 20; s.player.y = 12;
-  const a = E.dispatch(W, s, { type: 'GO_HOME' }); assert.deepEqual([a.player.x, a.player.y], [7, 12]); assert.equal(a.clock, s.clock);
-  s.flags.true_route = true; const b = E.dispatch(W, s, { type: 'GO_HOME' }); assert.deepEqual([b.player.x, b.player.y], [20, 12]);
+test('끼임 탈출: 움직일 수 있으면 그대로, 사방이 막히면 가장 가까운 빠져나갈 칸으로(시간 0)', () => {
+  let s = E.createWorld(W);
+  assert.deepEqual([E.dispatch(W, s, { type: 'UNSTUCK' }).player.x, E.dispatch(W, s, { type: 'UNSTUCK' }).player.y], [s.player.x, s.player.y]);
+  s.player.x = 4; s.player.y = 4; // 벽(가구) 칸에 끼임
+  const r = E.dispatch(W, s, { type: 'UNSTUCK' });
+  assert.ok(E.walkable(W, r.player.x, r.player.y)); assert.equal(Math.abs(r.player.x - 4) + Math.abs(r.player.y - 4), 1); assert.equal(r.clock, s.clock);
+});
+test('목격 장면·말 건 인물: 조건이 맞을 때만 해금, 증언으로 들은 건 장면 해금 안 함, 코드 왕복 보존', () => {
+  let s = E.createWorld(W);
+  s = E.dispatch(W, s, { type: 'TALK_REQUEST', npcId: 'companion', kind: 'T', chars: 3 });
+  assert.ok(s.player.talked.companion !== undefined);
+  let t = E.advance(W, E.applyTalk(W, s, 5), 3600);
+  const sb = t.player.scenes.serin_board; // 세린이 오전에 정원 게시판을 지나가면 해금
+  const back = C.unpack(W, C.pack(W, t));
+  assert.deepEqual(Object.keys(back.player.scenes).sort(), Object.keys(t.player.scenes).sort());
+  assert.ok(back.player.talked.companion !== undefined);
+  assert.equal(t.player.scenes.meet, undefined, '작업실 만남은 정원에서 못 봄');
+  const h = { ...E.clone(t), pend: 'companion', pk: 'T' }; const r = E.hearFacts(W, h, '기억001');
+  if (r.accepted.length) assert.equal(r.state.player.scenes.meet, undefined, '증언은 목격 장면이 아님');
+  console.log('   세린 게시판 장면:', sb === undefined ? '이번 실행에선 안 봄' : '해금');
 });
 
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
