@@ -76,3 +76,44 @@
 
 .tr-call{position:absolute;left:116px;right:6px;bottom:6px;padding:7px 9px;background:#f6ecd6;color:#3a2a14;border:2px solid #b98c4a;border-radius:11px;box-shadow:0 4px 12px #000a;font-size:13px;line-height:18px}
 .tr-call b{color:#8a3b2b}.tr-card .tr-call button{flex:1;height:32px;background:#e9dcc0;color:#3a2a14;border-color:#b98c4a}.tr-card .tr-call .tr-callyes{background:#6b4f26;color:#f6ead2;border-color:#e2bb73}
+
+.tr-court{background:radial-gradient(ellipse at 50% 30%,#2b2340,#0d0b16 75%)}
+.tr-thead{position:absolute;left:6px;right:6px;top:6px;display:flex;align-items:center;gap:8px;padding:5px 8px;background:#120f1ee6;border:1px solid #e9c98c55;border-radius:10px;font-size:13px}
+.tr-thead>div:first-child{flex:1}.tr-thead b{color:#f2d79e}
+.tr-hp{display:flex;gap:3px}.tr-hp i{width:11px;height:11px;transform:rotate(45deg);border:1px solid #e9c98c88;background:#2a2230}.tr-hp i.on{background:linear-gradient(135deg,#ffe3a0,#d08a3a);box-shadow:0 0 6px #f2c46d}
+.tr-tbody{position:absolute;left:6px;right:6px;top:58px;bottom:6px;display:flex;flex-direction:column;justify-content:flex-end}
+.tr-tbox{display:flex;gap:8px;align-items:flex-end;padding:8px;background:#0a0813ee;border:1px solid #8a7550;border-radius:10px;min-height:140px;animation:trin .25s ease-out}
+.tr-tpor{flex:none;border-radius:8px;overflow:hidden;border:1px solid #e9c98c55}.tr-tpor.sm{align-self:flex-start}
+.tr-baku{width:92px;height:118px;display:grid;place-items:center;font-size:44px;color:#e9c98c;background:radial-gradient(#3a2f4a,#15111f)}
+.tr-ttext{font-size:14px;line-height:20px;white-space:pre-wrap}.tr-ttext.narr{color:#b9c9d6;font-style:italic}
+.tr-debate{display:grid;gap:7px}
+.tr-stmt{display:flex;gap:8px;padding:9px;background:#f3ead6;color:#3a2a14;border-radius:10px;border-left:5px solid #d9a441;box-shadow:0 4px 10px #000a;animation:trin .3s ease-out}
+.tr-stmt.rebut{border-left-color:#c0504a}
+.tr-dots{display:flex;justify-content:center;gap:6px}.tr-dots i{width:7px;height:7px;border-radius:50%;background:#4a4458}.tr-dots i.on{background:#f2c46d}
+.tr-card .tr-tbtn{flex:1;height:36px;border-radius:9px;background:#1f1a2e;border-color:#e9c98c55;font-size:13px}
+.tr-card .tr-tbtn.gold{background:#6b4f26;border-color:#e2bb73;color:#f6ead2}
+.tr-drawer{display:grid;gap:5px;max-height:190px;overflow-y:auto;animation:trin .2s ease-out}
+.tr-card .tr-evi{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 9px;text-align:left;background:#f3ead6;color:#3a2a14;border-color:#c9a86c;font-size:13px;line-height:17px}
+.tr-evi span{font-size:11px;color:#7a5a30}
+.tr-chips{display:flex;flex-wrap:wrap;gap:4px}.tr-card .tr-chips button{height:28px;font-size:12px;border-radius:999px}.tr-card .tr-chips .on{background:#6b4f26;border-color:#e2bb73}
+.tr-line2{display:grid;gap:4px}
+.tr-slot{display:flex;gap:6px;align-items:center;min-height:28px;padding:3px 8px;border:1px dashed #4a4458;border-radius:8px;font-size:12px;color:#d9d0e8}
+.tr-slot i{font-style:normal;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#2a2230;font-size:11px;flex:none}
+.tr-slot.on{border-style:solid;border-color:#9a7ad8;background:#2a2140;animation:trin .3s ease-out}.tr-slot.on i{background:#9a7ad8;color:#120f1e}
+.tr-sky{position:relative;height:190px;border-radius:12px;background:radial-gradient(#3a2f5a55,#0000)}
+.tr-card .tr-bub{position:absolute;width:44%;min-height:60px;padding:6px 8px;border-radius:30px;font-size:12px;line-height:16px;background:radial-gradient(circle at 30% 30%,#f6f0ff,#c8b6f0);color:#2a1f40;border:1px solid #fff8;box-shadow:0 0 14px #b49cf088;animation:trfloat 3.2s ease-in-out infinite}
+.tr-votes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tr-card .tr-vote{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;background:#1f1a2e;border-radius:10px;font-size:13px}
+.tr-card .tr-vote.on{border-color:#f2c46d;box-shadow:0 0 0 2px #f2c46d}
+.tr-bar{width:100%;height:6px;background:#2a2230;border-radius:3px;overflow:hidden}.tr-bar i{display:block;height:100%;background:#f2c46d;transition:width 1s ease-out}
+.tr-stamp{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-8deg);padding:8px 22px;font-size:30px;font-weight:800;color:#ffe3a0;border:4px solid #ffe3a0;border-radius:10px;background:#120f1ecc;text-shadow:0 0 12px #f2c46d;animation:trstamp .35s ease-out;pointer-events:none;white-space:nowrap}
+.tr-stamp.bad{color:#ff9a8a;border-color:#ff9a8a;text-shadow:0 0 12px #c0504a}
+.tr-rewind{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#0d0b16f0;text-align:center;padding:20px;font-size:15px;color:#e9dcff}
+.tr-rewind.fail{color:#ffb0a0}
+.tr-swirl{width:120px;height:120px;border-radius:50%;background:conic-gradient(#9a7ad8,#f2c46d,#9a7ad8);animation:trspin 1.2s linear infinite reverse;mask:radial-gradient(#0000 40%,#000 42%);-webkit-mask:radial-gradient(#0000 40%,#000 42%)}
+.shake{animation:trshake .35s}
+@keyframes trin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes trfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes trstamp{from{opacity:0;transform:translate(-50%,-50%) rotate(-8deg) scale(2)}to{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(1)}}
+@keyframes trspin{to{transform:rotate(360deg)}}
+@keyframes trshake{0%,100%{transform:none}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}

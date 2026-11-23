@@ -5,16 +5,19 @@ const TroemereiCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 5;
-  const KINDS = ['', 'T', 'I', 'A', 'P'];
+  const VERSION = 6;
+  const KINDS = ['', 'T', 'I', 'A', 'P', 'R'];
 
   function hash32(text) { let h = 0x811c9dc5; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
   const hash16 = text => { const h = hash32(text); return (h ^ (h >>> 16)) & 0xffff; };
   // 세계 지문: 맵·일정·후속 규칙·사실·플래그 정의가 하나라도 바뀌면 달라진다 → 옛 코드를 조용히 잘못 읽지 않는다.
+  // 세계 지문: 상태 해석·판정에 영향을 주는 규칙은 전부 넣는다(설명 문구·그림은 제외). dataVersion을 올려도 거부된다.
   function fingerprint(w) {
-    return hash32(JSON.stringify({ id: w.map.id, v: w.version || 1, rows: w.map.rows, areas: w.map.areas, lm: w.map.landmarks.map(l => [l.id, l.x, l.y]),
-      npcs: w.npcs.map(n => [n.id, n.agenda]), rules: w.onComplete || [], facts: (w.facts || []).map(f => f.id), flags: w.flagNames || [],
-      items: (w.items || []).map(i => [i.id, i.at, i.from || '', i.flag || '']), scenes: (w.scenes || []).map(x => x.id), speed: [w.player.moveSeconds, ...w.npcs.map(n => n.stepSeconds || 0)] }));
+    const strip = o => JSON.parse(JSON.stringify(o, (k, v) => ['desc', 'text', 'caption', 'title', 'profile', 'notes', 'self', 'seen', 'player', 'log', 'publicLog', 'name', 'color', 'symbol', 'icon', 'img'].includes(k) ? undefined : v));
+    return hash32(JSON.stringify(strip({ id: w.map.id, v: w.version || 1, dv: w.dataVersion || 0, rows: w.map.rows, areas: w.map.areas.map(a => [a.x0, a.y0, a.x1, a.y1]),
+      lm: w.map.landmarks, props: w.map.props || [], npcs: w.npcs, rules: w.onComplete || [], pl: w.player, facts: (w.facts || []).map(f => [f.id, f.code]),
+      flags: w.flagNames || [], items: w.items || [], scenes: w.scenes || [], events: w.events || {}, branches: w.branches || [], notices: (w.notices || []).map(n => n.time),
+      slots: w.slots || [], markers: w.markers || [], trials: w.trials || [], chapter: w.chapter || 1, search: w.searchSeconds || 0 })));
   }
   function taskTable(w) {
     const list = [];
@@ -102,6 +105,7 @@ const TroemereiCodec = (() => {
     for (const it of w.items || []) { const v = (s.player.items || {})[it.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 0 = 아직 안 가짐
     for (const sc of w.scenes || []) { const v = (s.player.scenes || {})[sc.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 목격 장면 해금 시각
     let tk = 0; w.npcs.forEach((n, i) => { if ((s.player.talked || {})[n.id] !== undefined) tk |= 1 << i; }); o.uint(tk); // 말 걸어 본 인물
+    if (s.trial) { o.uint(s.trial.i + 1); o.uint(s.trial.phase); o.uint(s.trial.hp); o.uint(s.trial.sub); o.uint(s.trial.failed ? 1 : 0); } else o.uint(0); // 재판 진행
     for (const spec of w.npcs) { const v = (s.player.seen || {})[spec.id]; if (!v) o.uint(0); else { o.uint(v[0] + 2); o.uint(Math.max(0, clock - v[1])); } }
     for (const spec of w.npcs) {
       const n = s.npcs.find(x => x.id === spec.id);
@@ -139,6 +143,8 @@ const TroemereiCodec = (() => {
     for (const it of w.items || []) { const v = r.uint(); if (v) s.player.items[it.id] = clock - (v - 1); }
     s.player.scenes = {}; for (const sc of w.scenes || []) { const v = r.uint(); if (v) s.player.scenes[sc.id] = clock - (v - 1); }
     s.player.talked = {}; const tk = r.uint(); w.npcs.forEach((n, i) => { if (tk & (1 << i)) s.player.talked[n.id] = 0; });
+    const ti = r.uint(); s.trial = ti ? { i: ti - 1, phase: r.uint(), hp: r.uint(), sub: r.uint(), failed: r.uint() } : null;
+    if (s.trial && !(w.trials || [])[s.trial.i]) throw Error('상태 코드의 재판 번호가 세계 데이터에 없습니다');
     for (const spec of w.npcs) { const a = r.uint(); if (a) s.player.seen[spec.id] = [a - 2, clock - r.uint()]; }
     s.npcs = w.npcs.map(() => {
       const n = { x: r.byte(), y: r.byte() };

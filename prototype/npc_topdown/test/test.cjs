@@ -219,15 +219,16 @@ test('증언(k): 대상이 아는 기억만 「들음」 단서로 기록, 모�
   s.player.x = c.x; s.player.y = c.y + 1; if (!E.walkable(W, s.player.x, s.player.y)) { s.player.x = c.x + 1; s.player.y = c.y; }
   s = E.dispatch(W, s, { type: 'TALK_REQUEST', npcId: 'companion', kind: 'T', chars: 5 });
   assert.equal(s.pend, 'companion');
-  assert.equal(E.factCode(W, 'met_doyun'), '기억001');
-  const r = E.hearFacts(W, s, '기억001,기억002, 9');
-  assert.deepEqual(r.accepted, [1]);
-  assert.deepEqual(r.rejected.map(x => x[0]), [2, 9]);
+  assert.equal(E.factCode(W, 'met_doyun'), '기억K3R8');
+  const r = E.hearFacts(W, s, '기억K3R8@2,기억T9M2, 기억ZZZZ');
+  assert.deepEqual(r.accepted, ['K3R8']);
+  assert.deepEqual(r.rejected.map(x => x[0]), ['T9M2', 'ZZZZ']);
+  assert.deepEqual(E.parseK('기억K3R8@2,기억P4X6'), [{ code: 'K3R8', line: 2 }, { code: 'P4X6', line: 0 }]);
   const heard = r.state.player.mem.find(m => m[0] === 'met_doyun');
   assert.equal(heard[1], 2 + W.npcs.findIndex(n => n.id === 'companion'), '역할 = 2 + 말한 인물 번호');
   const back = C.unpack(W, C.pack(W, r.state));
   assert.deepEqual(back.player.mem.map(m => m.slice(0, 2)), r.state.player.mem.map(m => m.slice(0, 2)));
-  assert.equal(E.hearFacts(W, E.createWorld(W), '기억001').accepted.length, 0, '대화 상대가 없으면 거부');
+  assert.equal(E.hearFacts(W, E.createWorld(W), '기억K3R8').accepted.length, 0, '대화 상대가 없으면 거부');
 });
 test('사건 코드: 끼어들기(I)도 일반 대화(T)와 같이 인정, 자유 행동(P)은 거부', () => {
   let s = E.createWorld(W);
@@ -279,7 +280,7 @@ test('목격 장면·말 건 인물: 조건이 맞을 때만 해금, 증언으�
   assert.deepEqual(Object.keys(back.player.scenes).sort(), Object.keys(t.player.scenes).sort());
   assert.ok(back.player.talked.companion !== undefined);
   assert.equal(t.player.scenes.meet, undefined, '작업실 만남은 정원에서 못 봄');
-  const h = { ...E.clone(t), pend: 'companion', pk: 'T' }; const r = E.hearFacts(W, h, '기억001');
+  const h = { ...E.clone(t), pend: 'companion', pk: 'T' }; const r = E.hearFacts(W, h, '기억K3R8');
   if (r.accepted.length) assert.equal(r.state.player.scenes.meet, undefined, '증언은 목격 장면이 아님');
   console.log('   세린 게시판 장면:', sb === undefined ? '이번 실행에선 안 봄' : '해금');
 });
@@ -294,6 +295,38 @@ test('먼저 말 걸기: 정해진 시간에 플레이어를 찾아와 곁에서
   assert.ok(no.npcs.find(n => n.id === 'courier').completed.includes('call_player'), '한 번만');
   const wait = E.advance(W, s, 200); assert.equal(E.caller(W, wait), null, '기다리다 돌아감');
   const back = C.unpack(W, C.pack(W, s)); assert.ok(E.caller(W, back), '상태 코드 왕복 후에도 기다리는 중');
+});
+test('시선: 같은 방·6칸 안이어도 키 큰 가구(책장 등)에 가리면 안 보이고, 낮은 가구는 가리지 않음', () => {
+  // 자료실 책장(6~7,3) 위아래
+  assert.equal(E.lineOfSight(W, { x: 6, y: 2 }, { x: 6, y: 5 }), false, '책장이 가림');
+  assert.equal(E.lineOfSight(W, { x: 4, y: 3 }, { x: 4, y: 6 }) , true, '낮은 탁자(4,4)는 안 가림');
+  assert.equal(E.sees(W, { x: 6, y: 2 }, { x: 6, y: 5 }), false);
+});
+test('세계 지문: 공지·사건·갈래·장면 조건이 바뀌면 이전 코드 거부, 설명 문구만 바뀌면 허용', () => {
+  const code = pk(E.createWorld(W));
+  const mut = f => { const w2 = JSON.parse(JSON.stringify(W)); f(w2); try { C.unpack(w2, code); return '허용'; } catch (e) { return '거부'; } };
+  assert.equal(mut(w => { w.notices[0].time = '12:30'; }), '거부');
+  assert.equal(mut(w => { w.events.TRUE.flag = 'delivery_done'; }), '거부');
+  assert.equal(mut(w => { w.branches[0].letter = 'C'; }), '거부');
+  assert.equal(mut(w => { w.scenes[1].radius = 3; }), '거부');
+  assert.equal(mut(w => { w.dataVersion = 2; }), '거부');
+  assert.equal(mut(w => { w.items[0].desc = '다른 설명'; }), '허용');
+  assert.equal(mut(w => { w.npcs[0].notes[0].text = '다른 메모'; }), '허용');
+});
+test('재판: 시작·단계 진행·체력·되감기(꿈)·실패(현실)·AI 반론 사건 코드는 그 단계에서만, 코드 왕복', () => {
+  let s = E.startTrial(W, E.createWorld(W), 'T1');
+  assert.deepEqual([s.trial.phase, s.trial.hp], [0, 5]); assert.ok(s.player.items.memo_copy !== undefined, '재판 자료 지급');
+  assert.ok(E.markers(W, s).includes('#재판T1'));
+  s = E.trialStep(W, s, 'NEXT'); s = E.trialStep(W, s, 'NEXT'); s = E.trialStep(W, s, 'NEXT'); assert.equal(s.trial.phase, 3);
+  const back = C.unpack(W, C.pack(W, s)); assert.deepEqual(back.trial, { i: 0, phase: 3, hp: 5, sub: 0, failed: 0 });
+  const r = { ...E.clone(s), pend: 'librarian', pk: 'R' };
+  assert.equal(E.applyEvent(W, r, 'T1_R1').state.trial.phase, 4, '반론 성공 → 다음 단계');
+  const early = { ...E.clone(E.trialStep(W, E.startTrial(W, E.createWorld(W), 'T1'), 'NEXT')), pend: 'librarian', pk: 'R' };
+  assert.equal(E.applyEvent(W, early, 'T1_R1').accepted, false, '다른 단계에서는 무효');
+  let h = s; for (let i = 0; i < 4; i++) h = E.trialHit(W, h).state;
+  const rw = E.trialHit(W, h); assert.equal(rw.result, 'rewind'); assert.equal(rw.state.trial.hp, 5); assert.equal(rw.state.trial.phase, 3);
+  h.flags.true_route = true; assert.equal(E.trialHit(W, h).result, 'fail', '진엔딩은 되감기 없음');
+  let e = s; for (let i = 0; i < 4; i++) e = E.trialStep(W, e, 'NEXT'); assert.equal(e.trial, null); assert.equal(e.flags.trial_memo_done, true);
 });
 
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }

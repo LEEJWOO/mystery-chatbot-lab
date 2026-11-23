@@ -15,7 +15,21 @@ const TroemereiNPC = (() => {
   const josa=(w,a,b)=>{const c=String(w).charCodeAt(String(w).length-1)-0xac00;return w+(c>=0&&c<11172&&c%28?a:b);};
   // 방 번호(-1은 통로). 같은 방이고 6칸 이내면 서로 보인다(통로끼리는 3칸).
   function areaOf(w,x,y){return w.map.areas.findIndex(a=>x>=a.x0&&x<=a.x1&&y>=a.y0&&y<=a.y1);}
-  function sees(w,a,b){const ra=areaOf(w,a.x,a.y),rb=areaOf(w,b.x,b.y);if(ra!==rb)return false;return manhattan(a,b)<=(ra<0?3:6);}
+  // 시선을 막는 칸: 벽과 키 큰 가구('#'). 낮은 가구(low: 책상·벤치·상자·분수 등)는 막지 않는다.
+  const blockCache=new WeakMap();
+  function blockers(w){
+    let b=blockCache.get(w);if(b)return b;
+    const low=new Set();for(const p of w.map.props||[])if(p.low)for(let y=p.y;y<p.y+p.h;y++)for(let x=p.x;x<p.x+p.w;x++)low.add(posKey(x,y));
+    b=new Set();w.map.rows.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==='#'&&!low.has(posKey(x,y)))b.add(posKey(x,y));}));
+    blockCache.set(w,b);return b;
+  }
+  // 두 칸 사이 직선(브레젠험)이 막힌 칸을 지나지 않으면 보인다.
+  function lineOfSight(w,a,b){
+    const B=blockers(w);let x=a.x,y=a.y;const dx=abs(b.x-a.x),dy=-abs(b.y-a.y),sx=a.x<b.x?1:-1,sy=a.y<b.y?1:-1;let err=dx+dy;
+    while(!(x===b.x&&y===b.y)){const e2=2*err;if(e2>=dy){err+=dy;x+=sx;}if(e2<=dx){err+=dx;y+=sy;}if(x===b.x&&y===b.y)break;if(B.has(posKey(x,y)))return false;}
+    return true;
+  }
+  function sees(w,a,b){const ra=areaOf(w,a.x,a.y),rb=areaOf(w,b.x,b.y);if(ra!==rb)return false;return manhattan(a,b)<=(ra<0?3:6)&&lineOfSight(w,a,b);}
   // 기억: [사실ID, 역할, 시각]. 역할 0 직접 · 1 목격 · 2+i 인물 i에게 들음(증언). 인물당 최근 12개.
   function learn(target,factId,role,time){
     if(!target.mem)target.mem=[];
@@ -40,8 +54,9 @@ const TroemereiNPC = (() => {
       if(p.scenes[sc.id]!==undefined)continue;
       let ok=false;
       if(sc.fact)ok=(p.mem||[]).some(m=>m[0]===sc.fact&&m[1]<=1);
-      else if(sc.npc){const n=node(s,sc.npc),tod=s.clock%DAY;
-        ok=!!n&&sees(w,p,n)&&(!sc.area||(w.map.areas[areaOf(w,n.x,n.y)]||{}).name===sc.area)&&(!sc.from||tod>=absTime(sc.from))&&(!sc.to||tod<absTime(sc.to));}
+      else if(sc.npc){const n=node(s,sc.npc),tod=s.clock%DAY,lm=sc.near&&landmark(w,sc.near);
+        // near: 그 인물이 그 자리(랜드마크) 반경 radius칸 안에 있을 때만 — '그 방에 있었다'가 아니라 '그 근처에 있었다'
+        ok=!!n&&sees(w,p,n)&&(!sc.area||(w.map.areas[areaOf(w,n.x,n.y)]||{}).name===sc.area)&&(!lm||manhattan(n,lm)<=(sc.radius||1))&&(!sc.from||tod>=absTime(sc.from))&&(!sc.to||tod<absTime(sc.to));}
       if(ok)p.scenes[sc.id]=s.clock;
     }
   }
@@ -326,32 +341,64 @@ const TroemereiNPC = (() => {
     if(kinds&&!kinds.includes(state.pk))return {state,accepted:false,reason:'대화 종류가 맞지 않음'};
     if(rule.npcs&&!rule.npcs.includes(state.pend))return {state,accepted:false,reason:'이 인물에게는 인정되지 않음'};
     if(rule.flag&&state.flags[rule.flag])return {state,accepted:false,reason:'이미 기록됨'};
+    if(rule.trial){const T=state.trial,tr=T&&(w.trials||[])[T.i];
+      if(!tr||tr.code!==rule.trial||T.phase!==rule.phase)return {state,accepted:false,reason:'지금 재판 단계와 맞지 않음'};}
     const s=clone(state);
+    if(rule.trial){trialNext(w,s);return {state:s,accepted:true,reason:''};}
     if(rule.flag)s.flags[rule.flag]=true;
     addLog(w,s,rule.log||('사건 '+code+' 기록'),'world');
     return {state:s,accepted:true,reason:''};
   }
   // 증언(k): AI가 '대상이 대사로 말한 기억'의 코드를 적으면, 대상이 정말 그 기억을 가졌을 때만
   // 플레이어 단서에 '○○에게 들음'으로 기록한다. 사실이 참이라고 확정하지는 않는다(주장으로만 보관).
-  function factCode(w,id){const i=(w.facts||[]).findIndex(f=>f.id===id);return i<0?'':'기억'+String(i+1).padStart(3,'0');}
+  // 기억 코드는 사실마다 고정(code). 배열 순서가 바뀌어도 같은 코드 = 같은 사실.
+  function factCode(w,id){const f=(w.facts||[]).find(f=>f.id===id);return f&&f.code?'기억'+f.code:'';}
+  // k 문자열 → [{code, line}] ('기억K3R8@3' = 원본 3번째 줄에서 말함. 줄 번호가 없으면 마지막 줄로 본다)
+  function parseK(k){return [...String(k||'').matchAll(/(?:기억)?([A-Z0-9]{4})(?:@(\d{1,2}))?/g)].map(m=>({code:m[1],line:m[2]?+m[2]:0}));}
   function hearFacts(w,state,k){
     const out={state,accepted:[],rejected:[]};
-    const codes=[...new Set((String(k||'').match(/\d{1,3}/g)||[]).map(Number))];
+    const codes=[...new Set((Array.isArray(k)?k:parseK(k)).map(x=>x.code))];
     if(!codes.length)return out;
     const n=state.pend&&node(state,state.pend);
     if(!n){out.rejected=codes.map(c=>[c,'대화 상대가 없음']);return out;}
     const s=clone(state),m=node(s,n.id),idx=w.npcs.findIndex(x=>x.id===n.id);
     for(const c of codes){
-      const f=(w.facts||[])[c-1];
+      const f=(w.facts||[]).find(x=>x.code===c);
       if(!f){out.rejected.push([c,'없는 기억 번호']);continue;}
       if(!(m.mem||[]).some(x=>x[0]===f.id)){out.rejected.push([c,'이 인물은 모르는 일']);continue;}
       learn(s.player,f.id,2+idx,s.clock);out.accepted.push(c);
     }
     out.state=s;return out;
   }
+  // ---------- 재판(시제품) ----------
+  // s.trial = {i: 재판 번호, phase: 단계, hp: 재판 전용 체력, sub: 단계 안 진행도}. 재판 중에는 시간이 흐르지 않는다.
+  function startTrial(w,state,code){
+    const i=(w.trials||[]).findIndex(t=>t.code===code);if(i<0)return state;
+    const s=clone(state),tr=w.trials[i];s.trial={i,phase:0,hp:tr.hp||5,sub:0};
+    if(!s.player.items)s.player.items={};
+    for(const id of tr.evidence||[])if(s.player.items[id]===undefined)s.player.items[id]=s.clock; // 시험: 재판 자료로 지급
+    s.player.route=[];addLog(w,s,'재판이 열렸다: '+tr.title,'player');return s;
+  }
+  function trialNext(w,s){
+    const tr=w.trials[s.trial.i];s.trial.phase++;s.trial.sub=0;
+    if(s.trial.phase>=tr.phases.length){if(tr.flag)s.flags[tr.flag]=true;addLog(w,s,'재판이 끝났다: '+tr.title,'player');s.trial=null;}
+  }
+  // 틀림: 체력 -1. 0이 되면 꿈(노멀)에서는 바쿠가 그 단계를 되감고, 현실(진엔딩)에서는 실패로 끝난다.
+  function trialHit(w,state){
+    const s=clone(state),T=s.trial;if(!T)return {state:s,result:''};
+    T.hp--;if(T.hp>0)return {state:s,result:'hit'};
+    if(s.flags[w.realityFlag||'true_route']){T.failed=1;return {state:s,result:'fail'};}
+    T.hp=(w.trials[T.i].hp||5);T.sub=0;addLog(w,s,'바쿠가 꿈을 되감았다.','player');return {state:s,result:'rewind'};
+  }
+  function trialStep(w,state,action){
+    const s=clone(state);if(!s.trial)return s;
+    if(action==='NEXT')trialNext(w,s);else if(action==='SUB')s.trial.sub++;else if(action==='QUIT'){s.trial=null;addLog(w,s,'(시험) 재판을 중단했다.','player');}
+    return s;
+  }
   // 로어북을 켜는 표식. 화면이 매 메시지 머리말에 붙인다(검색 범위 '현재 유저 입력만' 항목용).
   function markers(w,s){
     const out=['#장'+(w.chapter||1)];
+    if(s.trial&&w.trials&&w.trials[s.trial.i])out.push('#재판'+w.trials[s.trial.i].code);
     // 시간대 갈래 표식: #1일저녁A. A는 인라인(메인), 조건이 맞으면 B·C…(어느 갈래인지는 화면이 판정)
     const sl=slotOf(w,s);
     if(sl){const b=(w.branches||[]).find(b=>(!b.flag||s.flags[b.flag])&&(!b.slot||b.slot===sl.day+'일'+sl.name));out.push('#'+sl.day+'일'+sl.name+(b?b.letter:'A'));}
@@ -458,6 +505,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, caller, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;

@@ -15,23 +15,24 @@ const TroemereiTalk = (() => {
   // 화면 3줄에 넘치는 발화는 같은 화자의 여러 페이지로 나눈다(전각 1칸, 반각 0.55칸 기준).
   const PAGE = 54;
   const width = ch => /[\u1100-\u11ff\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch) ? 1 : 0.55;
+  // 각 페이지에 원본 줄 번호(src)와 그 줄 안에서의 시작 글자 위치(off)를 남긴다 → 끼어들기 위치·증언 시점을 원본 기준으로 계산.
   function paginate(lines, limit = PAGE) {
     const out = [];
-    for (const l of lines) {
-      let rest = Array.from(l.text);
-      while (rest.length) {
-        let w = 0, cut = rest.length;
-        for (let i = 0; i < rest.length; i++) { w += width(rest[i]); if (w > limit) { cut = i; break; } }
-        if (cut < rest.length) { // 가능하면 문장부호·공백에서 자른다
-          let b = -1; for (let i = cut; i > cut * 0.5; i--) if (/[\s.,!?…。、~」]/.test(rest[i - 1])) { b = i; break; }
-          if (b > 0) cut = b;
-        }
-        out.push({ ...l, text: rest.slice(0, cut).join('').trim() }); rest = rest.slice(cut);
-        while (rest.length && /\s/.test(rest[0])) rest.shift();
+    lines.forEach((l, src) => {
+      const all = Array.from(l.text); let pos = 0;
+      while (pos < all.length) {
+        let w = 0, cut = all.length - pos;
+        for (let i = pos; i < all.length; i++) { w += width(all[i]); if (w > limit) { cut = i - pos; break; } }
+        if (pos + cut < all.length) { let b = -1; for (let i = cut; i > cut * 0.5; i--) if (/[\s.,!?…。、~」]/.test(all[pos + i - 1])) { b = i; break; } if (b > 0) cut = b; }
+        const text = all.slice(pos, pos + cut).join('');
+        if (text.trim()) out.push({ ...l, text, src, off: pos });
+        pos += cut;
       }
-    }
-    return out.filter(x => x.text);
+    });
+    return out;
   }
+  // 화면 페이지 위치(idx, 글자 수) → 원본 줄 위치(줄 번호 0부터, 그 줄 안 글자 수)
+  function origPos(pages, idx, chars) { const p = pages[idx]; return p ? [p.src, p.off + chars] : [0, 0]; }
   // 끼어들기: 내가 한 말은 전부, 상대 대사는 '가장 멀리 읽은 위치'까지만 대화 시간에 넣는다.
   function partialSeconds(lines, lineIndex, chars, userChars) {
     const seen = lines.slice(0, lineIndex).reduce((n, l) => n + Array.from(l.text).length, 0) + Math.max(0, chars | 0);
@@ -43,6 +44,6 @@ const TroemereiTalk = (() => {
     const where2 = [time, where, ...marks].filter(Boolean).join(' ');
     return [head + (where2 ? ' | ' + where2 : ''), ...ctx.filter(Boolean), text, 's=' + code].filter(Boolean).join('\n');
   }
-  return { parse, paginate, partialSeconds, handoff };
+  return { parse, paginate, origPos, partialSeconds, handoff };
 })();
 if (typeof module !== 'undefined') module.exports = TroemereiTalk;

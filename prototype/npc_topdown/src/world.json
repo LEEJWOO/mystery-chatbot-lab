@@ -176,7 +176,8 @@
     "x": 4,
     "y": 4,
     "w": 1,
-    "h": 1
+    "h": 1,
+    "low": true
    },
    {
     "t": "pot",
@@ -204,21 +205,24 @@
     "x": 18,
     "y": 3,
     "w": 1,
-    "h": 1
+    "h": 1,
+    "low": true
    },
    {
     "t": "desk",
     "x": 24,
     "y": 3,
     "w": 2,
-    "h": 1
+    "h": 1,
+    "low": true
    },
    {
     "t": "crate",
     "x": 27,
     "y": 5,
     "w": 1,
-    "h": 1
+    "h": 1,
+    "low": true
    },
    {
     "t": "tree",
@@ -253,7 +257,8 @@
     "x": 7,
     "y": 14,
     "w": 2,
-    "h": 1
+    "h": 1,
+    "low": true
    },
    {
     "t": "board",
@@ -267,21 +272,24 @@
     "x": 22,
     "y": 10,
     "w": 2,
-    "h": 2
+    "h": 2,
+    "low": true
    },
    {
     "t": "lamp",
     "x": 25,
     "y": 13,
     "w": 1,
-    "h": 1
+    "h": 1,
+    "low": true
    },
    {
     "t": "planter",
     "x": 17,
     "y": 15,
     "w": 1,
-    "h": 1
+    "h": 1,
+    "low": true
    }
   ],
   "floors": [
@@ -639,7 +647,9 @@
   "meeting_occurred",
   "meeting_prevented",
   "delivery_done",
-  "true_route"
+  "true_route",
+  "trial_only",
+  "trial_memo_done"
  ],
  "facts": [
   {
@@ -649,7 +659,8 @@
     "contact": "유리에게 업무 메모를 받았다"
    },
    "seen": "유리와 도윤이 작업실에서 짧게 이야기하는 걸 봤다",
-   "player": "유리와 도윤이 작업실에서 이야기했다"
+   "player": "유리와 도윤이 작업실에서 이야기했다",
+   "code": "K3R8"
   },
   {
    "id": "missed_doyun",
@@ -657,7 +668,8 @@
     "companion": "플레이어와 동행하느라 도윤에게 메모를 전하지 못했다"
    },
    "seen": "",
-   "player": ""
+   "player": "",
+   "code": "T9M2"
   },
   {
    "id": "delivered",
@@ -665,7 +677,8 @@
     "companion": "자료실 선반에 메모 사본을 두었다"
    },
    "seen": "유리가 자료실 선반에 무언가 두는 걸 봤다",
-   "player": "유리가 자료실 선반에 무언가를 두었다"
+   "player": "유리가 자료실 선반에 무언가를 두었다",
+   "code": "P4X6"
   }
  ],
  "chapter": 1,
@@ -680,6 +693,16 @@
     "T",
     "I"
    ]
+  },
+  "T1_R1": {
+   "kinds": [
+    "R"
+   ],
+   "npcs": [
+    "librarian"
+   ],
+   "trial": "T1",
+   "phase": 3
   }
  },
  "markers": [
@@ -702,6 +725,13 @@
    "at": "garden",
    "from": "1일 09:30",
    "desc": "짙은 남색 단추 하나. 벤치 밑에 떨어져 있었다."
+  },
+  {
+   "id": "work_order",
+   "name": "바뀐 작업 순서표",
+   "at": "desk",
+   "flag": "trial_only",
+   "desc": "작업실 탁자의 순서표. 오후 작업 순서가 메모대로 바뀌어 있다."
   }
  ],
  "notices": [
@@ -752,16 +782,106 @@
    "id": "serin_board",
    "title": "게시판 앞의 세린",
    "npc": "librarian",
-   "area": "정원",
    "from": "09:00",
    "to": "12:00",
-   "caption": "세린이 정원 게시판 앞을 지나가며 무언가를 확인했다."
+   "caption": "세린이 정원 게시판 앞을 지나가며 무언가를 확인했다.",
+   "near": "notice",
+   "radius": 1
   },
   {
    "id": "yuri_shelf",
    "title": "선반 앞의 유리",
    "fact": "delivered",
    "caption": "유리가 자료실 선반에 무언가를 두고 갔다."
+  }
+ ],
+ "dataVersion": 1,
+ "trials": [
+  {
+   "id": "memo",
+   "code": "T1",
+   "title": "작업실 메모 소동",
+   "hp": 5,
+   "flag": "trial_memo_done",
+   "evidence": [
+    "memo_copy",
+    "button",
+    "work_order"
+   ],
+   "phases": [
+    {
+     "type": "talk",
+     "lines": [
+      "바쿠:여러분, 모이셨군요. 오늘 아침 작업실 탁자의 작업 순서가 누군가의 메모 한 장으로 바뀌어 있었습니다.",
+      "바쿠:누가 그 메모를 남겼는지, 이 자리에서 밝혀 주시지요.",
+      "*살인 사건은 아니다. 하지만 이 자리 어딘가에 거짓말이 섞여 있다."
+     ]
+    },
+    {
+     "type": "debate",
+     "title": "엇갈린 증언",
+     "lines": [
+      {
+       "who": "courier",
+       "text": "저는 아침 내내 작업실을 드나들었는데요, 메모를 두고 가는 사람은 못 봤어요."
+      },
+      {
+       "who": "librarian",
+       "text": "순서표에 붙은 메모, 글씨가 도윤 씨 본인 글씨 같던데요. 혼자 바꾸고 잊은 거 아닐까요?",
+       "weak": "도윤 씨 본인 글씨",
+       "answer": "memo_copy"
+      },
+      {
+       "who": "contact",
+       "text": "……난 그런 메모 쓴 적 없어."
+      }
+     ],
+     "win": "메모 사본의 글씨는 도윤이 아니라 유리의 것이다."
+    },
+    {
+     "type": "talk",
+     "lines": [
+      "세린(놀람):유리 씨 글씨……? 그래도, 잠깐만요."
+     ]
+    },
+    {
+     "type": "rebut",
+     "npc": "librarian",
+     "claim": "사본이 유리 씨 글씨라고 해서 원본도 유리 씨가 쓴 건 아니잖아요. 도윤 씨가 유리 씨 글씨를 흉내 냈을 수도 있고요.",
+     "event": "T1_R1"
+    },
+    {
+     "type": "dream",
+     "title": "꿈 조각 잇기",
+     "guide": "그날 아침 일을 일어난 순서대로 이어 붙인다",
+     "pieces": [
+      "유리가 정원에서 작업실로 향한다",
+      "유리가 도윤에게 메모를 건넨다",
+      "도윤이 순서표에 메모를 붙인다",
+      "유리가 자료실 선반에 사본을 둔다"
+     ]
+    },
+    {
+     "type": "vote",
+     "question": "메모를 남긴 사람은?",
+     "answer": "companion",
+     "options": [
+      "companion",
+      "contact",
+      "librarian",
+      "courier"
+     ]
+    },
+    {
+     "type": "talk",
+     "lines": [
+      "바쿠:정답입니다. 메모를 남긴 분은 유리 님이었습니다.",
+      "유리(놀람):에, 에헤헤…… 전해 주고 말하는 걸 깜빡했네.",
+      "도윤(웃음):……다음엔 직접 말해.",
+      "*소동은 웃음으로 끝났다."
+     ]
+    }
+   ]
   }
  ]
 }
