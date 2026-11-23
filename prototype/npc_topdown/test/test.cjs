@@ -317,16 +317,16 @@ test('재판: 시작·단계 진행·체력·되감기(꿈)·실패(현실)·AI 
   let s = E.startTrial(W, E.createWorld(W), 'T1');
   assert.deepEqual([s.trial.phase, s.trial.hp], [0, 5]); assert.ok(s.player.items.memo_copy !== undefined, '재판 자료 지급');
   assert.ok(E.markers(W, s).includes('#재판T1'));
-  s = E.trialStep(W, s, 'NEXT'); s = E.trialStep(W, s, 'NEXT'); s = E.trialStep(W, s, 'NEXT'); assert.equal(s.trial.phase, 3);
-  const back = C.unpack(W, C.pack(W, s)); assert.deepEqual(back.trial, { i: 0, phase: 3, hp: 5, sub: 0, failed: 0 });
+  for (let i = 0; i < 5; i++) s = E.trialStep(W, s, 'NEXT'); assert.equal(s.trial.phase, 5);
+  const back = C.unpack(W, C.pack(W, s)); assert.deepEqual(back.trial, { i: 0, phase: 5, hp: 5, sub: 0, failed: 0 });
   const r = { ...E.clone(s), pend: 'librarian', pk: 'R' };
-  assert.equal(E.applyEvent(W, r, 'T1_R1').state.trial.phase, 4, '반론 성공 → 다음 단계');
+  assert.equal(E.applyEvent(W, r, 'T1_R1').state.trial.phase, 6, '반론 성공 → 다음 단계');
   const early = { ...E.clone(E.trialStep(W, E.startTrial(W, E.createWorld(W), 'T1'), 'NEXT')), pend: 'librarian', pk: 'R' };
   assert.equal(E.applyEvent(W, early, 'T1_R1').accepted, false, '다른 단계에서는 무효');
   let h = s; for (let i = 0; i < 4; i++) h = E.trialHit(W, h).state;
-  const rw = E.trialHit(W, h); assert.equal(rw.result, 'rewind'); assert.equal(rw.state.trial.hp, 5); assert.equal(rw.state.trial.phase, 3);
+  const rw = E.trialHit(W, h); assert.equal(rw.result, 'rewind'); assert.equal(rw.state.trial.hp, 5); assert.equal(rw.state.trial.phase, 5);
   h.flags.true_route = true; assert.equal(E.trialHit(W, h).result, 'fail', '진엔딩은 되감기 없음');
-  let e = s; for (let i = 0; i < 4; i++) e = E.trialStep(W, e, 'NEXT'); assert.equal(e.trial, null); assert.equal(e.flags.trial_memo_done, true);
+  let e = s; for (let i = 0; i < 8; i++) e = E.trialStep(W, e, 'NEXT'); assert.equal(e.trial, null); assert.equal(e.flags.trial_memo_done, true);
 });
 
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
