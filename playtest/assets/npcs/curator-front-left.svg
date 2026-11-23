@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 340" width="200" height="340">
+  <defs><linearGradient id="j" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#243c5e"/><stop offset="1" stop-color="#1b304a"/></linearGradient><linearGradient id="f" x1="0" x2=".85" y1="0" y2="1"><stop stop-color="#fff0d8"/><stop offset="1" stop-color="#f1c9a8"/></linearGradient></defs>
+  <ellipse cx="100" cy="331" rx="51" ry="6" fill="#14212b" opacity=".23"/>
+  <path d="M66 269L61 329H92L105 273Z" fill="#1b304a"/><path d="M106 272L111 329H142L135 267Z" fill="#1b304a"/>
+  <path d="M57 327l-6 9h44l-3-9ZM111 327l-1 9h44l-11-9Z" fill="#252a32"/>
+  <path d="M62 162Q100 144 138 162L158 187L156 280Q100 295 45 278L43 185Z" fill="url(#j)" stroke="#1c2f40" stroke-width="2"/>
+  <path d="M57 173Q43 180 31 224L42 265L58 262L65 201Z" fill="#243c5e" stroke="#203848" stroke-width="2"/>
+  <path d="M143 172Q164 179 170 221L159 269L144 261L136 201Z" fill="#1b304a" stroke="#203848" stroke-width="2"/>
+  <path d="M81 155L82 167L99 185L116 166L116 154Z" fill="#f1c9a8"/>
+  <path d="M77 170L101 196 122 170L110 162H89Z" fill="#f7eee1" stroke="#ffffff" stroke-opacity=".34" stroke-width="1.6"/>
+  <path d="M103 190L103 273" stroke="#bdd0dc" stroke-opacity=".36" stroke-width="1.7"/>
+  <path d="M53 277Q102 296 154 277" stroke="#111f2b" stroke-opacity=".4" stroke-width="2.2" fill="none"/>
+  <g transform="translate(-3.2 0)">
+   
+   <path d="M72 94Q77 60 100 57Q125 54 132 94L131 124Q128 150 102 156Q76 150 71 123Z" fill="#f1c9a8" stroke="#8f6f62" stroke-width="1.6"/>
+   <path d="M69 109Q62 56 98 48Q142 43 139 110L127 88Q110 76 96 83Q79 88 69 109Z" fill="#2b364d"/>
+   <path d="M68 90Q80 66 103 69Q132 67 136 87" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3"/>
+   <g fill="#3e3539" opacity=".9"><ellipse cx="86.7" cy="111" rx="2.8" ry="3.3"/><ellipse cx="109.7" cy="111" rx="2.8" ry="3.3"/></g><path d="M95 136Q102 141 110 135" fill="none" stroke="#975f5a" stroke-width="2"/>
+   <path d="M81 102Q90 97 96 101 M107 102Q116 98 122 103" stroke="#2b364d" stroke-width="2.2" fill="none" opacity=".8"/>
+  </g>
+  <rect x="127" y="223" width="20" height="12" rx="2" fill="#d8ac60"/><path d="M130 227h14 M130 230h10" stroke="#fff2cd" stroke-width="1"/>
+  <path d="M66 169L83 200 96 187 M137 170L118 200 105 187" stroke="#b5c5cc" stroke-opacity=".55" stroke-width="1.5" fill="none"/>
+  </svg>

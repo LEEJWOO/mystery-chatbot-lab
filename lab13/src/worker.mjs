@@ -1,7 +1,9 @@
 import {initialState,validateState} from './core.mjs';
 import {renderSVG} from './render.mjs';
 import {ASSETS} from './assets.generated.mjs';
-export default {async fetch(request){
+import {hubFetch} from '../../playtest/src/hub_worker.mjs';
+export default {async fetch(request,env){
+ const extra=await hubFetch(request,env);if(extra)return extra;
  const url=new URL(request.url),h={'Access-Control-Allow-Origin':'*','X-Content-Type-Options':'nosniff'};
  const json=(obj,status=200)=>new Response(JSON.stringify(obj),{status,headers:{...h,'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{...h,'Access-Control-Allow-Methods':'GET, HEAD, OPTIONS'}});
