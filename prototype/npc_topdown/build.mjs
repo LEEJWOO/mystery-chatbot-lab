@@ -15,7 +15,9 @@ const jsx = [
   strip(read('./src/codec.js')),
   strip(read('./src/dialogue.js')),
   read('./src/component.jsx'),
-].join('\n');
+].join('\n')
+  // 등록용 출력에서는 내부 객체 이름을 소문자로 바꿔, UUMMAI 컴포넌트 목록에 Troemerei 하나만 보이게 한다.
+  .replace(/\bTroemereiNPC\b/g, 'trNPC').replace(/\bTroemereiCodec\b/g, 'trCodec').replace(/\bTroemereiTalk\b/g, 'trTalk');
 fs.mkdirSync(new URL('./dist/', import.meta.url), { recursive: true });
 fs.writeFileSync(new URL('./dist/Troemerei.jsx', import.meta.url), jsx);
 

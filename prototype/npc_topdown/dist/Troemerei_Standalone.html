@@ -303,7 +303,7 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
 <script>const {useState,useEffect,useRef,useMemo}=React;
 const TN_WORLD = { "version": 2, "kind": "prototype-world-not-canon", "title": "\uD2B8\uB85C\uBA54\uB77C \xB7 \uC77C\uC0C1 \uD589\uB3D9 \uC0CC\uB4DC\uBC15\uC2A4", "notes": "\uC778\uBB3C/\uC7A5\uC18C/\uC0AC\uAC74\uC740 \uB3D9\uC791 \uAC80\uC99D\uC6A9 \uC784\uC2DC \uB370\uC774\uD130\uC774\uBA70 \uBCF8\uD3B8 \uC124\uC815\uC774 \uC544\uB2C8\uB2E4.", "map": { "id": "prototype", "width": 30, "height": 18, "rows": ["##############################", "#..............#.............#", "#..............#.............#", "#..............#..#..........#", "#...#..........#.............#", "#..........................#.#", "#.........#....#.............#", "#..............#.............#", "########.###########.#########", "#..............#.............#", "#..............#.............#", "#..............#.............#", "#............................#", "#..............#.........#...#", "#............#.#.............#", "#...#..........#.#...........#", "#..............#.............#", "##############################"], "tileSeconds": 4, "areas": [{ "name": "\uC790\uB8CC\uC2E4", "x0": 1, "y0": 1, "x1": 14, "y1": 7 }, { "name": "\uC791\uC5C5\uC2E4", "x0": 16, "y0": 1, "x1": 28, "y1": 7 }, { "name": "\uC815\uC6D0", "x0": 1, "y0": 9, "x1": 14, "y1": 16 }, { "name": "\uAD11\uC7A5", "x0": 16, "y0": 9, "x1": 28, "y1": 16 }], "landmarks": [{ "id": "archive", "name": "\uC790\uB8CC\uC2E4 \uC120\uBC18", "x": 6, "y": 4, "icon": "\u25A3" }, { "id": "desk", "name": "\uC791\uC5C5\uC2E4 \uD0C1\uC790", "x": 24, "y": 4, "icon": "\u25C7" }, { "id": "fountain", "name": "\uAD11\uC7A5 \uBD84\uC218", "x": 22, "y": 12, "icon": "\u25C9" }, { "id": "garden", "name": "\uC815\uC6D0 \uBCA4\uCE58", "x": 7, "y": 13, "icon": "\u25A4" }, { "id": "notice", "name": "\uAC8C\uC2DC\uD310", "x": 11, "y": 12, "icon": "\u25A5" }] }, "player": { "x": 7, "y": 12, "moveSeconds": 4 }, "npcs": [{ "id": "companion", "name": "\uC720\uB9AC", "symbol": "\uC720", "color": "#de9f68", "x": 8, "y": 12, "stepSeconds": 5, "agenda": [{ "id": "meet_contact", "kind": "meet", "targetNpc": "contact", "from": "09:00", "until": "09:25", "durationSeconds": 45, "priority": 90, "weight": 5, "once": true, "interruptible": true, "onComplete": "meeting_created", "onInterrupt": "meeting_prevented", "onInterruptFact": "missed_doyun", "onAccompany": "cancel" }, { "id": "garden_break", "kind": "visit", "landmark": "garden", "from": "09:00", "until": "18:30", "durationSeconds": 100, "priority": 10, "weight": 3, "cooldownSeconds": 180, "interruptible": true }, { "id": "fountain_walk", "kind": "visit", "landmark": "fountain", "from": "09:00", "until": "18:30", "durationSeconds": 80, "priority": 10, "weight": 2, "cooldownSeconds": 150, "interruptible": true }] }, { "id": "contact", "name": "\uB3C4\uC724", "symbol": "\uB3C4", "color": "#7aaddd", "x": 24, "y": 4, "stepSeconds": 8, "agenda": [] }, { "id": "librarian", "name": "\uC138\uB9B0", "symbol": "\uC138", "color": "#a49ad8", "x": 5, "y": 5, "stepSeconds": 9, "agenda": [{ "id": "archive_patrol", "kind": "visit", "landmark": "archive", "from": "09:00", "until": "18:00", "durationSeconds": 90, "priority": 10, "weight": 4, "cooldownSeconds": 120, "interruptible": true }, { "id": "notice_review", "kind": "visit", "landmark": "notice", "from": "09:00", "until": "18:00", "durationSeconds": 40, "priority": 10, "weight": 1, "cooldownSeconds": 180, "interruptible": true }] }, { "id": "courier", "name": "\uD0DC\uC218", "symbol": "\uD0DC", "color": "#88bfa6", "x": 21, "y": 14, "stepSeconds": 7, "agenda": [{ "id": "post_delivery", "kind": "visit", "landmark": "notice", "from": "09:00", "until": "18:30", "durationSeconds": 40, "priority": 10, "weight": 4, "cooldownSeconds": 140, "interruptible": true }, { "id": "fetch_material", "kind": "visit", "landmark": "desk", "from": "09:00", "until": "18:30", "durationSeconds": 90, "priority": 10, "weight": 2, "cooldownSeconds": 150, "interruptible": true }] }], "onComplete": [{ "id": "meeting_created", "when": { "npc": "companion", "task": "meet_contact", "targetNpc": "contact" }, "setFlag": "meeting_occurred", "queueTask": { "id": "deliver_request", "kind": "visit", "landmark": "archive", "durationSeconds": 70, "priority": 100, "interruptible": false, "once": true, "onCompleteFlag": "delivery_done", "onCompleteFact": "delivered" }, "publicLog": "\uB450 \uC0AC\uB78C\uC774 \uB300\uD654\uB97C \uB9C8\uCCE4\uACE0, \uC720\uB9AC\uC5D0\uAC8C \uC790\uB8CC\uC2E4 \uBC29\uBB38 \uC77C\uC815\uC774 \uC0C8\uB85C \uC0DD\uACBC\uB2E4.", "fact": "met_doyun" }], "flagNames": ["meeting_occurred", "meeting_prevented", "delivery_done"], "facts": [{ "id": "met_doyun", "self": { "companion": "\uB3C4\uC724\uC5D0\uAC8C \uC5C5\uBB34 \uBA54\uBAA8\uB97C \uC804\uD588\uB2E4", "contact": "\uC720\uB9AC\uC5D0\uAC8C \uC5C5\uBB34 \uBA54\uBAA8\uB97C \uBC1B\uC558\uB2E4" }, "seen": "\uC720\uB9AC\uC640 \uB3C4\uC724\uC774 \uC791\uC5C5\uC2E4\uC5D0\uC11C \uC9E7\uAC8C \uC774\uC57C\uAE30\uD558\uB294 \uAC78 \uBD24\uB2E4", "player": "\uC720\uB9AC\uC640 \uB3C4\uC724\uC774 \uC791\uC5C5\uC2E4\uC5D0\uC11C \uC774\uC57C\uAE30\uD588\uB2E4" }, { "id": "missed_doyun", "self": { "companion": "\uD50C\uB808\uC774\uC5B4\uC640 \uB3D9\uD589\uD558\uB290\uB77C \uB3C4\uC724\uC5D0\uAC8C \uBA54\uBAA8\uB97C \uC804\uD558\uC9C0 \uBABB\uD588\uB2E4" }, "seen": "", "player": "" }, { "id": "delivered", "self": { "companion": "\uC790\uB8CC\uC2E4 \uC120\uBC18\uC5D0 \uBA54\uBAA8 \uC0AC\uBCF8\uC744 \uB450\uC5C8\uB2E4" }, "seen": "\uC720\uB9AC\uAC00 \uC790\uB8CC\uC2E4 \uC120\uBC18\uC5D0 \uBB34\uC5B8\uAC00 \uB450\uB294 \uAC78 \uBD24\uB2E4", "player": "\uC720\uB9AC\uAC00 \uC790\uB8CC\uC2E4 \uC120\uBC18\uC5D0 \uBB34\uC5B8\uAC00\uB97C \uB450\uC5C8\uB2E4" }] };
 const TN_CSS = '.tr-out{width:100%;position:relative;font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;color:#e7edf5;-webkit-tap-highlight-color:transparent}\n.tr-card{position:absolute;left:0;top:0;width:360px;height:540px;overflow:hidden;background:#0c1421;border-radius:8px;transform-origin:0 0;user-select:none}\n.tr-card *{box-sizing:border-box}.tr-card button{font:inherit;color:inherit;cursor:pointer;background:#0b1522e0;border:1px solid #3d5368;border-radius:7px;padding:0 8px;line-height:1}\n.tr-card button:disabled{opacity:.38;cursor:default}\n.tr-map{position:absolute;inset:0;display:block;touch-action:manipulation}\n.tr-hud{position:absolute;left:4px;right:4px;top:4px;display:flex;gap:4px;align-items:center;font-size:12px;pointer-events:none}\n.tr-hud>*{pointer-events:auto}\n.tr-pill{background:#0b1522e0;border:1px solid #3d5368;border-radius:7px;padding:3px 7px;line-height:16px;white-space:nowrap}\n.tr-time{color:#e7c894;font-variant-numeric:tabular-nums}\n.tr-hud button{height:24px;font-size:12px}\n.tr-toast{position:absolute;left:4px;right:4px;top:32px;font-size:11px;line-height:15px;padding:2px 7px;background:#0b1522b8;border-radius:6px;color:#c9d5e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}\n.tr-pad{position:absolute;width:34px;height:34px;font-size:15px!important;display:grid;place-items:center;padding:0!important;touch-action:none}\n.tr-menu{position:absolute;left:112px;right:6px;bottom:6px;padding:5px;background:#08111ef2;border:1px solid #6d7f92;border-radius:9px}\n.tr-menu-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;line-height:15px;margin:0 2px 4px}\n.tr-menu-h b{font-weight:600;color:#f2c48f}.tr-menu-h span{color:#93adc2;font-size:11px}\n.tr-menu-g{display:grid;grid-template-columns:1fr 1fr;gap:4px}.tr-menu-g button{height:34px;font-size:13px}\n.tr-menu-why{font-size:10px;color:#93adc2;margin:3px 2px 0;line-height:13px}\n.tr-preview{position:absolute;left:112px;right:6px;bottom:6px;padding:4px 7px;font-size:12px;line-height:16px;background:#f3e6c8;color:#3d2c14;border-radius:8px}\n.tr-sheet{position:absolute;inset:0;background:#0c1421;display:flex;flex-direction:column}\n.tr-tabs{display:flex;gap:3px;padding:4px}.tr-tabs button{flex:1;height:28px;font-size:12px}.tr-tabs .on{background:#2c4a63;border-color:#7ea0bc}\n.tr-body{flex:1;overflow-y:auto;padding:2px 8px 8px;font-size:13px;line-height:18px}\n.tr-row{padding:4px 0;border-bottom:1px solid #22344a}.tr-row time{color:#c6a572;margin-right:6px;font-variant-numeric:tabular-nums}\n.tr-mut{color:#93adc2;font-size:11px;line-height:15px}\n.tr-mono{font:11px ui-monospace,monospace;word-break:break-all;color:#cfe0ee}\n.tr-ta{width:100%;resize:none;padding:5px 7px;background:#08121c;border:1px solid #3d5368;color:#e6eef7;border-radius:6px;font:inherit;font-size:16px;line-height:20px;user-select:text}\n.tr-talk{position:absolute;inset:0}\n.tr-box{position:absolute;left:5px;right:5px;padding:3px 8px 4px;background:#08111ef2;border:1px solid #8a7550;border-radius:8px}\n.tr-name{display:flex;justify-content:space-between;font-size:12px;line-height:16px}.tr-name b{color:#f2c48f;font-weight:600}.tr-name span{color:#93adc2;font-size:11px}\n.tr-line{font-size:14px;line-height:19px;height:57px;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}\n.tr-line.narr{color:#b9c9d6;font-style:italic}\n.tr-ctl{display:flex;gap:4px;margin-top:2px}.tr-ctl button{height:22px;font-size:11px;padding:0 7px}\n.tr-in{position:absolute;left:5px;right:5px;bottom:5px;padding:4px;background:#0e1a29f5;border:1px solid #3d5368;border-radius:8px}\n.tr-in-top{display:flex;gap:4px;margin-bottom:3px;align-items:center}.tr-in-top button{height:22px;font-size:11px}\n.tr-send{width:52px;flex:none;white-space:nowrap;padding:0 4px!important;background:#907040!important;border-color:#c1a06a!important;font-size:13px!important}\n.tr-drop{position:absolute;left:4px;bottom:100%;margin-bottom:3px;display:grid;gap:3px;padding:4px;background:#08111ef7;border:1px solid #6d7f92;border-radius:8px;width:150px}\n.tr-drop button{height:30px;font-size:12px;text-align:left}\n.tr-err{position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:19px}\n';
-const TroemereiNPC = /* @__PURE__ */ (() => {
+const trNPC = /* @__PURE__ */ (() => {
   const abs = Math.abs;
   const posKey = (x, y) => x + "," + y;
   const manhattan = (a, b) => abs(a.x - b.x) + abs(a.y - b.y);
@@ -783,7 +783,7 @@ const TroemereiNPC = /* @__PURE__ */ (() => {
   }
   return { createWorld, advance, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone };
 })();
-const TroemereiCodec = /* @__PURE__ */ (() => {
+const trCodec = /* @__PURE__ */ (() => {
   const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   const MODES = ["idle", "moving", "busy", "paused", "accompany"];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
@@ -1120,7 +1120,7 @@ const TroemereiCodec = /* @__PURE__ */ (() => {
   }
   return { pack, unpack, hash16, fingerprint };
 })();
-const TroemereiTalk = /* @__PURE__ */ (() => {
+const trTalk = /* @__PURE__ */ (() => {
   const LINE = /^([^:：*|()]{1,20})(?:\(([^()]{1,12})\))?\s*[:：]\s*(.+)$/s;
   function parse(raw) {
     if (!raw) return [];
@@ -1149,31 +1149,31 @@ const TR_IMP = { idle: "\uD55C\uAC00\uD574 \uBCF4\uC778\uB2E4", moving: "\uC5B4\
 const TR_BG = ["#25344a", "#2d3a30", "#283a4a", "#2c3550"];
 const trNpc = (id) => TN_WORLD.npcs.find((n) => n.id === id) || { name: id, color: "#999", symbol: "?" };
 const trArea = (x, y) => {
-  const i = TroemereiNPC.areaOf(TN_WORLD, x, y);
+  const i = trNPC.areaOf(TN_WORLD, x, y);
   return i < 0 ? "\uD1B5\uB85C" : TN_WORLD.map.areas[i].name;
 };
-const trHM = (n) => TroemereiNPC.clock(n).slice(0, 5);
+const trHM = (n) => trNPC.clock(n).slice(0, 5);
 const trFact = (id, role, who) => {
   const f = (TN_WORLD.facts || []).find((x) => x.id === id);
   if (!f) return id;
   if (who === "player") return f.player || f.seen || id;
   return role === 0 ? (f.self || {})[who] || f.seen || id : f.seen || id;
 };
-const trVisible = (s, n) => TroemereiNPC.sees(TN_WORLD, s.player, n);
+const trVisible = (s, n) => trNPC.sees(TN_WORLD, s.player, n);
 const trChars = (lines) => lines.reduce((k, l) => k + Array.from(l.text).length, 0);
 function Troemerei({ s = "", t = "", d = "" }) {
-  const lines = useMemo(() => TroemereiTalk.parse(d), [d]);
+  const lines = useMemo(() => trTalk.parse(d), [d]);
   const [boot] = useState(() => {
-    if (!s) return { base: TroemereiNPC.createWorld(TN_WORLD), error: "" };
+    if (!s) return { base: trNPC.createWorld(TN_WORLD), error: "" };
     try {
-      return { base: TroemereiCodec.unpack(TN_WORLD, s), error: "" };
+      return { base: trCodec.unpack(TN_WORLD, s), error: "" };
     } catch (e) {
       return { base: null, error: e.message };
     }
   });
-  const replySec = (b) => b && b.pk === "P" && String(t).trim() !== "" ? Math.max(0, Math.min(900, Math.floor(Number(t) || 0))) : TroemereiNPC.talkSeconds(b ? b.pc : 0, trChars(lines));
+  const replySec = (b) => b && b.pk === "P" && String(t).trim() !== "" ? Math.max(0, Math.min(900, Math.floor(Number(t) || 0))) : trNPC.talkSeconds(b ? b.pc : 0, trChars(lines));
   const pendNpc = boot.base && boot.base.pend;
-  const [state, setState] = useState(() => !boot.base ? null : s && !lines.length ? TroemereiNPC.applyTalk(TN_WORLD, boot.base, replySec(boot.base)) : boot.base);
+  const [state, setState] = useState(() => !boot.base ? null : s && !lines.length ? trNPC.applyTalk(TN_WORLD, boot.base, replySec(boot.base)) : boot.base);
   const [talk, setTalk] = useState(() => boot.base && lines.length ? { npc: pendNpc || null, idx: 0, shown: 0, cut: false, fresh: false } : null);
   const [consumed, setConsumed] = useState(() => !lines.length);
   const [menu, setMenu] = useState(null);
@@ -1190,10 +1190,10 @@ function Troemerei({ s = "", t = "", d = "" }) {
   useEffect(() => {
     const fit = () => {
       const el = outRef.current;
-      if (el) {
-        const w = el.getBoundingClientRect().width || TR_W;
-        setScale(Math.max(0.6, Math.min(1.6, w / TR_W)));
-      }
+      if (!el) return;
+      const w = el.getBoundingClientRect().width || TR_W;
+      const h = typeof window !== "undefined" && window.innerHeight || 99999;
+      setScale(Math.max(0.6, Math.min(1.6, w / TR_W, (h - 8) / TR_H)));
     };
     fit();
     if (typeof ResizeObserver === "function" && outRef.current) {
@@ -1220,10 +1220,10 @@ function Troemerei({ s = "", t = "", d = "" }) {
     if (!state || sent || talk || !state.player.route.length) return;
     const id = setTimeout(() => {
       const before = new Set(state.npcs.filter((n) => trVisible(state, n)).map((n) => n.id));
-      let next = TroemereiNPC.advance(TN_WORLD, state, TN_WORLD.player.moveSeconds || 4);
+      let next = trNPC.advance(TN_WORLD, state, TN_WORLD.player.moveSeconds || 4);
       const fresh = next.npcs.filter((n) => trVisible(next, n) && !before.has(n.id));
       if (fresh.length && next.player.route.length) {
-        next = TroemereiNPC.dispatch(TN_WORLD, next, { type: "CLEAR_ROUTE" });
+        next = trNPC.dispatch(TN_WORLD, next, { type: "CLEAR_ROUTE" });
         setToast(fresh.map((n) => trNpc(n.id).name).join("\xB7") + "\uC774(\uAC00) \uBCF4\uC5EC \uBA48\uCDC4\uB2E4");
       }
       setState(next);
@@ -1232,27 +1232,27 @@ function Troemerei({ s = "", t = "", d = "" }) {
   }, [state, sent, talk]);
   if (!state) return /* @__PURE__ */ React.createElement("div", { className: "tr-out", ref: outRef, style: { height: TR_H * scale } }, /* @__PURE__ */ React.createElement("style", null, TN_CSS), /* @__PURE__ */ React.createElement("div", { className: "tr-card", style: { transform: `scale(${scale})` } }, /* @__PURE__ */ React.createElement("div", { className: "tr-err" }, /* @__PURE__ */ React.createElement("b", null, "\uC0C1\uD0DC \uCF54\uB4DC\uB97C \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4"), /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, boot.error), /* @__PURE__ */ React.createElement("div", null, "\uC9C1\uC804 \uC778\uACC4 \uBA54\uC2DC\uC9C0\uC758 ", /* @__PURE__ */ React.createElement("b", null, "s="), " \uB4A4 \uAC12\uC744 \uBD99\uC5EC\uB123\uC73C\uBA74 \uC774\uC5B4\uC11C \uC9C4\uD589\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."), /* @__PURE__ */ React.createElement("textarea", { className: "tr-ta", rows: 4, value: codeText, onChange: (e) => setCodeText(e.target.value) }), /* @__PURE__ */ React.createElement("button", { style: { height: 34 }, onClick: () => {
     try {
-      const v = TroemereiCodec.unpack(TN_WORLD, codeText.trim());
-      setState(TroemereiNPC.applyTalk(TN_WORLD, v, 0));
+      const v = trCodec.unpack(TN_WORLD, codeText.trim());
+      setState(trNPC.applyTalk(TN_WORLD, v, 0));
     } catch (e) {
       setToast(e.message);
     }
-  } }, "\uC774 \uCF54\uB4DC\uB85C \uBCF5\uC6D0"), /* @__PURE__ */ React.createElement("button", { style: { height: 34 }, onClick: () => setState(TroemereiNPC.createWorld(TN_WORLD)) }, "\uCC98\uC74C\uBD80\uD130 \uC2DC\uC791"), toast ? /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, toast) : null)));
-  const p = state.player, area = TroemereiNPC.areaOf(TN_WORLD, p.x, p.y);
+  } }, "\uC774 \uCF54\uB4DC\uB85C \uBCF5\uC6D0"), /* @__PURE__ */ React.createElement("button", { style: { height: 34 }, onClick: () => setState(trNPC.createWorld(TN_WORLD)) }, "\uCC98\uC74C\uBD80\uD130 \uC2DC\uC791"), toast ? /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, toast) : null)));
+  const p = state.player, area = trNPC.areaOf(TN_WORLD, p.x, p.y);
   const camX = Math.max(0, Math.min(TN_WORLD.map.width * TR_CELL - TR_W, (p.x + 0.5) * TR_CELL - TR_W / 2));
   const camY = Math.max(0, Math.min(TN_WORLD.map.height * TR_CELL - TR_H, (p.y + 0.5) * TR_CELL - TR_H / 2 + 40));
   const busy = !!sent;
   function act(a) {
     if (busy) return;
-    setState((v) => TroemereiNPC.dispatch(TN_WORLD, v, a));
+    setState((v) => trNPC.dispatch(TN_WORLD, v, a));
   }
   function step(dx, dy) {
     setPreview(null);
     setMenu(null);
     setState((v) => {
       if (v.player.route.length) return v;
-      const a = TroemereiNPC.dispatch(TN_WORLD, v, { type: "MOVE_ONE", dx, dy });
-      return a.player.route.length ? TroemereiNPC.advance(TN_WORLD, a, TN_WORLD.player.moveSeconds || 4) : a;
+      const a = trNPC.dispatch(TN_WORLD, v, { type: "MOVE_ONE", dx, dy });
+      return a.player.route.length ? trNPC.advance(TN_WORLD, a, TN_WORLD.player.moveSeconds || 4) : a;
     });
   }
   function padDown(dx, dy) {
@@ -1275,18 +1275,18 @@ function Troemerei({ s = "", t = "", d = "" }) {
       setMenu({ kind: "npc", id: who.id });
       return;
     }
-    const lm = TN_WORLD.map.landmarks.find((l) => l.x === x && l.y === y && TroemereiNPC.areaOf(TN_WORLD, x, y) === area);
+    const lm = TN_WORLD.map.landmarks.find((l) => l.x === x && l.y === y && trNPC.areaOf(TN_WORLD, x, y) === area);
     if (lm) {
       setPreview(null);
       setMenu({ kind: "lm", id: lm.id });
       return;
     }
     setMenu(null);
-    if (!TroemereiNPC.walkable(TN_WORLD, x, y)) {
+    if (!trNPC.walkable(TN_WORLD, x, y)) {
       setPreview(null);
       return;
     }
-    if (TroemereiNPC.areaOf(TN_WORLD, x, y) !== area) {
+    if (trNPC.areaOf(TN_WORLD, x, y) !== area) {
       setPreview(null);
       setToast("\uB2E4\uB978 \uAD6C\uC5ED\uC740 \uBC29\uD5A5\uD0A4\uB85C \uC774\uB3D9\uD558\uC138\uC694");
       return;
@@ -1296,7 +1296,7 @@ function Troemerei({ s = "", t = "", d = "" }) {
       act({ type: "MOVE_TO", x, y });
       return;
     }
-    const path = TroemereiNPC.route(TN_WORLD, state, p, { x, y }, { ignorePlayer: true });
+    const path = trNPC.route(TN_WORLD, state, p, { x, y }, { ignorePlayer: true });
     if (!path.length) {
       setPreview(null);
       return;
@@ -1306,7 +1306,7 @@ function Troemerei({ s = "", t = "", d = "" }) {
   function npcContext(next, id) {
     const n = next.npcs.find((v) => v.id === id), name = trNpc(id).name;
     const mem = (n.mem || []).slice(-5).map((m) => trHM(m[2]) + " " + trFact(m[0], m[1], id) + (m[1] ? "(\uBAA9\uACA9)" : ""));
-    return [name + " \uC0C1\uD0DC: " + TroemereiNPC.describe(TN_WORLD, next, n), mem.length ? name + " \uAE30\uC5B5: " + mem.join(" / ") : ""];
+    return [name + " \uC0C1\uD0DC: " + trNPC.describe(TN_WORLD, next, n), mem.length ? name + " \uAE30\uC5B5: " + mem.join(" / ") : ""];
   }
   function clueLine(next) {
     const c = (next.player.mem || []).slice(-6).map((m) => trFact(m[0], m[1], "player"));
@@ -1315,7 +1315,7 @@ function Troemerei({ s = "", t = "", d = "" }) {
   function applyReply(kind) {
     if (!lines.length || consumed) return state;
     const full2 = replySec(boot.base);
-    return TroemereiNPC.applyTalk(TN_WORLD, boot.base, kind === "I" ? TroemereiTalk.partialSeconds(lines, talk.idx, talk.shown, full2) : full2);
+    return trNPC.applyTalk(TN_WORLD, boot.base, kind === "I" ? trTalk.partialSeconds(lines, talk.idx, talk.shown, full2) : full2);
   }
   function send(kind) {
     const msg = text.trim();
@@ -1325,7 +1325,7 @@ function Troemerei({ s = "", t = "", d = "" }) {
     if (kind === "I") cut = `${talk.idx + 1}/${lines.length}:${talk.shown}`;
     const id = (kind === "T" || kind === "I") && talk ? talk.npc : null;
     if (id) {
-      next = TroemereiNPC.dispatch(TN_WORLD, next, { type: "TALK_REQUEST", npcId: id, kind, chars: chars2 });
+      next = trNPC.dispatch(TN_WORLD, next, { type: "TALK_REQUEST", npcId: id, kind, chars: chars2 });
       if (next.pend !== id) {
         setToast("\uC9C0\uAE08\uC740 \uB9D0\uC744 \uAC78 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4");
         return;
@@ -1333,11 +1333,11 @@ function Troemerei({ s = "", t = "", d = "" }) {
       target = trNpc(id).name;
       ctx = [...npcContext(next, id), clueLine(next)];
     } else {
-      next = { ...TroemereiNPC.clone(next), pk: kind === "T" ? "P" : kind, pc: chars2, pend: null };
+      next = { ...trNPC.clone(next), pk: kind === "T" ? "P" : kind, pc: chars2, pend: null };
       ctx = [clueLine(next)];
     }
-    const code = TroemereiCodec.pack(TN_WORLD, next);
-    const message = TroemereiTalk.handoff({ kind: id ? kind : kind === "T" ? "P" : kind, target, cut, where: trArea(next.player.x, next.player.y), time: next.day + "\uC77C " + trHM(next.clock), ctx, text: msg, code });
+    const code = trCodec.pack(TN_WORLD, next);
+    const message = trTalk.handoff({ kind: id ? kind : kind === "T" ? "P" : kind, target, cut, where: trArea(next.player.x, next.player.y), time: next.day + "\uC77C " + trHM(next.clock), ctx, text: msg, code });
     try {
       if (typeof sendMessage === "function") sendMessage(message);
       setState(next);
@@ -1368,7 +1368,7 @@ function Troemerei({ s = "", t = "", d = "" }) {
       setDrop(false);
       return;
     }
-    next = TroemereiNPC.dispatch(TN_WORLD, next, { type, npcId: talk.npc });
+    next = trNPC.dispatch(TN_WORLD, next, { type, npcId: talk.npc });
     setState(next);
     setTalk(null);
     setDrop(false);
@@ -1401,7 +1401,7 @@ function Troemerei({ s = "", t = "", d = "" }) {
     const def = n ? trNpc(talk.npc) : { name: "\uC0C1\uD669", color: "#6b7a8c", symbol: "\u2026" };
     const sp = line && !line.narration ? TN_WORLD.npcs.find((x) => x.name === line.speaker) || null : null;
     const boxBottom = canInput ? 92 : 5;
-    return /* @__PURE__ */ React.createElement("div", { className: "tr-out", ref: outRef, style: { height: TR_H * scale } }, /* @__PURE__ */ React.createElement("style", null, TN_CSS), /* @__PURE__ */ React.createElement("div", { className: "tr-card", style: { transform: `scale(${scale})`, background: TR_BG[Math.max(0, area)] } }, /* @__PURE__ */ React.createElement("div", { className: "tr-talk" }, def.portrait ? /* @__PURE__ */ React.createElement("img", { src: def.portrait, alt: "", style: { position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: "88%", objectFit: "contain", objectPosition: "center bottom" } }) : /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 360 540", style: { position: "absolute", inset: 0 }, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("ellipse", { cx: "180", cy: "520", rx: "150", ry: "230", fill: def.color, opacity: ".55" }), /* @__PURE__ */ React.createElement("circle", { cx: "180", cy: "190", r: "78", fill: def.color, opacity: ".9" }), /* @__PURE__ */ React.createElement("text", { x: "180", y: "212", textAnchor: "middle", fontSize: "64", fontWeight: "700", fill: "#14212c" }, def.symbol)), /* @__PURE__ */ React.createElement("div", { className: "tr-hud" }, /* @__PURE__ */ React.createElement("span", { className: "tr-pill" }, def.name, " \xB7 ", trArea(n ? n.x : state.player.x, n ? n.y : state.player.y)), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("span", { className: "tr-pill tr-time" }, TroemereiNPC.clock(state.clock))), /* @__PURE__ */ React.createElement("div", { className: "tr-toast", style: { right: "auto" } }, toast || (n ? TR_IMP[n.mode] : "\uD589\uB3D9\uC758 \uACB0\uACFC")), line ? /* @__PURE__ */ React.createElement("div", { className: "tr-box", style: { bottom: boxBottom }, onClick: () => {
+    return /* @__PURE__ */ React.createElement("div", { className: "tr-out", ref: outRef, style: { height: TR_H * scale } }, /* @__PURE__ */ React.createElement("style", null, TN_CSS), /* @__PURE__ */ React.createElement("div", { className: "tr-card", style: { transform: `scale(${scale})`, background: TR_BG[Math.max(0, area)] } }, /* @__PURE__ */ React.createElement("div", { className: "tr-talk" }, def.portrait ? /* @__PURE__ */ React.createElement("img", { src: def.portrait, alt: "", style: { position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: "88%", objectFit: "contain", objectPosition: "center bottom" } }) : /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 360 540", style: { position: "absolute", inset: 0 }, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("ellipse", { cx: "180", cy: "520", rx: "150", ry: "230", fill: def.color, opacity: ".55" }), /* @__PURE__ */ React.createElement("circle", { cx: "180", cy: "190", r: "78", fill: def.color, opacity: ".9" }), /* @__PURE__ */ React.createElement("text", { x: "180", y: "212", textAnchor: "middle", fontSize: "64", fontWeight: "700", fill: "#14212c" }, def.symbol)), /* @__PURE__ */ React.createElement("div", { className: "tr-hud" }, /* @__PURE__ */ React.createElement("span", { className: "tr-pill" }, def.name, " \xB7 ", trArea(n ? n.x : state.player.x, n ? n.y : state.player.y)), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("span", { className: "tr-pill tr-time" }, trNPC.clock(state.clock))), /* @__PURE__ */ React.createElement("div", { className: "tr-toast", style: { right: "auto" } }, toast || (n ? TR_IMP[n.mode] : "\uD589\uB3D9\uC758 \uACB0\uACFC")), line ? /* @__PURE__ */ React.createElement("div", { className: "tr-box", style: { bottom: boxBottom }, onClick: () => {
       if (talk.cut) return;
       if (!full) setTalk((v) => ({ ...v, shown: chars.length }));
       else if (!lastLine) setTalk((v) => ({ ...v, idx: v.idx + 1, shown: 0 }));
@@ -1416,55 +1416,52 @@ function Troemerei({ s = "", t = "", d = "" }) {
   const dist = mn ? Math.abs(p.x - mn.x) + Math.abs(p.y - mn.y) : 0;
   const near = dist <= 1, canAcc = near && mn && mn.mode !== "busy" && mn.mode !== "accompany" && (!mn.intent || mn.intent.interruptible);
   const recent = state.logs.filter((e) => e.visible && e.type === "world").slice(-1)[0];
-  return /* @__PURE__ */ React.createElement("div", { className: "tr-out", ref: outRef, style: { height: TR_H * scale } }, /* @__PURE__ */ React.createElement("style", null, TN_CSS), /* @__PURE__ */ React.createElement("div", { className: "tr-card", style: { transform: `scale(${scale})` } }, /* @__PURE__ */ React.createElement("svg", { ref: svgRef, className: "tr-map", viewBox: `${camX} ${camY} ${TR_W} ${TR_H}`, onClick: tapMap }, /* @__PURE__ */ React.createElement(TrStatic, null), TN_WORLD.map.areas.map((a, i) => i === area && !debug ? null : /* @__PURE__ */ React.createElement("rect", { key: "f" + i, x: a.x0 * TR_CELL, y: a.y0 * TR_CELL, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL, fill: "#050b14", opacity: debug ? 0.35 : 0.82, pointerEvents: "none" })), preview ? /* @__PURE__ */ React.createElement("polyline", { points: [p, ...preview.path].map((q) => `${(q.x + 0.5) * TR_CELL},${(q.y + 0.5) * TR_CELL}`).join(" "), fill: "none", stroke: "#f2d99e", strokeWidth: "3", strokeDasharray: "5 4", pointerEvents: "none" }) : null, p.route.length ? /* @__PURE__ */ React.createElement("polyline", { points: [p, ...p.route].map((q) => `${(q.x + 0.5) * TR_CELL},${(q.y + 0.5) * TR_CELL}`).join(" "), fill: "none", stroke: "#f2d99e", strokeWidth: "3", pointerEvents: "none" }) : null, vis.map((n) => {
+  return /* @__PURE__ */ React.createElement("div", { className: "tr-out", ref: outRef, style: { height: TR_H * scale } }, /* @__PURE__ */ React.createElement("style", null, TN_CSS), /* @__PURE__ */ React.createElement("div", { className: "tr-card", style: { transform: `scale(${scale})` } }, /* @__PURE__ */ React.createElement("svg", { ref: svgRef, className: "tr-map", viewBox: `${camX} ${camY} ${TR_W} ${TR_H}`, onClick: tapMap }, trStaticLayer(), TN_WORLD.map.areas.map((a, i) => i === area && !debug ? null : /* @__PURE__ */ React.createElement("rect", { key: "f" + i, x: a.x0 * TR_CELL, y: a.y0 * TR_CELL, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL, fill: "#050b14", opacity: debug ? 0.35 : 0.82, pointerEvents: "none" })), preview ? /* @__PURE__ */ React.createElement("polyline", { points: [p, ...preview.path].map((q) => `${(q.x + 0.5) * TR_CELL},${(q.y + 0.5) * TR_CELL}`).join(" "), fill: "none", stroke: "#f2d99e", strokeWidth: "3", strokeDasharray: "5 4", pointerEvents: "none" }) : null, p.route.length ? /* @__PURE__ */ React.createElement("polyline", { points: [p, ...p.route].map((q) => `${(q.x + 0.5) * TR_CELL},${(q.y + 0.5) * TR_CELL}`).join(" "), fill: "none", stroke: "#f2d99e", strokeWidth: "3", pointerEvents: "none" }) : null, vis.map((n) => {
     const df = trNpc(n.id), cx = (n.x + 0.5) * TR_CELL, cy = (n.y + 0.5) * TR_CELL;
     return /* @__PURE__ */ React.createElement("g", { key: n.id, pointerEvents: "none" }, menu && menu.id === n.id ? /* @__PURE__ */ React.createElement("circle", { cx, cy, r: "18", fill: "none", stroke: "#f0d29a", strokeWidth: "2", strokeDasharray: "4 3" }) : null, /* @__PURE__ */ React.createElement("circle", { cx, cy, r: "14", fill: df.color, stroke: "#f4efdf", strokeWidth: "1.6" }), /* @__PURE__ */ React.createElement("text", { x: cx, y: cy + 4, textAnchor: "middle", fontSize: "12", fontWeight: "700", fill: "#14212c" }, df.symbol), n.mode === "accompany" ? /* @__PURE__ */ React.createElement("circle", { cx: cx + 11, cy: cy - 11, r: "4", fill: "#f7d47c" }) : null);
-  }), /* @__PURE__ */ React.createElement("g", { pointerEvents: "none" }, /* @__PURE__ */ React.createElement("circle", { cx: (p.x + 0.5) * TR_CELL, cy: (p.y + 0.5) * TR_CELL, r: "15", fill: "#f6dfab", stroke: "#1b2a39", strokeWidth: "3" }), /* @__PURE__ */ React.createElement("text", { x: (p.x + 0.5) * TR_CELL, y: (p.y + 0.5) * TR_CELL + 4, textAnchor: "middle", fontSize: "12", fontWeight: "700", fill: "#1b2a39" }, "\uB098"))), /* @__PURE__ */ React.createElement("div", { className: "tr-hud" }, /* @__PURE__ */ React.createElement("span", { className: "tr-pill" }, trArea(p.x, p.y)), /* @__PURE__ */ React.createElement("span", { className: "tr-pill tr-time" }, state.day, "\uC77C ", TroemereiNPC.clock(state.clock)), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("button", { onClick: () => setSheet("clue") }, "\uB178\uD2B8"), /* @__PURE__ */ React.createElement("button", { onClick: () => setSheet("set") }, "\u2261")), /* @__PURE__ */ React.createElement("div", { className: "tr-toast" }, toast || (recent ? trHM(recent.time) + " " + recent.text : "\uC778\uBB3C\xB7\uBB3C\uAC74\uC744 \uB204\uB974\uBA74 \uD589\uB3D9\uC744 \uACE0\uB97C \uC218 \uC788\uB2E4")), [[0, -1, 41, 436, "\u2191"], [-1, 0, 6, 471, "\u2190"], [1, 0, 76, 471, "\u2192"], [0, 1, 41, 506, "\u2193"]].map(([dx, dy, x, y, k]) => /* @__PURE__ */ React.createElement("button", { key: k, className: "tr-pad", style: { left: x, top: y - 5 }, disabled: busy, onPointerDown: (e) => {
+  }), /* @__PURE__ */ React.createElement("g", { pointerEvents: "none" }, /* @__PURE__ */ React.createElement("circle", { cx: (p.x + 0.5) * TR_CELL, cy: (p.y + 0.5) * TR_CELL, r: "15", fill: "#f6dfab", stroke: "#1b2a39", strokeWidth: "3" }), /* @__PURE__ */ React.createElement("text", { x: (p.x + 0.5) * TR_CELL, y: (p.y + 0.5) * TR_CELL + 4, textAnchor: "middle", fontSize: "12", fontWeight: "700", fill: "#1b2a39" }, "\uB098"))), /* @__PURE__ */ React.createElement("div", { className: "tr-hud" }, /* @__PURE__ */ React.createElement("span", { className: "tr-pill" }, trArea(p.x, p.y)), /* @__PURE__ */ React.createElement("span", { className: "tr-pill tr-time" }, state.day, "\uC77C ", trNPC.clock(state.clock)), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("button", { onClick: () => setSheet("clue") }, "\uB178\uD2B8"), /* @__PURE__ */ React.createElement("button", { onClick: () => setSheet("set") }, "\u2261")), /* @__PURE__ */ React.createElement("div", { className: "tr-toast" }, toast || (recent ? trHM(recent.time) + " " + recent.text : "\uC778\uBB3C\xB7\uBB3C\uAC74\uC744 \uB204\uB974\uBA74 \uD589\uB3D9\uC744 \uACE0\uB97C \uC218 \uC788\uB2E4")), [[0, -1, 41, 436, "\u2191"], [-1, 0, 6, 471, "\u2190"], [1, 0, 76, 471, "\u2192"], [0, 1, 41, 506, "\u2193"]].map(([dx, dy, x, y, k]) => /* @__PURE__ */ React.createElement("button", { key: k, className: "tr-pad", style: { left: x, top: y - 5 }, disabled: busy, onPointerDown: (e) => {
     e.preventDefault();
     padDown(dx, dy);
-  }, onPointerUp: padUp, onPointerLeave: padUp, onPointerCancel: padUp }, k)), preview && !menu ? /* @__PURE__ */ React.createElement("div", { className: "tr-preview", onClick: () => setPreview(null) }, preview.path.length, "\uCE78 \xB7 ", preview.sec, "\uCD08 \uAC78\uB9BC \u2014 \uAC19\uC740 \uCE78\uC744 \uD55C \uBC88 \uB354 \uB204\uB974\uBA74 \uCD9C\uBC1C") : null, mn ? /* @__PURE__ */ React.createElement("div", { className: "tr-menu" }, /* @__PURE__ */ React.createElement("div", { className: "tr-menu-h" }, /* @__PURE__ */ React.createElement("b", null, trNpc(mn.id).name), /* @__PURE__ */ React.createElement("span", null, dist, "\uCE78 \xB7 ", TR_IMP[mn.mode])), /* @__PURE__ */ React.createElement("div", { className: "tr-menu-g" }, /* @__PURE__ */ React.createElement("button", { disabled: !near || mn.mode === "busy" || busy, onClick: () => menuDo("TALK") }, "\uB300\uD654"), /* @__PURE__ */ React.createElement("button", { disabled: !canAcc || busy, onClick: () => menuDo("ACCOMPANY") }, "\uB3D9\uD589 \uC694\uCCAD"), /* @__PURE__ */ React.createElement("button", { disabled: mn.mode !== "accompany" || busy, onClick: () => menuDo("RELEASE") }, "\uB3D9\uD589 \uC885\uB8CC"), /* @__PURE__ */ React.createElement("button", { disabled: busy, onClick: () => menuDo("LOOK") }, "\uAD00\uCC30 0\uCD08")), !near ? /* @__PURE__ */ React.createElement("div", { className: "tr-menu-why" }, "\uB300\uD654\xB7\uB3D9\uD589\uC740 \uBC14\uB85C \uC606 \uCE78\uC5D0\uC11C \uD560 \uC218 \uC788\uB2E4") : mn.mode === "busy" ? /* @__PURE__ */ React.createElement("div", { className: "tr-menu-why" }, "\uC9C0\uAE08\uC740 \uD558\uB358 \uC77C\uC5D0 \uC9D1\uC911\uD558\uACE0 \uC788\uB2E4") : null) : null, ml ? /* @__PURE__ */ React.createElement("div", { className: "tr-menu" }, /* @__PURE__ */ React.createElement("div", { className: "tr-menu-h" }, /* @__PURE__ */ React.createElement("b", null, ml.name), /* @__PURE__ */ React.createElement("span", null, Math.abs(p.x - ml.x) + Math.abs(p.y - ml.y), "\uCE78")), /* @__PURE__ */ React.createElement("div", { className: "tr-menu-g" }, /* @__PURE__ */ React.createElement("button", { onClick: () => menuDo("LOOK") }, "\uAD00\uCC30 0\uCD08"), /* @__PURE__ */ React.createElement("button", { onClick: () => menuDo("SEARCH") }, "\uC870\uC0AC"), /* @__PURE__ */ React.createElement("button", { onClick: () => menuDo("GO") }, "\uC5EC\uAE30\uB85C \uC774\uB3D9"), /* @__PURE__ */ React.createElement("button", { onClick: () => setMenu(null) }, "\uB2EB\uAE30"))) : null, sent ? /* @__PURE__ */ React.createElement("div", { className: "tr-preview", style: { left: 112 } }, "\uC804\uB2EC\uD588\uC2B5\uB2C8\uB2E4. \uC0C8 \uD654\uBA74\uC5D0\uC11C \uC774\uC5B4\uC9D1\uB2C8\uB2E4.") : null, sheet ? /* @__PURE__ */ React.createElement(
-    TrSheet,
-    {
-      tab: sheet,
-      setTab: setSheet,
-      state,
-      debug,
-      setDebug,
-      busy,
-      onWait: (sec) => {
-        act({ type: "WAIT", seconds: sec });
+  }, onPointerUp: padUp, onPointerLeave: padUp, onPointerCancel: padUp }, k)), preview && !menu ? /* @__PURE__ */ React.createElement("div", { className: "tr-preview", onClick: () => setPreview(null) }, preview.path.length, "\uCE78 \xB7 ", preview.sec, "\uCD08 \uAC78\uB9BC \u2014 \uAC19\uC740 \uCE78\uC744 \uD55C \uBC88 \uB354 \uB204\uB974\uBA74 \uCD9C\uBC1C") : null, mn ? /* @__PURE__ */ React.createElement("div", { className: "tr-menu" }, /* @__PURE__ */ React.createElement("div", { className: "tr-menu-h" }, /* @__PURE__ */ React.createElement("b", null, trNpc(mn.id).name), /* @__PURE__ */ React.createElement("span", null, dist, "\uCE78 \xB7 ", TR_IMP[mn.mode])), /* @__PURE__ */ React.createElement("div", { className: "tr-menu-g" }, /* @__PURE__ */ React.createElement("button", { disabled: !near || mn.mode === "busy" || busy, onClick: () => menuDo("TALK") }, "\uB300\uD654"), /* @__PURE__ */ React.createElement("button", { disabled: !canAcc || busy, onClick: () => menuDo("ACCOMPANY") }, "\uB3D9\uD589 \uC694\uCCAD"), /* @__PURE__ */ React.createElement("button", { disabled: mn.mode !== "accompany" || busy, onClick: () => menuDo("RELEASE") }, "\uB3D9\uD589 \uC885\uB8CC"), /* @__PURE__ */ React.createElement("button", { disabled: busy, onClick: () => menuDo("LOOK") }, "\uAD00\uCC30 0\uCD08")), !near ? /* @__PURE__ */ React.createElement("div", { className: "tr-menu-why" }, "\uB300\uD654\xB7\uB3D9\uD589\uC740 \uBC14\uB85C \uC606 \uCE78\uC5D0\uC11C \uD560 \uC218 \uC788\uB2E4") : mn.mode === "busy" ? /* @__PURE__ */ React.createElement("div", { className: "tr-menu-why" }, "\uC9C0\uAE08\uC740 \uD558\uB358 \uC77C\uC5D0 \uC9D1\uC911\uD558\uACE0 \uC788\uB2E4") : null) : null, ml ? /* @__PURE__ */ React.createElement("div", { className: "tr-menu" }, /* @__PURE__ */ React.createElement("div", { className: "tr-menu-h" }, /* @__PURE__ */ React.createElement("b", null, ml.name), /* @__PURE__ */ React.createElement("span", null, Math.abs(p.x - ml.x) + Math.abs(p.y - ml.y), "\uCE78")), /* @__PURE__ */ React.createElement("div", { className: "tr-menu-g" }, /* @__PURE__ */ React.createElement("button", { onClick: () => menuDo("LOOK") }, "\uAD00\uCC30 0\uCD08"), /* @__PURE__ */ React.createElement("button", { onClick: () => menuDo("SEARCH") }, "\uC870\uC0AC"), /* @__PURE__ */ React.createElement("button", { onClick: () => menuDo("GO") }, "\uC5EC\uAE30\uB85C \uC774\uB3D9"), /* @__PURE__ */ React.createElement("button", { onClick: () => setMenu(null) }, "\uB2EB\uAE30"))) : null, sent ? /* @__PURE__ */ React.createElement("div", { className: "tr-preview", style: { left: 112 } }, "\uC804\uB2EC\uD588\uC2B5\uB2C8\uB2E4. \uC0C8 \uD654\uBA74\uC5D0\uC11C \uC774\uC5B4\uC9D1\uB2C8\uB2E4.") : null, sheet ? trSheet({
+    tab: sheet,
+    setTab: setSheet,
+    state,
+    debug,
+    setDebug,
+    busy,
+    onWait: (sec) => {
+      act({ type: "WAIT", seconds: sec });
+      setSheet("");
+    },
+    codeText,
+    setCodeText,
+    onRestore: () => {
+      try {
+        const v = trCodec.unpack(TN_WORLD, codeText.trim());
+        setState(trNPC.applyTalk(TN_WORLD, v, 0));
         setSheet("");
-      },
-      codeText,
-      setCodeText,
-      onRestore: () => {
-        try {
-          const v = TroemereiCodec.unpack(TN_WORLD, codeText.trim());
-          setState(TroemereiNPC.applyTalk(TN_WORLD, v, 0));
-          setSheet("");
-          setToast("\uC0C1\uD0DC \uCF54\uB4DC\uB97C \uBCF5\uC6D0\uD588\uC2B5\uB2C8\uB2E4");
-        } catch (e) {
-          setToast("\uBCF5\uC6D0 \uC2E4\uD328: " + e.message);
-        }
-      },
-      onFree: () => {
-        setSheet("free");
-        setText("");
-      },
-      text,
-      setText,
-      send,
-      sent
-    }
-  ) : null));
+        setToast("\uC0C1\uD0DC \uCF54\uB4DC\uB97C \uBCF5\uC6D0\uD588\uC2B5\uB2C8\uB2E4");
+      } catch (e) {
+        setToast("\uBCF5\uC6D0 \uC2E4\uD328: " + e.message);
+      }
+    },
+    onFree: () => {
+      setSheet("free");
+      setText("");
+    },
+    text,
+    setText,
+    send,
+    sent
+  }) : null));
 }
-const TR_STATIC = /* @__PURE__ */ (() => {
+const trStaticLayer = /* @__PURE__ */ (() => {
   let cache = null;
   return () => {
     if (cache) return cache;
     const out = [];
     TN_WORLD.map.rows.forEach((row, y) => row.split("").forEach((c, x) => {
-      const i = TroemereiNPC.areaOf(TN_WORLD, x, y);
+      const i = trNPC.areaOf(TN_WORLD, x, y);
       out.push(/* @__PURE__ */ React.createElement("rect", { key: x + "-" + y, x: x * TR_CELL, y: y * TR_CELL, width: TR_CELL, height: TR_CELL, fill: c === "#" ? "#0f1a27" : TR_BG[Math.max(0, i)], stroke: "#5f7585", strokeOpacity: ".09" }));
     }));
     TN_WORLD.map.landmarks.forEach((l) => out.push(/* @__PURE__ */ React.createElement("g", { key: "l" + l.id }, /* @__PURE__ */ React.createElement("rect", { x: l.x * TR_CELL + 6, y: l.y * TR_CELL + 6, width: TR_CELL - 12, height: TR_CELL - 12, rx: "4", fill: "#e0bc78", opacity: ".22" }), /* @__PURE__ */ React.createElement("text", { x: (l.x + 0.5) * TR_CELL, y: (l.y + 0.5) * TR_CELL + 6, fontSize: "16", textAnchor: "middle", fill: "#eddbaf" }, l.icon))));
@@ -1472,16 +1469,13 @@ const TR_STATIC = /* @__PURE__ */ (() => {
     return cache;
   };
 })();
-function TrStatic() {
-  return TR_STATIC();
-}
-function TrSheet({ tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
+function trSheet({ tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
   const tabs = [["clue", "\uB2E8\uC11C"], ["people", "\uC778\uBB3C"], ["log", "\uAE30\uB85D"], ["set", "\uC124\uC815"]];
   const mem = (state.player.mem || []).slice().reverse();
   return /* @__PURE__ */ React.createElement("div", { className: "tr-sheet" }, /* @__PURE__ */ React.createElement("div", { className: "tr-tabs" }, tabs.map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: tab === k ? "on" : "", onClick: () => setTab(k) }, l)), /* @__PURE__ */ React.createElement("button", { style: { flex: "none", width: 34 }, onClick: () => setTab("") }, "\u2715")), /* @__PURE__ */ React.createElement("div", { className: "tr-body" }, tab === "clue" ? mem.length ? mem.map((m, i) => /* @__PURE__ */ React.createElement("div", { className: "tr-row", key: i }, /* @__PURE__ */ React.createElement("time", null, trHM(m[2])), trFact(m[0], m[1], "player"))) : /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC544\uC9C1 \uC9C1\uC811 \uBCF4\uAC70\uB098 \uB4E4\uC740 \uB2E8\uC11C\uAC00 \uC5C6\uB2E4.") : null, tab === "people" ? TN_WORLD.npcs.map((n) => {
     const v = (state.player.seen || {})[n.id];
     return /* @__PURE__ */ React.createElement("div", { className: "tr-row", key: n.id }, /* @__PURE__ */ React.createElement("b", { style: { color: n.color } }, n.name), " ", /* @__PURE__ */ React.createElement("span", { className: "tr-mut" }, v ? "\uB9C8\uC9C0\uB9C9\uC73C\uB85C \uBCF8 \uACF3: " + (v[0] < 0 ? "\uD1B5\uB85C" : TN_WORLD.map.areas[v[0]].name) + " \xB7 " + trHM(v[1]) : "\uC544\uC9C1 \uBCF4\uC9C0 \uBABB\uD588\uB2E4"));
-  }) : null, tab === "log" ? state.logs.filter((e) => debug || e.visible).slice(-30).reverse().map((e, i) => /* @__PURE__ */ React.createElement("div", { className: "tr-row", key: i }, /* @__PURE__ */ React.createElement("time", null, trHM(e.time)), e.text)) : null, tab === "set" ? /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 6, paddingTop: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { style: { flex: 1, height: 32 }, disabled: busy, onClick: () => onWait(60) }, "1\uBD84 \uB300\uAE30"), /* @__PURE__ */ React.createElement("button", { style: { flex: 1, height: 32 }, disabled: busy, onClick: () => onWait(300) }, "5\uBD84 \uB300\uAE30")), /* @__PURE__ */ React.createElement("button", { style: { height: 32 }, disabled: busy, onClick: onFree }, "\uC790\uC720 \uD589\uB3D9 \xB7 \uCD94\uB9AC \uC785\uB825"), /* @__PURE__ */ React.createElement("label", { className: "tr-mut" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: debug, onChange: (e) => setDebug(e.target.checked) }), " \uB514\uBC84\uADF8 (\uC228\uC740 \uC778\uBB3C\xB7\uAE30\uB85D \uD45C\uC2DC)"), /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC0C1\uD0DC \uCF54\uB4DC"), /* @__PURE__ */ React.createElement("div", { className: "tr-mono" }, TroemereiCodec.pack(TN_WORLD, state)), /* @__PURE__ */ React.createElement("textarea", { className: "tr-ta", rows: 2, value: codeText, onChange: (e) => setCodeText(e.target.value), placeholder: "\uBCF5\uC6D0\uD560 \uC0C1\uD0DC \uCF54\uB4DC" }), /* @__PURE__ */ React.createElement("button", { style: { height: 30 }, disabled: busy, onClick: onRestore }, "\uC774 \uCF54\uB4DC\uB85C \uBCF5\uC6D0"), /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC2DC\uD5D8\uD310 v0.3 \xB7 \uC784\uC2DC \uC778\uBB3C\xB7\uC7A5\uC18C(\uBCF8\uD3B8 \uC544\uB2D8)")) : null, tab === "free" ? /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 6, paddingTop: 4 } }, /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC778\uBB3C\uC774 \uC544\uB2CC \uC0C1\uB300\uB85C \uD558\uB294 \uD589\uB3D9\uC774\uB098, \uC9C0\uAE08\uAE4C\uC9C0\uC758 \uCD94\uB9AC\uB97C \uC801\uB294\uB2E4."), /* @__PURE__ */ React.createElement("textarea", { className: "tr-ta", rows: 4, value: text, onChange: (e) => setText(e.target.value.slice(0, 500)), placeholder: "\uD589\uB3D9\uC774\uB098 \uCD94\uB9AC" }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { style: { flex: 1, height: 34 }, disabled: !text.trim() || !!sent, onClick: () => send("P") }, "\uD589\uB3D9 \uC804\uB2EC"), /* @__PURE__ */ React.createElement("button", { style: { flex: 1, height: 34 }, disabled: !text.trim() || !!sent, onClick: () => send("A") }, "\uCD94\uB9AC \uC81C\uC2DC")), sent ? /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC804\uB2EC\uD588\uC2B5\uB2C8\uB2E4. \uC0C8 \uD654\uBA74\uC5D0\uC11C \uC774\uC5B4\uC9D1\uB2C8\uB2E4.") : null) : null));
+  }) : null, tab === "log" ? state.logs.filter((e) => debug || e.visible).slice(-30).reverse().map((e, i) => /* @__PURE__ */ React.createElement("div", { className: "tr-row", key: i }, /* @__PURE__ */ React.createElement("time", null, trHM(e.time)), e.text)) : null, tab === "set" ? /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 6, paddingTop: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { style: { flex: 1, height: 32 }, disabled: busy, onClick: () => onWait(60) }, "1\uBD84 \uB300\uAE30"), /* @__PURE__ */ React.createElement("button", { style: { flex: 1, height: 32 }, disabled: busy, onClick: () => onWait(300) }, "5\uBD84 \uB300\uAE30")), /* @__PURE__ */ React.createElement("button", { style: { height: 32 }, disabled: busy, onClick: onFree }, "\uC790\uC720 \uD589\uB3D9 \xB7 \uCD94\uB9AC \uC785\uB825"), /* @__PURE__ */ React.createElement("label", { className: "tr-mut" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: debug, onChange: (e) => setDebug(e.target.checked) }), " \uB514\uBC84\uADF8 (\uC228\uC740 \uC778\uBB3C\xB7\uAE30\uB85D \uD45C\uC2DC)"), /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC0C1\uD0DC \uCF54\uB4DC"), /* @__PURE__ */ React.createElement("div", { className: "tr-mono" }, trCodec.pack(TN_WORLD, state)), /* @__PURE__ */ React.createElement("textarea", { className: "tr-ta", rows: 2, value: codeText, onChange: (e) => setCodeText(e.target.value), placeholder: "\uBCF5\uC6D0\uD560 \uC0C1\uD0DC \uCF54\uB4DC" }), /* @__PURE__ */ React.createElement("button", { style: { height: 30 }, disabled: busy, onClick: onRestore }, "\uC774 \uCF54\uB4DC\uB85C \uBCF5\uC6D0"), /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC2DC\uD5D8\uD310 v0.3 \xB7 \uC784\uC2DC \uC778\uBB3C\xB7\uC7A5\uC18C(\uBCF8\uD3B8 \uC544\uB2D8)")) : null, tab === "free" ? /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 6, paddingTop: 4 } }, /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC778\uBB3C\uC774 \uC544\uB2CC \uC0C1\uB300\uB85C \uD558\uB294 \uD589\uB3D9\uC774\uB098, \uC9C0\uAE08\uAE4C\uC9C0\uC758 \uCD94\uB9AC\uB97C \uC801\uB294\uB2E4."), /* @__PURE__ */ React.createElement("textarea", { className: "tr-ta", rows: 4, value: text, onChange: (e) => setText(e.target.value.slice(0, 500)), placeholder: "\uD589\uB3D9\uC774\uB098 \uCD94\uB9AC" }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { style: { flex: 1, height: 34 }, disabled: !text.trim() || !!sent, onClick: () => send("P") }, "\uD589\uB3D9 \uC804\uB2EC"), /* @__PURE__ */ React.createElement("button", { style: { flex: 1, height: 34 }, disabled: !text.trim() || !!sent, onClick: () => send("A") }, "\uCD94\uB9AC \uC81C\uC2DC")), sent ? /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC804\uB2EC\uD588\uC2B5\uB2C8\uB2E4. \uC0C8 \uD654\uBA74\uC5D0\uC11C \uC774\uC5B4\uC9D1\uB2C8\uB2E4.") : null) : null));
 }
 
 // 브라우저 시험용: sendMessage를 가로채 화면에 보여주고, 붙여넣은 AI 태그로 컴포넌트를 새로 마운트한다.

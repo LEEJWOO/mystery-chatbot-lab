@@ -35,7 +35,7 @@ function Troemerei({ s = '', t = '', d = '' }) {
   const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null);
 
   useEffect(() => {
-    const fit = () => { const el = outRef.current; if (el) { const w = el.getBoundingClientRect().width || TR_W; setScale(Math.max(0.6, Math.min(1.6, w / TR_W))); } };
+    const fit = () => { const el = outRef.current; if (!el) return; const w = el.getBoundingClientRect().width || TR_W; const h = (typeof window !== 'undefined' && window.innerHeight) || 99999; setScale(Math.max(0.6, Math.min(1.6, w / TR_W, (h - 8) / TR_H))); };
     fit();
     if (typeof ResizeObserver === 'function' && outRef.current) { const ro = new ResizeObserver(fit); ro.observe(outRef.current); return () => ro.disconnect(); }
     if (typeof window !== 'undefined') { window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit); }
@@ -201,7 +201,7 @@ function Troemerei({ s = '', t = '', d = '' }) {
   return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
     <div className="tr-card" style={{ transform: `scale(${scale})` }}>
       <svg ref={svgRef} className="tr-map" viewBox={`${camX} ${camY} ${TR_W} ${TR_H}`} onClick={tapMap}>
-        <TrStatic />
+        {trStaticLayer()}
         {TN_WORLD.map.areas.map((a, i) => i === area && !debug ? null : <rect key={'f' + i} x={a.x0 * TR_CELL} y={a.y0 * TR_CELL} width={(a.x1 - a.x0 + 1) * TR_CELL} height={(a.y1 - a.y0 + 1) * TR_CELL} fill="#050b14" opacity={debug ? .35 : .82} pointerEvents="none" />)}
         {preview ? <polyline points={[p, ...preview.path].map(q => `${(q.x + .5) * TR_CELL},${(q.y + .5) * TR_CELL}`).join(' ')} fill="none" stroke="#f2d99e" strokeWidth="3" strokeDasharray="5 4" pointerEvents="none" /> : null}
         {p.route.length ? <polyline points={[p, ...p.route].map(q => `${(q.x + .5) * TR_CELL},${(q.y + .5) * TR_CELL}`).join(' ')} fill="none" stroke="#f2d99e" strokeWidth="3" pointerEvents="none" /> : null}
@@ -226,15 +226,16 @@ function Troemerei({ s = '', t = '', d = '' }) {
       {ml ? <div className="tr-menu"><div className="tr-menu-h"><b>{ml.name}</b><span>{Math.abs(p.x - ml.x) + Math.abs(p.y - ml.y)}칸</span></div>
         <div className="tr-menu-g"><button onClick={() => menuDo('LOOK')}>관찰 0초</button><button onClick={() => menuDo('SEARCH')}>조사</button><button onClick={() => menuDo('GO')}>여기로 이동</button><button onClick={() => setMenu(null)}>닫기</button></div></div> : null}
       {sent ? <div className="tr-preview" style={{ left: 112 }}>전달했습니다. 새 화면에서 이어집니다.</div> : null}
-      {sheet ? <TrSheet tab={sheet} setTab={setSheet} state={state} debug={debug} setDebug={setDebug} busy={busy}
-        onWait={sec => { act({ type: 'WAIT', seconds: sec }); setSheet(''); }} codeText={codeText} setCodeText={setCodeText}
-        onRestore={() => { try { const v = TroemereiCodec.unpack(TN_WORLD, codeText.trim()); setState(TroemereiNPC.applyTalk(TN_WORLD, v, 0)); setSheet(''); setToast('상태 코드를 복원했습니다'); } catch (e) { setToast('복원 실패: ' + e.message); } }}
-        onFree={() => { setSheet('free'); setText(''); }} text={text} setText={setText} send={send} sent={sent} /> : null}
+      {sheet ? trSheet({ tab: sheet, setTab: setSheet, state, debug, setDebug, busy,
+        onWait: sec => { act({ type: 'WAIT', seconds: sec }); setSheet(''); }, codeText, setCodeText,
+        onRestore: () => { try { const v = TroemereiCodec.unpack(TN_WORLD, codeText.trim()); setState(TroemereiNPC.applyTalk(TN_WORLD, v, 0)); setSheet(''); setToast('상태 코드를 복원했습니다'); } catch (e) { setToast('복원 실패: ' + e.message); } },
+        onFree: () => { setSheet('free'); setText(''); }, text, setText, send, sent }) : null}
     </div></div>;
 }
 
 // 움직이지 않는 지도 층: 한 번만 만들고 다시 그리지 않는다.
-const TR_STATIC = (() => {
+// 움직이지 않는 지도 층(함수 호출로 사용: 대문자 이름은 UUMMAI가 별도 컴포넌트로 인식하므로 피한다).
+const trStaticLayer = (() => {
   let cache = null;
   return () => {
     if (cache) return cache;
@@ -245,9 +246,8 @@ const TR_STATIC = (() => {
     return cache;
   };
 })();
-function TrStatic() { return TR_STATIC(); }
 
-function TrSheet({ tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
+function trSheet({ tab, setTab, state, debug, setDebug, busy, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
   const tabs = [['clue', '단서'], ['people', '인물'], ['log', '기록'], ['set', '설정']];
   const mem = (state.player.mem || []).slice().reverse();
   return <div className="tr-sheet">
