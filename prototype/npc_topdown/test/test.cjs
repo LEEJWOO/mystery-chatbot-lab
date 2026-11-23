@@ -43,7 +43,7 @@ test('손상 검출: 한 글자 바뀌면 체크섬 오류, 다른 맵이면 거
   const i = Math.floor(code.length / 2), bad = code.slice(0, i) + (code[i] === 'A' ? 'B' : 'A') + code.slice(i + 1);
   assert.throws(() => C.unpack(W, bad), /손상|잘렸|알 수 없는|오류/);
   const other = JSON.parse(JSON.stringify(W)); other.map.id = 'other';
-  assert.throws(() => C.unpack(other, code), /다른 맵/);
+  assert.throws(() => C.unpack(other, code), /세계 데이터/);
   assert.throws(() => C.unpack(W, code + '\''), /허용되지 않은/);
 });
 test('대화 요청: 인접해야 하고, 응답 시간 반영은 다시 마운트해도 동일', () => {
@@ -81,8 +81,8 @@ test('끼어들기: 본 글자 비율만큼만 시간 반영', () => {
   assert.equal(T.partialSeconds(l, 1, 10, 40), 40);
 });
 test('인계 메시지 형식: 한 줄 머리말 + 입력 + 상태 코드', () => {
-  const msg = T.handoff({ kind: 'I', target: '유리', cut: '2/3:15', where: '정원', time: '09:01', text: '잠깐만요', code: 'AbC' });
-  assert.equal(msg, 'TRM1 I 유리 cut=2/3:15 | 09:01 정원\n잠깐만요\ns=AbC');
+  const msg = T.handoff({ kind: 'I', target: '유리', cut: '2/3:15', where: '정원', time: '09:01', ctx: ['유리 상태: 한가함', ''], text: '잠깐만요', code: 'AbC' });
+  assert.equal(msg, 'TRM1 I 유리 cut=2/3:15 | 09:01 정원\n유리 상태: 한가함\n잠깐만요\ns=AbC');
 });
 test('매 턴 저장해도 사건 결과는 연속 진행과 같음', () => {
   let a = E.createWorld(W), b = E.createWorld(W);
@@ -93,6 +93,53 @@ test('단일 JSX 산출물에 import/export/fetch/localStorage 없음', () => {
   const fs = require('node:fs'), src = fs.readFileSync(__dirname + '/../dist/Troemerei.jsx', 'utf8');
   for (const bad of [/^\s*import\s/m, /^\s*export\s/m, /\bfetch\(/, /localStorage/, /\bmodule\.exports/]) assert.ok(!bad.test(src), '금지 패턴: ' + bad);
   assert.ok(/function Troemerei\(/.test(src));
+});
+
+test('세계 지문: 일정 정의가 바뀌면 옛 상태 코드를 거부(조용히 다른 행동으로 읽지 않음)', () => {
+  let s = E.advance(W, E.createWorld(W), 400);
+  const code = pk(s);
+  const changed = JSON.parse(JSON.stringify(W));
+  changed.npcs[3].agenda.unshift({ id: 'new_task', kind: 'visit', landmark: 'garden', from: '09:00', until: '18:00', durationSeconds: 30, priority: 10, weight: 1 });
+  assert.throws(() => C.unpack(changed, code), /세계 데이터/);
+  const renamed = JSON.parse(JSON.stringify(W)); renamed.facts[0].id = 'met_other';
+  assert.throws(() => C.unpack(renamed, code), /세계 데이터/);
+});
+test('날짜 넘김: 자정이 지나면 날짜가 늘고, 다음 날 09시 이후 일정이 다시 진행됨', () => {
+  let s = E.createWorld(W);
+  const target = 86400 + 9 * 3600 + 1800; while (s.clock < target) s = E.advance(W, s, Math.min(7200, target - s.clock));
+  assert.equal(s.day, 2);
+  assert.equal(E.clock(s.clock).slice(0, 2), '09');
+  assert.ok(s.npcs.some(n => n.intent || n.mode === 'busy'), '둘째 날 아침에 일정을 고른 NPC가 있어야 함');
+  const before = s.npcs.map(n => n.completed.length);
+  s = E.advance(W, s, 1800);
+  assert.ok(s.npcs.some((n, i) => n.lastCompleted && Object.values(n.lastCompleted).some(t => t > 86400 + 9 * 3600)), '둘째 날 완료한 행동이 있어야 함');
+});
+test('연기(postpone): 동행을 끝내면 미뤘던 만남을 다시 진행 / 취소(cancel)는 다시 안 함', () => {
+  const P = JSON.parse(JSON.stringify(W)); P.npcs[0].agenda[0].onAccompany = 'postpone';
+  let a = E.dispatch(P, E.createWorld(P), { type: 'ACCOMPANY', npcId: 'companion' });
+  a = E.advance(P, a, 30); a = E.dispatch(P, a, { type: 'RELEASE', npcId: 'companion' }); a = E.advance(P, a, 600);
+  assert.equal(a.flags.meeting_occurred, true);
+  let b = E.dispatch(W, E.createWorld(W), { type: 'ACCOMPANY', npcId: 'companion' });
+  b = E.advance(W, b, 30); b = E.dispatch(W, b, { type: 'RELEASE', npcId: 'companion' }); b = E.advance(W, b, 600);
+  assert.equal(b.flags.meeting_occurred, false);
+});
+test('인물 기억: 당사자는 직접, 근처 사람은 목격으로 알고, 먼 사람은 모름', () => {
+  let s = E.createWorld(W); s.player.x = 22; s.player.y = 6;
+  s = E.advance(W, s, 400);
+  const mem = id => s.npcs.find(n => n.id === id).mem.map(m => m[0] + ':' + m[1]);
+  assert.ok(mem('companion').includes('met_doyun:0')); assert.ok(mem('contact').includes('met_doyun:0'));
+  assert.ok(s.player.mem.some(m => m[0] === 'met_doyun' && m[1] === 1), '근처에 있던 플레이어는 목격');
+  const far = E.advance(W, E.createWorld(W), 400);
+  assert.ok(!far.player.mem.some(m => m[0] === 'met_doyun'), '정원에 있던 플레이어는 모름');
+  const acc = E.dispatch(W, E.createWorld(W), { type: 'ACCOMPANY', npcId: 'companion' });
+  assert.ok(acc.npcs[0].mem.some(m => m[0] === 'missed_doyun'));
+});
+test('대화 시간은 글자 수로 계산하고, 대기 정보(종류·글자 수)는 코드에 보존', () => {
+  assert.equal(E.talkSeconds(60, 120), 34); assert.equal(E.talkSeconds(0, 0), 5);
+  let s = E.dispatch(W, E.createWorld(W), { type: 'TALK_REQUEST', npcId: 'companion', kind: 'T', chars: 42 });
+  const back = C.unpack(W, pk(s));
+  assert.equal(back.pk, 'T'); assert.equal(back.pc, 42); assert.equal(back.pend, 'companion');
+  assert.deepEqual(back.player.seen, s.player.seen);
 });
 
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }

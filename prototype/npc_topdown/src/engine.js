@@ -1,3 +1,4 @@
+/* Troemerei NPC simulation core v0.3 — 결정적 NPC 일정·경로·기억. DOM/네트워크/LLM 의존 없음. */
 const TroemereiNPC = (() => {
   const abs = Math.abs;
   const posKey = (x,y) => x+','+y;
@@ -10,6 +11,24 @@ const TroemereiNPC = (() => {
   const walkable = (w,x,y) => inBounds(w,x,y) && w.map.rows[y][x] !== '#';
   const node = (s,id) => s.npcs.find(n=>n.id===id);
   const landmark = (w,id) => w.map.landmarks.find(x=>x.id===id);
+  const DAY=86400;
+  // 방 번호(-1은 통로). 같은 방이고 6칸 이내면 서로 보인다(통로끼리는 3칸).
+  function areaOf(w,x,y){return w.map.areas.findIndex(a=>x>=a.x0&&x<=a.x1&&y>=a.y0&&y<=a.y1);}
+  function sees(w,a,b){const ra=areaOf(w,a.x,a.y),rb=areaOf(w,b.x,b.y);if(ra!==rb)return false;return manhattan(a,b)<=(ra<0?3:6);}
+  // 기억: [사실ID, 역할(0 직접 1 목격), 시각]. 인물당 최근 12개.
+  function learn(target,factId,role,time){
+    if(!target.mem)target.mem=[];
+    if(target.mem.some(m=>m[0]===factId&&m[1]===role))return;
+    target.mem.push([factId,role,time]);if(target.mem.length>12)target.mem.shift();
+  }
+  function witness(w,s,actor,factId,direct){
+    for(const id of direct){const m=node(s,id);if(m)learn(m,factId,0,s.clock);}
+    for(const o of s.npcs)if(!direct.includes(o.id)&&sees(w,o,actor))learn(o,factId,1,s.clock);
+    if(sees(w,s.player,actor))learn(s.player,factId,1,s.clock);
+  }
+  function updateSeen(w,s){
+    for(const n of s.npcs)if(sees(w,s.player,n))s.player.seen[n.id]=[areaOf(w,n.x,n.y),s.clock];
+  }
   function addLog(s,text,type='world',at=null) {
     const visible=type==='player'||!at||manhattan(s.player,at)<=5;
     s.logs.push({time:s.clock,text,type,visible});
@@ -17,15 +36,16 @@ const TroemereiNPC = (() => {
   }
   function createWorld(w,seed=246813579){
     const s={schema:'TROEMEREI_NPC_V1',version:1,worldId:w.map.id,day:1,clock:9*3600,
-      rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0},
+      rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{}},
       npcs:w.npcs.map((n,i)=>({id:n.id,x:n.x,y:n.y,mode:'idle',intent:null,route:[],
         nextMoveAt:9*3600+10+i*4,busyUntil:0,blockedSince:null,completed:[],
-        excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0})),
-      flags:{meeting_occurred:false,meeting_prevented:false,delivery_done:false},
-      logs:[],revision:0,pend:null};
+        excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:[]})),
+      flags:Object.fromEntries((w.flagNames||[]).map(f=>[f,false])),
+      logs:[],revision:0,pend:null,pk:'',pc:0};
     addLog(s,'시뮬레이션이 시작되었다. NPC들은 각자의 일정에 따라 행동한다.','player');
     // Decisions exist from the first frame; the player can cancel a planned visit before movement.
     for(const n of s.npcs)decide(w,s,n);
+    updateSeen(w,s);
     return s;
   }
   function route(w,s,from,to,{ignorePlayer=false,ignoreNpc=null}={}){
@@ -80,7 +100,8 @@ const TroemereiNPC = (() => {
   }
   function isAvailable(s,n,t){
     if(n.excluded.includes(t.id)||n.completed.includes(t.id)&&t.once)return false;
-    if(s.clock<secs(t.from||'00:00') ||s.clock>=secs(t.until||'23:59'))return false;
+    const tod=s.clock%DAY; // 일정 시각은 '그날 기준'으로 비교한다(자정이 지나도 다음 날 다시 선택).
+    if(tod<secs(t.from||'00:00') ||tod>=secs(t.until||'23:59'))return false;
     if(n.lastCompleted[t.id] && s.clock-n.lastCompleted[t.id]<(t.cooldownSeconds||0))return false;
     return true;
   }
@@ -129,9 +150,11 @@ const TroemereiNPC = (() => {
         if(r.setFlag)s.flags[r.setFlag]=true;
         if(r.queueTask)n.queued.push(clone(r.queueTask));
         if(r.publicLog)addLog(s,r.publicLog,'world',n);
+        if(r.fact)witness(w,s,n,r.fact,[n.id,r.when.targetNpc].filter(Boolean));
       }
     }
     if(task.onCompleteFlag)s.flags[task.onCompleteFlag]=true;
+    if(task.onCompleteFact)witness(w,s,n,task.onCompleteFact,[n.id]);
     n.mode='idle';n.intent=null;n.route=[];n.nextMoveAt=s.clock+5;n.busyUntil=0;
   }
   function npcStep(w,s,n){
@@ -195,7 +218,9 @@ const TroemereiNPC = (() => {
       s.clock++;
       if(s.player.route.length&&s.player.nextMoveAt<=s.clock)stepPlayer(w,s);
       for(const n of s.npcs){if(n.mode!=='accompany'&&n.nextMoveAt<=s.clock)npcStep(w,s,n);}
+      updateSeen(w,s);
     }
+    s.day=1+Math.floor(s.clock/DAY);
     s.revision++;
     return s;
   }
@@ -215,8 +240,10 @@ const TroemereiNPC = (() => {
         addLog(s,'지금은 동행할 수 없다.','player');return s;
       }
       if(n.intent){
-        n.excluded.push(n.intent.id);
+        // onAccompany: 'cancel'(기본, 이번 일정은 다시 고르지 않음) / 'postpone'(동행이 끝나면 다시 고를 수 있음)
+        if(n.intent.onAccompany!=='postpone')n.excluded.push(n.intent.id);
         if(n.intent.onInterrupt)s.flags[n.intent.onInterrupt]=true;
+        if(n.intent.onInterruptFact)learn(n,n.intent.onInterruptFact,0,s.clock);
       }
       n.mode='accompany';n.intent=null;n.route=[];n.nextMoveAt=0;n.busyUntil=0;n.blockedSince=null;
       addLog(s,w.npcs.find(x=>x.id===n.id).name+'이(가) 동행을 수락했다. 기존 방문 일정은 취소됐다.','player');
@@ -229,7 +256,7 @@ const TroemereiNPC = (() => {
       const n=node(s,action.npcId);
       if(!n||manhattan(player,n)>1){addLog(s,'대화하려면 인물에게 접근해야 한다.','player');return s;}
       if(n.mode==='busy'){addLog(s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
-      s.pend=n.id;player.route=[];player.nextMoveAt=0;
+      s.pend=n.id;s.pk=action.kind||'T';s.pc=Math.max(0,Math.min(2000,action.chars|0));player.route=[];player.nextMoveAt=0;
     }else if(action.type==='WAIT')return advance(w,s,action.seconds||60);
     else if(action.type==='CLEAR_ROUTE'){s.player.route=[];s.player.nextMoveAt=0;addLog(s,'이동을 멈췄다.','player');}
     s.revision++;return s;
@@ -241,10 +268,20 @@ const TroemereiNPC = (() => {
     if(s.pend===undefined)s.pend=null;
     const n=s.pend?node(s,s.pend):null;
     if(n&&n.mode!=='accompany'){n.mode='paused';n.busyUntil=s.clock+sec;n.nextMoveAt=n.busyUntil;}
-    s.player.route=[];s.player.nextMoveAt=0;s.pend=null;
+    s.player.route=[];s.player.nextMoveAt=0;s.pend=null;s.pk='';s.pc=0;
     if(sec>0){addLog(s,(n?w.npcs.find(x=>x.id===n.id).name+'와(과) ':'')+'대화하며 '+sec+'초가 지났다.','player');s=advance(w,s,sec);}
     else s.revision++;
     return s;
+  }
+  // 대화 시간은 AI가 정하지 않고 글자 수로 계산한다(초당 약 6자 + 기본 4초).
+  function talkSeconds(userChars,replyChars){return Math.max(5,Math.min(600,Math.ceil(((userChars|0)+(replyChars|0))/6)+4));}
+  // NPC가 스스로 아는 현재 행동을 짧은 말로.
+  function describe(w,s,n){
+    const name=id=>(w.npcs.find(x=>x.id===id)||{}).name||id, place=id=>(landmark(w,id)||{}).name||'어딘가';
+    if(n.mode==='accompany')return '플레이어와 동행 중';
+    if(n.mode==='busy'&&n.intent)return n.intent.targetNpc?name(n.intent.targetNpc)+'와 이야기하는 중':place(n.intent.landmark)+'에서 일하는 중';
+    if(n.intent)return n.intent.targetNpc?name(n.intent.targetNpc)+'에게 가는 중':place(n.intent.landmark)+' 쪽으로 가는 중';
+    return '한가함';
   }
   function diagnostics(w,s){
     return s.npcs.map(n=>({id:n.id,name:w.npcs.find(x=>x.id===n.id).name,mode:n.mode,
@@ -256,6 +293,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, advance, dispatch, applyTalk, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, advance, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;
