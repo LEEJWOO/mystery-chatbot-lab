@@ -115,7 +115,7 @@ def main(manifest):
     if m.get('sprites'):
         im = Image.open(os.path.join(root, m['sprites'])).convert('RGBA'); name, n = save(im, out_dir, 100, True)
         meta = json.load(open(os.path.join(root, m['sprites_meta']), encoding='utf-8'))
-        table['sprites'] = {'src': name, 'w': im.width, 'h': im.height, 'ids': meta['ids'], 'cw': meta['cw'], 'ch': meta['ch']}
+        table['sprites'] = {'src': name, 'w': im.width, 'h': im.height, 'ids': meta['ids'], 'cw': meta['cw'], 'ch': meta['ch'], 'dirs': meta['dirs']}
         report.append('스프라이트 %d명 %dKB' % (len(meta['ids']), n // 1024))
     with open(os.path.join(root, m['table']), 'w', encoding='utf-8') as f:
         json.dump(table, f, ensure_ascii=False, indent=1)

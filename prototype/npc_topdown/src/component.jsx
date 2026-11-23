@@ -31,25 +31,32 @@ function trFace(c, expr) {
   return c.def || '';
 }
 
-const TR_STEP_MS = 180;
-// 탐색 화면 인물: 스프라이트 묶음(6칸: 하·하걷기·상·상걷기·좌·좌걷기)에서 방향·걸음에 맞는 칸을 고른다.
+const TR_STEP_MS = 180, TR_FRAME_MS = 90;
+// 탐색 화면 인물: 스프라이트 묶음에서 방향(하·상·좌·우)과 걷기 단계에 맞는 칸을 고른다.
+// 칸 번호는 주소 표의 sprites.dirs = {down:{idle, walk:[…]}, …}를 따른다(걷기 장수 자유). 우가 없으면 좌를 뒤집는다.
 function trCharSprite(c, animRef, movedRef, sel, bad) {
   const now = Date.now(), A = animRef.current;
-  const a = A[c.id] || (A[c.id] = { x: c.x, y: c.y, dir: 'down', step: 0, at: 0 });
+  const a = A[c.id] || (A[c.id] = { x: c.x, y: c.y, dir: 'down', step: 0, at: -1e9 });
   if (a.x !== c.x || a.y !== c.y) {
     const dx = c.x - a.x, dy = c.y - a.y;
     a.dir = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
-    a.step++; a.at = now; a.x = c.x; a.y = c.y; movedRef.current = true;
+    a.step++; a.at = now; a.x = c.x; a.y = c.y;
   }
-  const walking = now - a.at < TR_STEP_MS, sp = TR_A.sprites, row = sp ? sp.ids.indexOf(c.id) : -1;
+  const el = now - a.at, walking = el < TR_STEP_MS;
+  if (el < TR_STEP_MS + TR_FRAME_MS) movedRef.current = true;
+  const sp = TR_A.sprites, row = sp ? sp.ids.indexOf(c.id) : -1;
   const df = c.n ? trNpc(c.id) : { name: '나', color: '#f6dfab', symbol: '나' };
   const pos = { transform: `translate(${c.x * TR_CELL}px,${c.y * TR_CELL}px)` };
   const tag = c.n ? <div className="tr-tag" style={{ borderColor: df.color }}>{df.name}{c.n.mode === 'accompany' ? ' ★' : ''}</div> : null;
   if (!sp || row < 0 || bad[trUrl(sp.src)]) return <div key={c.id} className="tr-ch" style={pos}>
     <div className="tr-tok" style={{ background: df.color, outline: sel ? '2px dashed #f0d29a' : 'none' }}>{df.symbol}</div>{tag}</div>;
-  let col, flip = false;
-  if (a.dir === 'down' || a.dir === 'up') { const b = a.dir === 'down' ? 0 : 2; col = walking ? b + 1 : b; flip = walking && a.step % 2 === 0; }
-  else { col = walking && a.step % 2 ? 5 : 4; flip = a.dir === 'right'; }
+  const dirs = sp.dirs || {}, flip = a.dir === 'right' && !dirs.right, set = dirs[flip ? 'left' : a.dir] || dirs.down || { idle: 0, walk: [] };
+  let col = set.idle;
+  if (walking && set.walk && set.walk.length) {
+    // 한 칸 이동 동안 걷기 그림을 (장수/2)장씩 넘긴다 → 두 칸에 한 주기.
+    const per = Math.max(1, Math.ceil(set.walk.length / 2));
+    col = set.walk[((a.step - 1) * per + Math.min(per - 1, Math.floor(el / (TR_STEP_MS / per)))) % set.walk.length];
+  }
   return <div key={c.id} className="tr-ch" style={pos}>
     <div className={'tr-shadow' + (sel ? ' sel' : '')} />
     <div className="tr-px" style={{ position: 'absolute', left: (TR_CELL - sp.cw) / 2, bottom: 2, width: sp.cw, height: sp.ch, backgroundImage: `url(${trUrl(sp.src)})`, backgroundSize: `${sp.w}px ${sp.h}px`, backgroundPosition: `${-col * sp.cw}px ${-row * sp.ch}px`, transform: flip ? 'scaleX(-1)' : 'none' }} />
@@ -110,7 +117,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
   // 걷기 연출: 인물별 직전 칸·방향·걸음 수. 칸이 바뀌면 그쪽을 보고 한 걸음 걷는다(우는 좌 그림을 뒤집음).
   const animRef = useRef({}), movedRef = useRef(false);
   const [, setTick] = useState(0);
-  useEffect(() => { if (!movedRef.current) return; movedRef.current = false; const id = setTimeout(() => setTick(v => v + 1), TR_STEP_MS + 30); return () => clearTimeout(id); });
+  // 걷는 인물이 있으면 걷기 칸이 넘어가도록 짧게 다시 그린다(걸음이 끝나면 멈춤).
+  useEffect(() => { if (!movedRef.current) return; movedRef.current = false; const id = setTimeout(() => setTick(v => v + 1), TR_FRAME_MS); return () => clearTimeout(id); });
 
   useEffect(() => {
     // 높이 기준은 화면(screen) 크기로 잡는다. UUMMAI는 컴포넌트를 내용 높이에 맞춘 iframe에 넣으므로

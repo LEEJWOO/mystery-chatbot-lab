@@ -2,7 +2,8 @@
 
 사용: python3 -I tools/pixelart.py <world.json> <출력 폴더>
 - map.png     : 칸당 18px 원본을 2배(칸당 36px)로 키운 전체 맵. 바닥·벽·가구를 world.json(rows·props·decor·floors)에서 그린다.
-- sprites.png : 인물마다 한 줄, 6칸(하·하걷기·상·상걷기·좌·좌걷기). 칸 18x27px 원본의 2배. 우는 좌를 뒤집어 쓴다.
+- sprites.png : 인물마다 한 줄, 하·상·좌·우 × [정지 1 + 걷기 4] = 20칸. 칸 18x27px 원본의 2배.
+  화면은 sprites.json의 dirs(방향별 정지·걷기 칸 번호)를 따르므로 걷기 장수는 몇 장이든 된다.
 - sprites.json: 줄 순서(인물 id) — tools/assets.py가 주소 표에 넣는다.
 본편 그래픽이 오면 같은 규격(칸 크기·프레임 순서)의 그림으로 바꿔 끼우면 된다.
 """
@@ -184,33 +185,40 @@ LOOKS = {   # 머리색, 머리 모양, 윗옷, 아래옷
 }
 SKIN = '#f6d7c0'
 
-def chibi(look, view, step):
-    """view: down/up/left, step: 0 정지 1 걷기. 16x24를 18x27 칸 아래쪽 가운데에 그린다."""
+PHASES = ['idle', 'stepA', 'pass', 'stepB', 'pass']   # 정지 1 + 걷기 4(한 걸음마다 2장씩 넘어감)
+DIRS = ['down', 'up', 'left', 'right']
+
+def chibi(look, view, phase):
+    """view: down/up/left, phase: PHASES. 16x24를 18x27 칸 아래쪽 가운데에 그린다. 우(right)는 좌를 그린 뒤 뒤집는다."""
     hair, style, top, bottom = (hexc(c) if c.startswith('#') else c for c in look)
     skin = hexc(SKIN); im = Image.new('RGBA', (CW, CH)); d = ImageDraw.Draw(im)
-    ox, oy = 1, CH - 25          # 원점(16x24 영역의 왼쪽 위)
+    bob = 1 if phase == 'pass' else 0
+    ox, oy = 1, CH - 25 - bob    # 원점(16x24 영역의 왼쪽 위). 발을 모으는 순간 1px 들린다.
     P = lambda x0, y0, x1, y1, c: d.rectangle([ox + x0, oy + y0, ox + x1, oy + y1], fill=c)
-    dark = shade(bottom, .7)
+    dark, far = shade(bottom, .7), shade(bottom, .78)
     # 다리
     if view in ('down', 'up'):
-        if step: P(5, 19, 6, 22, bottom); P(5, 23, 6, 23, dark); P(9, 19, 10, 21, bottom); P(9, 22, 10, 22, dark)
-        else: P(5, 19, 6, 22, bottom); P(9, 19, 10, 22, bottom); P(5, 23, 6, 23, dark); P(9, 23, 10, 23, dark)
+        L, R = (23, 22) if phase == 'stepA' else (22, 23) if phase == 'stepB' else (23 + bob, 23 + bob)
+        P(5, 19, 6, L - 1, bottom); P(5, L, 6, L, dark); P(9, 19, 10, R - 1, bottom); P(9, R, 10, R, dark)
     else:
-        if step: P(4, 19, 5, 22, bottom); P(3, 23, 5, 23, dark); P(9, 19, 10, 22, bottom); P(9, 23, 11, 23, dark)
-        else: P(6, 19, 9, 22, bottom); P(5, 23, 9, 23, dark)
+        if phase == 'stepA': P(9, 19, 10, 22, far); P(9, 23, 11, 23, shade(dark, .85)); P(4, 19, 5, 22, bottom); P(3, 23, 5, 23, dark)
+        elif phase == 'stepB': P(4, 19, 5, 22, far); P(3, 23, 5, 23, shade(dark, .85)); P(9, 19, 10, 22, bottom); P(9, 23, 11, 23, dark)
+        else: P(6, 19, 9, 22 + bob, bottom); P(5, 23 + bob, 9, 23 + bob, dark)
     # 긴 머리는 몸 뒤에(뒷모습은 등을 덮는다)
     if style == 'long' and view != 'up':
         if view == 'left': P(8, 6, 13, 16, shade(hair, .9))
         else: P(2, 6, 13, 16, shade(hair, .9))
-    # 몸통·팔
+    # 몸통·팔(팔은 걸음과 반대로 흔든다)
     if view in ('down', 'up'):
         P(4, 12, 11, 18, top); P(4, 18, 11, 18, shade(top, .8))
-        la, ra = (1, 0) if step else (0, 0)
-        P(3, 12 - la, 3, 16 - la, shade(top, .9)); P(12, 12 - ra, 12, 16 - ra, shade(top, .9))
-        if view == 'down': P(3, 17 - la, 3, 17 - la, skin); P(12, 17 - ra, 12, 17 - ra, skin); P(7, 12, 8, 13, hexc('#f3ead6'))
+        la, ra = (-1, 1) if phase == 'stepA' else (1, -1) if phase == 'stepB' else (0, 0)
+        if view == 'up': la, ra = ra, la
+        P(3, 12 + la, 3, 16 + la, shade(top, .9)); P(12, 12 + ra, 12, 16 + ra, shade(top, .9))
+        if view == 'down': P(3, 17 + la, 3, 17 + la, skin); P(12, 17 + ra, 12, 17 + ra, skin); P(7, 12, 8, 13, hexc('#f3ead6'))
     else:
         P(5, 12, 10, 18, top); P(5, 18, 10, 18, shade(top, .8))
-        if step: P(4, 13, 5, 15, shade(top, .9)); P(4, 16, 4, 16, skin)
+        if phase == 'stepA': P(9, 13, 10, 15, shade(top, .9)); P(10, 16, 10, 16, skin)
+        elif phase == 'stepB': P(4, 13, 5, 15, shade(top, .9)); P(4, 16, 4, 16, skin)
         else: P(7, 13, 8, 16, shade(top, .9)); P(7, 17, 8, 17, skin)
     # 머리
     d.ellipse([ox + 2, oy + 0, ox + 13, oy + 12], fill=hair)
@@ -236,17 +244,22 @@ def chibi(look, view, step):
     return outline(im)
 
 def build_sprites(ids):
-    sheet = Image.new('RGBA', (CW * 6, CH * len(ids)))
+    """인물마다 한 줄: 하·상·좌·우 순서로 각각 [정지, 걷기1~4]. 좌우는 따로 저장한다(시험 그림은 우=좌 뒤집기로 생성)."""
+    per = len(PHASES); sheet = Image.new('RGBA', (CW * per * len(DIRS), CH * len(ids)))
     for r, cid in enumerate(ids):
         look = LOOKS.get(cid, LOOKS['player'])
-        for c, (view, step) in enumerate([('down', 0), ('down', 1), ('up', 0), ('up', 1), ('left', 0), ('left', 1)]):
-            sheet.alpha_composite(chibi(look, view, step), (c * CW, r * CH))
-    return sheet.resize((sheet.width * UP, sheet.height * UP), Image.NEAREST)
+        for di, view in enumerate(DIRS):
+            for pi, phase in enumerate(PHASES):
+                im = chibi(look, 'left' if view == 'right' else view, phase)
+                if view == 'right': im = im.transpose(Image.FLIP_LEFT_RIGHT)
+                sheet.alpha_composite(im, ((di * per + pi) * CW, r * CH))
+    dirs = {v: {'idle': di * per, 'walk': list(range(di * per + 1, di * per + per))} for di, v in enumerate(DIRS)}
+    return sheet.resize((sheet.width * UP, sheet.height * UP), Image.NEAREST), dirs
 
 if __name__ == '__main__':
     world = json.load(open(sys.argv[1], encoding='utf-8')); out = sys.argv[2]; os.makedirs(out, exist_ok=True)
     build_map(world).save(os.path.join(out, 'map.png'))
     ids = ['player'] + [n['id'] for n in world['npcs']]
-    build_sprites(ids).save(os.path.join(out, 'sprites.png'))
-    json.dump({'ids': ids, 'cw': CW * UP, 'ch': CH * UP, 'tile': T * UP}, open(os.path.join(out, 'sprites.json'), 'w'))
+    sheet, dirs = build_sprites(ids); sheet.save(os.path.join(out, 'sprites.png'))
+    json.dump({'ids': ids, 'cw': CW * UP, 'ch': CH * UP, 'tile': T * UP, 'dirs': dirs}, open(os.path.join(out, 'sprites.json'), 'w'))
     print('map', world['map']['width'] * T * UP, 'x', world['map']['height'] * T * UP, '/ sprites', len(ids), '명')
