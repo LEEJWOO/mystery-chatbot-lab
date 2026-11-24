@@ -531,22 +531,49 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   function trCheckin() {
     const L = ck || state.player.look || AV_DEFAULT, set = (k, v) => setCk({ ...L, [k]: v });
     const A = TR_A.avatar, wk = A ? A.dirs.down.walk : [], col = A ? (ckTick % 8 < 4 ? wk[ckTick % wk.length] : A.dirs[['left', 'up', 'right', 'down'][Math.floor(ckTick / 8) % 4]].idle) : 0;
-    const chips = (k, label) => <div className="tr-ckrow"><span>{label}</span><div>{AV[k].map((o, i) => Array.isArray(o)
-      ? <button key={i} className={'tr-sw' + (L[k] === i ? ' on' : '')} style={{ background: o[1] }} title={o[0]} onClick={() => set(k, i)} />
-      : <button key={i} className={'tr-ckc' + (L[k] === i ? ' on' : '')} onClick={() => set(k, i)}>{o}</button>)}</div></div>;
-    const done = () => { const look = { ...L, name: String(L.name || '').trim().slice(0, 12) || '손님' }; setState(v => { const x = TroemereiNPC.clone(v); x.player.look = look; x.revision++; return x; }); setCk(null); setToast((look.name) + ' 님, 체크인을 마쳤습니다.'); };
+    const chips = (k, label, en) => <div className="ck-row"><label><i>{en}</i>{label}</label><div>{AV[k].map((o, i) => Array.isArray(o)
+      ? <button key={i} className={'ck-sw' + (L[k] === i ? ' on' : '')} style={{ background: o[1] }} title={o[0]} onClick={() => set(k, i)} />
+      : <button key={i} className={'ck-opt' + (L[k] === i ? ' on' : '')} onClick={() => set(k, i)}>{o}</button>)}</div></div>;
+    const sec = (en, ko) => <div className="ck-sec"><span>{en}</span><b>{ko}</b></div>;
+    const done = () => { const look = { ...L, name: String(L.name || '').trim().slice(0, 12) || '손님' }; setState(v => { const x = TroemereiNPC.clone(v); x.player.look = look; x.revision++; return x; }); setCk(null); setToast(look.name + ' 님, 체크인을 마쳤습니다.'); };
+    const corner = r => <svg key={r} className={'ck-corner c' + r} viewBox="0 0 40 40" aria-hidden="true"><path d="M2 38 L2 8 Q2 2 8 2 L38 2" /><path d="M7 38 L7 12 Q7 7 12 7 L38 7" /><path d="M12 12 q6 0 6 6 q-6 0 -6 -6 Z" /></svg>;
     return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
       <div className="tr-card tr-ck" style={{ transform: `scale(${scale})` }}>
-        <div className="tr-ckhead"><b>HOTEL RÊVERIE</b><span>숙박 카드 · REGISTRATION</span></div>
-        <div className="tr-ckview">{trAvatar(L, { position: 'absolute', left: 4, top: -6, width: 150, height: 225 })}
-          <div className="tr-ckpx">{A ? trAvatarPx(L, col, { left: 0, bottom: 0, transform: 'scale(1.6)', transformOrigin: 'left bottom' }) : null}</div>
-          <div className="tr-cknote">걷는 모습 미리보기<br /><span className="tr-mut2">그림은 임시입니다</span></div></div>
-        <div className="tr-ckform">
-          <div className="tr-ckrow"><span>성함</span><input value={L.name || ''} maxLength={12} placeholder="이름" onChange={e => set('name', e.target.value)} /></div>
-          {chips('g', '성별')}{chips('hf', '앞머리')}{chips('hb', '뒷머리')}{chips('hc', '머리색')}{chips('eye', '눈')}{chips('ec', '눈동자')}{chips('sk', '피부')}{chips('of', '옷')}{chips('oc', '옷 색')}{chips('ac', '장신구')}
-          <div className="tr-cksign">서명란 · 기재하신 정보는 체크인 후에도 설정에서 바꿀 수 있습니다.</div>
+        <div className="ck-paper" />{[0, 1, 2, 3].map(corner)}
+        <div className="ck-head">
+          <svg className="ck-crest" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="29" className="g1" /><circle cx="32" cy="32" r="25" className="g2" />
+            <path d="M14 40 Q12 26 22 16 M50 40 Q52 26 42 16" className="g3" />
+            {[0, 1, 2, 3, 4].map(k => <ellipse key={'l' + k} cx={16 + k * 1.2} cy={38 - k * 5} rx="2.2" ry="4" transform={`rotate(${-30 + k * 12} ${16 + k * 1.2} ${38 - k * 5})`} className="lf" />)}
+            {[0, 1, 2, 3, 4].map(k => <ellipse key={'r' + k} cx={48 - k * 1.2} cy={38 - k * 5} rx="2.2" ry="4" transform={`rotate(${30 - k * 12} ${48 - k * 1.2} ${38 - k * 5})`} className="lf" />)}
+            <text x="32" y="40" textAnchor="middle" className="mono">R</text><path d="M32 9 l2 4 4 .6 -3 2.8 .8 4 -3.8 -2 -3.8 2 .8 -4 -3 -2.8 4 -.6 Z" className="st" />
+          </svg>
+          <div className="ck-title"><b>HOTEL RÊVERIE</b><span>GUEST REGISTRATION · 숙박 카드</span></div>
+          <div className="ck-no"><span>No.</span><b>{String(1 + ((state.rng || 0) % 9000)).padStart(4, '0')}</b><i>DAY 1 · {TroemereiNPC.clock(state.clock).slice(0, 5)}</i></div>
         </div>
-        <div className="tr-ckfoot">{state.player.look ? <button onClick={() => setCk(null)}>취소</button> : null}<button className="gold" onClick={done}>체크인</button></div>
+        <div className="ck-rule"><i /></div>
+        <div className="ck-view">
+          <div className="ck-frame"><div className="ck-frame-in">{trAvatar(L, { position: 'absolute', left: -14, top: -4, width: 150, height: 225 })}</div>
+            <svg className="ck-arch" viewBox="0 0 124 170" aria-hidden="true"><path d="M4 168 L4 62 Q4 4 62 4 Q120 4 120 62 L120 168 Z" /><path d="M10 162 L10 64 Q10 10 62 10 Q114 10 114 64 L114 162 Z" /></svg></div>
+          <div className="ck-side"><div className="ck-cap">PREVIEW · 미리보기</div>
+            <div className="ck-stage"><div className="ck-ped" /><div className="ck-px">{A ? trAvatarPx(L, col, { left: 0, bottom: 0, transform: 'scale(1.5)', transformOrigin: 'left bottom' }) : null}</div></div>
+            <div className="ck-cap">WALKING · 걸음</div><div className="ck-note">그림은 임시입니다</div></div>
+        </div>
+        <div className="ck-form">
+          {sec('GUEST', '투숙객')}
+          <div className="ck-row"><label><i>NAME</i>성함</label><input value={L.name || ''} maxLength={12} placeholder="이름을 적어 주십시오" onChange={e => set('name', e.target.value)} /></div>
+          {chips('g', '성별', 'SEX')}
+          {sec('APPEARANCE', '용모')}
+          {chips('hf', '앞머리', 'FRINGE')}{chips('hb', '뒷머리', 'HAIR')}{chips('hc', '머리색', 'COLOR')}{chips('eye', '눈', 'EYES')}{chips('ec', '눈동자', 'IRIS')}{chips('sk', '피부', 'SKIN')}
+          {sec('ATTIRE', '복장')}
+          {chips('of', '옷', 'DRESS')}{chips('oc', '옷 색', 'TONE')}{chips('ac', '장신구', 'ACCENT')}
+          <div className="ck-terms">※ 기재하신 사항은 체크인 후에도 프런트(설정)에서 고치실 수 있습니다.</div>
+        </div>
+        <div className="ck-foot">
+          <div className="ck-sign"><span>SIGNATURE · 서명</span><b>{String(L.name || '').trim() || '\u00a0'}</b></div>
+          {state.player.look ? <button className="ck-cancel" onClick={() => setCk(null)}>취소</button> : null}
+          <button className="ck-seal" onClick={done}><b>R</b><span>체크인</span></button>
+        </div>
       </div></div>;
   }
   function trTrialScreen() {

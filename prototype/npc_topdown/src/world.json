@@ -551,7 +551,8 @@
    ],
    "sex": "m",
    "rel": {
-    "trust": 35
+    "trust": 35,
+    "affection": 40
    }
   },
   {
@@ -681,7 +682,8 @@
    ],
    "sex": "m",
    "rel": {
-    "trust": 50
+    "trust": 50,
+    "affection": 40
    }
   }
  ],
@@ -933,7 +935,7 @@
    "caption": "유리가 자료실 선반에 무언가를 두고 갔다."
   }
  ],
- "dataVersion": 6,
+ "dataVersion": 7,
  "trials": [
   {
    "id": "memo",
@@ -2096,7 +2098,8 @@
      "보통",
      "호감",
      "애정"
-    ]
+    ],
+    "opposite": true
    }
   ]
  },
