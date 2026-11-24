@@ -84,7 +84,6 @@
 .tr-tbody{position:absolute;left:6px;right:6px;top:78px;bottom:6px;z-index:1;display:flex;flex-direction:column;justify-content:flex-end}
 .tr-tbox{display:flex;gap:8px;align-items:flex-end;padding:8px;background:#0a0813ee;border:1px solid #8a7550;border-radius:10px;min-height:140px;animation:trin .25s ease-out}
 .tr-tpor{flex:none;border-radius:8px;overflow:hidden;border:1px solid #e9c98c55}.tr-tpor.sm{align-self:flex-start}
-.tr-baku{width:92px;height:118px;display:grid;place-items:center;font-size:44px;color:#e9c98c;background:radial-gradient(#3a2f4a,#15111f)}
 .tr-ttext{font-size:14px;line-height:20px;white-space:pre-wrap}.tr-ttext.narr{color:#b9c9d6;font-style:italic}
 .tr-debate{display:grid;gap:7px}
 .tr-stmt{display:flex;gap:8px;padding:9px;background:#f3ead6;color:#3a2a14;border-radius:10px;border-left:5px solid #d9a441;box-shadow:0 4px 10px #000a;animation:trin .3s ease-out}
@@ -142,9 +141,8 @@
 .tr-stage{position:absolute;left:0;right:0;top:0;height:300px;overflow:hidden}
 .tr-stage.mini{height:110px}
 .tr-spot-light{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,#f2e6c033,transparent 60%),radial-gradient(ellipse at 50% 100%,#3a2f5a66,transparent 70%)}
-.tr-actor{position:absolute;left:0;bottom:-170px;width:360px;height:528px;transform:scale(.82);transform-origin:50% 100%;animation:tractor .35s ease-out}
-.tr-actor.baku{display:grid;place-items:end center;transform:none;bottom:0;height:300px}
-.tr-baku-sil{width:150px;height:240px;border-radius:75px 75px 10px 10px;background:linear-gradient(#1a1526,#0a0810);border:1px solid #e9c98c55;display:grid;place-items:center;font-size:52px;color:#e9c98c99;box-shadow:0 0 30px #9a7ad855}
+.tr-actor{position:absolute;left:0;bottom:-170px;width:360px;height:528px;transform-origin:50% 100%;animation:tractor .35s ease-out}
+.tr-actor-in{position:absolute;inset:0;transform:scale(.82);transform-origin:50% 100%}
 .fx-shake .tr-actor{animation:trshake .4s 2}
 .fx-zoom .tr-actor{animation:trzoom .5s ease-out}
 .tr-flash{position:absolute;inset:0;background:#fff;animation:trflash .5s ease-out forwards;pointer-events:none}
@@ -181,8 +179,8 @@
 .tr-whisper{font-style:italic;color:#c9c0dc;font-size:14px;line-height:21px;max-width:280px;opacity:0;animation:trwhisper 1s ease-out 1s forwards}
 .tr-later{opacity:0;animation:trwhisper .6s ease-out 2.4s forwards}
 .tr-rewind{animation:trdream 2.4s ease-in-out}
-@keyframes tractor{from{opacity:0;transform:scale(.82) translateX(30px)}to{opacity:1;transform:scale(.82)}}
-@keyframes trzoom{0%{transform:scale(.82)}40%{transform:scale(.9)}100%{transform:scale(.82)}}
+@keyframes tractor{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes trzoom{0%{transform:none}40%{transform:scale(1.1)}100%{transform:none}}
 @keyframes trflash{from{opacity:.9}to{opacity:0}}
 @keyframes trcut{0%{transform:skewY(-8deg) translateX(110%)}18%{transform:skewY(-8deg) translateX(0)}80%{transform:skewY(-8deg) translateX(0);opacity:1}100%{transform:skewY(-8deg) translateX(-110%);opacity:0}}
 @keyframes trshard{0%{transform:none;opacity:1}30%{transform:none;opacity:1}100%{transform:translate(var(--dx),calc(var(--dy) + 260px)) rotate(25deg);opacity:0}}
@@ -196,3 +194,59 @@
 
 .tr-rewind{z-index:10}.tr-stamp{z-index:9}.tr-shards{z-index:8}
 .tr-fan::before{content:attr(data-l);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#ffe3a0;font-size:12px}
+
+/* v1.3 진행자 등장: 위에서 조명이 내려오고 실루엣이 떠오른다 */
+.tr-actor.host{display:block;transform:none;bottom:0;height:300px;animation:none}
+.tr-spot{position:absolute;left:50%;top:-20px;width:300px;height:330px;transform:translateX(-50%);transform-origin:50% 0;background:conic-gradient(from 160deg at 50% 0,transparent 0deg,#fff4d433 14deg,#fff4d455 20deg,#fff4d433 26deg,transparent 40deg);filter:blur(2px);animation:trspot .9s cubic-bezier(.2,.8,.2,1) both}
+.tr-spot-floor{position:absolute;left:50%;bottom:6px;width:210px;height:34px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(#fff4d466,transparent 70%);animation:trspotf .9s .3s both}
+.tr-host-sil{position:absolute;left:50%;bottom:0;width:160px;height:260px;transform:translateX(-50%);animation:trhost .8s .45s both;filter:drop-shadow(0 0 10px #e9c98c44)}
+@keyframes trspot{0%{transform:translateX(-50%) scaleY(0);opacity:0}60%{opacity:1}100%{transform:translateX(-50%) scaleY(1);opacity:1}}
+@keyframes trspotf{from{opacity:0;transform:translateX(-50%) scale(.3)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+@keyframes trhost{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%)}}
+/* 반론: 화면을 비스듬히 나눠 나와 상대가 맞선다 */
+.tr-stage.split{height:250px}
+.tr-split{position:absolute;inset:0;pointer-events:none}
+.tr-split-l{position:absolute;inset:0;clip-path:polygon(0 0,52% 0,38% 100%,0 100%);background:linear-gradient(120deg,#163252,#0a1220 70%);animation:trsplitl .45s cubic-bezier(.2,.9,.3,1) both}
+.tr-split-l .tr-me-sil{position:absolute;left:14px;bottom:-26px;width:150px;height:244px}
+.tr-split-l b{position:absolute;left:18px;top:86px;font-size:15px;color:#bfe0ff;text-shadow:0 0 8px #3a8ad8}
+.tr-split-seam{position:absolute;left:0;right:0;top:0;bottom:0;background:linear-gradient(to bottom right,transparent calc(50% - 2px),#fff 50%,transparent calc(50% + 2px));clip-path:polygon(50% 0,54% 0,40% 100%,36% 100%);background:#fff;box-shadow:0 0 18px #fff;animation:trseam .6s .25s both}
+.tr-split-tag{position:absolute;left:44%;top:46%;transform:translate(-50%,-50%) rotate(-12deg);padding:3px 16px;font-size:26px;font-weight:900;color:#fff;background:#c0303a;border:2px solid #fff;letter-spacing:4px;box-shadow:0 0 16px #c0303a;animation:trtag .5s .45s cubic-bezier(.2,1.6,.4,1) both}
+.tr-split-r{position:absolute;right:16px;top:86px;font-size:15px;color:#ffd3c6;text-shadow:0 0 8px #c0303a}
+.tr-stage.split .tr-actor{left:auto;right:-70px;width:360px;animation:trsplitr .45s cubic-bezier(.2,.9,.3,1) both}
+@keyframes trsplitl{from{transform:translateX(-60%)}to{transform:none}}
+@keyframes trsplitr{from{transform:translateX(60%)}to{transform:none}}
+@keyframes trseam{0%{opacity:0;transform:scaleY(0)}40%{opacity:1}100%{opacity:.85;transform:none}}
+@keyframes trtag{from{opacity:0;transform:translate(-50%,-50%) rotate(-12deg) scale(2.4)}to{opacity:1;transform:translate(-50%,-50%) rotate(-12deg) scale(1)}}
+/* 체력이 깨진다 */
+.tr-hp i{position:relative}
+.tr-hp i.brk{background:none;border-color:transparent}
+.tr-hp i.brk u{position:absolute;left:0;top:0;width:6px;height:6px;background:linear-gradient(135deg,#ffe3a0,#d08a3a);animation:trhpb .7s ease-out forwards}
+.tr-hp i.brk u:nth-child(2){left:5px;--bx:14px;--by:-10px}.tr-hp i.brk u:nth-child(3){top:5px;--bx:-12px;--by:12px}.tr-hp i.brk u:nth-child(4){left:5px;top:5px;--bx:12px;--by:14px}
+.tr-hp i.brk u:nth-child(1){--bx:-14px;--by:-12px}
+@keyframes trhpb{0%{transform:none;opacity:1}100%{transform:translate(var(--bx),var(--by)) rotate(160deg);opacity:0}}
+.tr-hurt{position:absolute;inset:0;z-index:8;pointer-events:none;box-shadow:inset 0 0 70px 20px #c0303aaa;animation:trhurt .7s ease-out forwards}
+@keyframes trhurt{0%{opacity:1}100%{opacity:0}}
+/* 풀린 쟁점 카드가 표시줄로 날아가 붙는다 */
+.tr-fly{position:absolute;z-index:9;left:50%;top:46%;display:flex;gap:6px;align-items:center;padding:8px 14px;border-radius:10px;background:#1c1630;border:2px solid #9a7ad8;color:#efe6ff;font-size:15px;white-space:nowrap;box-shadow:0 0 18px #9a7ad8aa;transform:translate(-50%,-50%);animation:trfly 1.2s cubic-bezier(.55,0,.35,1) forwards;pointer-events:none}
+.tr-fly i{font-style:normal;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#9a7ad8;color:#120f1e;font-size:11px}
+@keyframes trfly{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}45%{left:50%;top:46%;transform:translate(-50%,-50%) scale(1)}100%{left:var(--tx);top:60px;transform:translate(-50%,-50%) scale(.3);opacity:.3}}
+.tr-issue.pop{animation:trpop .5s 1s ease-out}
+@keyframes trpop{0%{box-shadow:0 0 0 0 #9a7ad8}50%{box-shadow:0 0 14px 4px #c9b0ff;background:#3a2c5a}100%{box-shadow:none}}
+/* 투표: 다른 참가자들도 차례로 표를 던지고, 슬롯이 돌아 결과가 멈춘다 */
+.tr-voters{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.tr-voter{font-size:11px;padding:2px 7px;border-radius:9px;background:#1f1a2e;color:#6d6580;border:1px solid #3a3448}
+.tr-voter.in{color:#f6ead2;border-color:#f2c46d88;animation:trvin .3s ease-out}.tr-voter b{margin-right:3px}
+@keyframes trvin{from{transform:scale(1.4);background:#4a3a20}to{transform:none}}
+.tr-reelwrap{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#07060ccc;animation:trfade .3s}
+.tr-reel-t{font-size:16px;letter-spacing:6px;color:#f2d79e}
+.tr-reel{width:110px;height:120px;overflow:hidden;border:3px solid #f2c46d;border-radius:10px;background:#1a1526;box-shadow:0 0 24px #f2c46d66, inset 0 14px 14px -10px #000, inset 0 -14px 14px -10px #000}
+.tr-reel.split{display:grid;place-items:center;font-size:16px;color:#ff9a8a;border-color:#ff9a8a}
+.tr-reel-cell{height:120px;display:grid;place-items:center}
+.tr-reel-name{font-size:20px;font-weight:800;color:#f6ead2;opacity:0;transform:scale(.6)}
+.tr-reel-name.on{opacity:1;transform:none;transition:all .3s cubic-bezier(.2,1.6,.4,1)}
+@keyframes trfade{from{opacity:0}to{opacity:1}}
+/* 관계 표시 */
+.tr-relrow{display:flex;align-items:center;gap:5px;font-size:11px;margin-top:2px}.tr-relrow>span:first-child{width:24px;color:#7a6a58}
+.tr-relpips{display:flex;gap:2px}.tr-relpips i{width:9px;height:9px;border-radius:2px;background:#d8ccb4}.tr-relpips i.on.trust{background:#4a8ad0}.tr-relpips i.on.affection{background:#d05a7a}
+.tr-relrow em{font-style:normal;color:#5a4a3a}.tr-relrow button{height:18px;min-width:20px;padding:0 4px;font-size:11px}
+.tr-relbox{display:flex;flex-direction:column;padding:3px 6px;border-radius:6px;background:#ffffff0d}.tr-relbox .tr-relrow>span:first-child,.tr-relbox .tr-relrow em{color:#a9b6c2}
