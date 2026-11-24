@@ -388,7 +388,7 @@ const TroemereiNPC = (() => {
     const s=clone(state),T=s.trial;if(!T)return {state:s,result:''};
     T.hp--;if(T.hp>0)return {state:s,result:'hit'};
     if(s.flags[w.realityFlag||'true_route']){T.failed=1;return {state:s,result:'fail'};}
-    T.hp=(w.trials[T.i].hp||5);T.sub=0;addLog(w,s,'바쿠가 꿈을 되감았다.','player');return {state:s,result:'rewind'};
+    T.hp=(w.trials[T.i].hp||5);T.sub=0;addLog(w,s,'……정신을 차리니, 조금 전 그 순간이었다.','player');return {state:s,result:'rewind'};
   }
   function trialStep(w,state,action){
     const s=clone(state);if(!s.trial)return s;
