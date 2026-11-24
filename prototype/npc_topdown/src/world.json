@@ -500,7 +500,26 @@
    "x": 24,
    "y": 4,
    "stepSeconds": 8,
-   "agenda": [],
+   "agenda": [
+    {
+     "id": "attach_memo",
+     "kind": "visit",
+     "landmark": "desk",
+     "ifFlag": [
+      "meeting_occurred",
+      "memo_handed"
+     ],
+     "from": "09:00",
+     "until": "18:00",
+     "durationSeconds": 30,
+     "priority": 80,
+     "weight": 1,
+     "once": true,
+     "interruptible": false,
+     "onCompleteFlag": "order_changed",
+     "onCompleteFact": "memo_attached"
+    }
+   ],
    "profile": "30대 초반 · 무뚝뚝하고 꼼꼼하다",
    "notes": [
     {
@@ -587,6 +606,20 @@
    "stepSeconds": 7,
    "agenda": [
     {
+     "id": "deliver_for_yuri",
+     "kind": "meet",
+     "targetNpc": "contact",
+     "ifFlag": "meeting_prevented",
+     "from": "09:00",
+     "until": "12:00",
+     "durationSeconds": 40,
+     "priority": 60,
+     "weight": 1,
+     "once": true,
+     "interruptible": true,
+     "onComplete": "taesu_delivered"
+    },
+    {
      "id": "post_delivery",
      "kind": "visit",
      "landmark": "notice",
@@ -660,6 +693,17 @@
    },
    "publicLog": "두 사람이 대화를 마쳤고, 유리에게 자료실 방문 일정이 새로 생겼다.",
    "fact": "met_doyun"
+  },
+  {
+   "id": "taesu_delivered",
+   "when": {
+    "npc": "courier",
+    "task": "deliver_for_yuri",
+    "targetNpc": "contact"
+   },
+   "setFlag": "memo_handed",
+   "publicLog": "태수가 도윤에게 무언가를 건넸다.",
+   "fact": "taesu_delivered"
   }
  ],
  "flagNames": [
@@ -668,7 +712,9 @@
   "delivery_done",
   "true_route",
   "trial_only",
-  "trial_memo_done"
+  "trial_memo_done",
+  "memo_handed",
+  "order_changed"
  ],
  "facts": [
   {
@@ -684,7 +730,8 @@
   {
    "id": "missed_doyun",
    "self": {
-    "companion": "플레이어와 동행하느라 도윤에게 메모를 전하지 못했다"
+    "companion": "플레이어와 동행하게 되어, 도윤에게 줄 업무 메모를 태수에게 맡겼다",
+    "courier": "유리에게 도윤 몫의 업무 메모를 받아 두었다"
    },
    "seen": "",
    "player": "",
@@ -698,6 +745,25 @@
    "seen": "유리가 자료실 선반에 무언가 두는 걸 봤다",
    "player": "유리가 자료실 선반에 무언가를 두었다",
    "code": "P4X6"
+  },
+  {
+   "id": "memo_attached",
+   "code": "M7A2",
+   "self": {
+    "contact": "받은 업무 메모를 작업 순서표에 붙이고 순서를 바꿨다"
+   },
+   "seen": "도윤이 작업 순서표에 종이 한 장을 붙이는 걸 봤다",
+   "player": "도윤이 작업 순서표에 종이를 붙였다"
+  },
+  {
+   "id": "taesu_delivered",
+   "code": "D5T8",
+   "self": {
+    "courier": "유리의 부탁으로 도윤에게 메모를 전했다",
+    "contact": "태수에게서 유리의 업무 메모를 받았다"
+   },
+   "seen": "태수가 도윤에게 종이를 건네는 걸 봤다",
+   "player": "태수가 도윤에게 종이를 건넸다"
   }
  ],
  "chapter": 1,
@@ -737,6 +803,13 @@
    "at": "archive",
    "flag": "delivery_done",
    "desc": "유리의 글씨. 「도윤 씨, 오후 작업 순서 변경」"
+  },
+  {
+   "id": "memo_note",
+   "name": "순서표에 붙은 메모",
+   "at": "desk",
+   "flag": "order_changed",
+   "desc": "작업 순서표에 붙은 원본 메모. 둥근 글씨, 끝에 「유」 서명. 「오후 작업 순서 변경」"
   },
   {
    "id": "button",
@@ -814,7 +887,7 @@
    "caption": "유리가 자료실 선반에 무언가를 두고 갔다."
   }
  ],
- "dataVersion": 3,
+ "dataVersion": 4,
  "trials": [
   {
    "id": "memo",
@@ -1607,6 +1680,301 @@
      "a": "전달하고 말을 깜빡했다"
     }
    ]
+  },
+  {
+   "id": "case_c1",
+   "code": "C1",
+   "kind": "case",
+   "title": "작업 순서표 소동",
+   "hp": 5,
+   "evidence": [],
+   "issues": [],
+   "phases": [
+    {
+     "type": "talk",
+     "lines": [
+      {
+       "who": "host",
+       "text": "모이셨군요. 오늘 아침, 작업실의 [[작업 순서표]]가 누군가의 메모로 바뀌어 있었습니다.",
+       "fx": "flash"
+      },
+      {
+       "who": "contact",
+       "text": "……내가 붙였다. 메모를 받았으니까.",
+       "alt": [
+        {
+         "if": {
+          "rel": {
+           "trust": [
+            1,
+            2
+           ]
+          }
+         },
+         "text": "……붙인 건 나다. 받은 대로 붙였을 뿐이야."
+        }
+       ]
+      },
+      {
+       "who": "courier",
+       "text": "근데 그 메모, 누가 쓴 거예요?",
+       "face": "놀람"
+      },
+      {
+       "who": "companion",
+       "text": "어…… 그게.",
+       "face": "놀람",
+       "alt": [
+        {
+         "if": {
+          "flag": "meeting_prevented"
+         },
+         "text": "난 아침 내내 같이 다녔잖아. 그치?",
+         "face": "웃음"
+        }
+       ]
+      },
+      {
+       "who": "host",
+       "text": "조사 시간을 드리겠습니다. 마감이 되면, 혹은 준비가 끝났다고 말씀하시면 재판을 시작하지요.",
+       "speed": 0.8
+      },
+      {
+       "who": "host",
+       "text": "순서표는 재판 자료로 제가 보관하겠습니다. 사본을 드리지요."
+      }
+     ]
+    },
+    {
+     "type": "investigate",
+     "minutes": 40,
+     "grant": [
+      "work_order"
+     ],
+     "declare": true
+    },
+    {
+     "type": "talk",
+     "lines": [
+      {
+       "who": "host",
+       "text": "시간이 되었습니다. 재판을 시작하겠습니다.",
+       "fx": "flash",
+       "speed": 0.8
+      }
+     ]
+    }
+   ],
+   "then": [
+    {
+     "if": "meeting_prevented",
+     "code": "T1B"
+    },
+    {
+     "code": "T1"
+    }
+   ]
+  },
+  {
+   "id": "trial_t1b",
+   "code": "T1B",
+   "title": "작업 순서표 소동 (B)",
+   "hp": 5,
+   "flag": "trial_memo_done",
+   "evidence": [
+    "memo_note",
+    "work_order",
+    "button"
+   ],
+   "issues": [
+    {
+     "id": "j1",
+     "q": "메모를 쓴 사람은?",
+     "a": "유리"
+    },
+    {
+     "id": "j2",
+     "q": "메모를 전한 사람은?",
+     "a": "태수"
+    },
+    {
+     "id": "j3",
+     "q": "이 소동의 진상은?",
+     "a": "부탁받아 전하고 말을 깜빡했다"
+    }
+   ],
+   "phases": [
+    {
+     "type": "talk",
+     "lines": [
+      {
+       "who": "host",
+       "text": "메모는 작업 순서표에 붙어 있었습니다. 다만 오늘 아침 [[유리 님]]은 줄곧 한 분과 함께 다니셨지요."
+      },
+      {
+       "who": "librarian",
+       "text": "……그럼 유리 씨는 아니겠네요."
+      }
+     ]
+    },
+    {
+     "type": "trans",
+     "issue": "j1",
+     "text": "쟁점 하나"
+    },
+    {
+     "type": "debate",
+     "title": "증언에 증거 제시",
+     "issue": "j1",
+     "lines": [
+      {
+       "who": "courier",
+       "text": "유리 씨는 작업실 근처에도 안 왔어요. 아침 내내 다른 데 있었다니까요."
+      },
+      {
+       "who": "librarian",
+       "text": "작업실에 오지 않았으니, 메모도 [[유리 씨가 쓴 게 아니에요]].",
+       "answer": "memo_note"
+      },
+      {
+       "who": "contact",
+       "text": "……글씨는 봤지만, 누구 건지는 말 안 했다."
+      }
+     ],
+     "win": "메모의 둥근 글씨와 「유」 서명은 유리의 것이다. 직접 오지 않았어도 쓴 사람은 유리다."
+    },
+    {
+     "type": "talk",
+     "lines": [
+      {
+       "who": "companion",
+       "text": "맞아, 그거 내가 쓴 거야. 근데 난 계속 같이 있었는데……?",
+       "face": "놀람"
+      },
+      {
+       "who": "contact",
+       "text": "……쓴 사람과 가져온 사람이 달랐다는 거군."
+      }
+     ]
+    },
+    {
+     "type": "trans",
+     "issue": "j2",
+     "text": "쟁점 둘"
+    },
+    {
+     "type": "pairs",
+     "issue": "j2",
+     "title": "엇갈린 증언",
+     "guide": "세 사람의 증언 중 서로 부딪치는 두 문장을 고른다",
+     "witnesses": [
+      {
+       "who": "courier",
+       "parts": [
+        "저는 작업실엔",
+        "자료만 가지러 갔고",
+        "아무것도 안 건넸어요"
+       ]
+      },
+      {
+       "who": "contact",
+       "parts": [
+        "메모는",
+        "태수가 내게",
+        "직접 건넸다"
+       ]
+      },
+      {
+       "who": "librarian",
+       "parts": [
+        "저는 아침에",
+        "자료실에서",
+        "정리를 했어요"
+       ]
+      }
+     ],
+     "answers": [
+      [
+       [
+        0,
+        2
+       ],
+       [
+        1,
+        1
+       ]
+      ],
+      [
+       [
+        0,
+        2
+       ],
+       [
+        1,
+        2
+       ]
+      ]
+     ]
+    },
+    {
+     "type": "talk",
+     "lines": [
+      {
+       "who": "courier",
+       "text": "아…… 맞다. 유리 씨가 같이 나가기 전에 부탁했었어요. 깜빡하고 말을 안 했네.",
+       "face": "놀람",
+       "fx": "shake"
+      },
+      {
+       "who": "companion",
+       "text": "에이, 태수 씨도 참.",
+       "face": "웃음"
+      }
+     ]
+    },
+    {
+     "type": "trans",
+     "issue": "j3",
+     "text": "쟁점 셋"
+    },
+    {
+     "type": "vote",
+     "question": "메모를 작업실에 전한 사람은?",
+     "answer": "courier",
+     "options": [
+      "companion",
+      "contact",
+      "librarian",
+      "courier"
+     ],
+     "follow": 4,
+     "beliefs": {
+      "companion": "courier",
+      "contact": "courier",
+      "librarian": "companion",
+      "courier": "companion"
+     }
+    },
+    {
+     "type": "talk",
+     "lines": [
+      {
+       "who": "host",
+       "text": "정답입니다. 메모는 유리 님이 쓰고, [[태수 님]]이 전했습니다.",
+       "fx": "flash"
+      },
+      {
+       "who": "courier",
+       "text": "하하…… 다음엔 꼭 말할게요.",
+       "face": "웃음"
+      },
+      {
+       "who": "",
+       "text": "소동은 웃음으로 끝났다."
+      }
+     ]
+    }
+   ]
   }
  ],
  "host": {
@@ -1643,5 +2011,29 @@
     ]
    }
   ]
- }
+ },
+ "cases": [
+  {
+   "id": "C1",
+   "flag": "order_changed",
+   "spot": "desk",
+   "watchers": [
+    "courier",
+    "librarian"
+   ],
+   "trial": "C1",
+   "notice": "지배인 방송: 작업실의 작업 순서표가 바뀌어 있습니다. 모두 작업실로 모여 주십시오.",
+   "from": "10:40",
+   "task": {
+    "id": "gather_C1",
+    "kind": "visit",
+    "landmark": "desk",
+    "durationSeconds": 3600,
+    "priority": 300,
+    "weight": 1,
+    "interruptible": false,
+    "once": true
+   }
+  }
+ ]
 }

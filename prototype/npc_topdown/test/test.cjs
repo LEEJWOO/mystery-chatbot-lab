@@ -322,6 +322,30 @@ test('대화 중 증거 제시: 사건 규칙의 present는 그 증거를 낸 �
   const withIt = { ...base, pv: 'memo_copy' }; assert.equal(E.applyEvent(W2, withIt, 'SHOW').accepted, true);
   assert.equal(C.unpack(W2, C.pack(W2, withIt)).pv, 'memo_copy');
 });
+test('사건 연결: 실제 행동 → 발견 → 현장 입장 시 집합 → 조사(마감·자료) → 개정 → 갈래별 재판(A=T1, B=T1B), 막으면 사건 없음', () => {
+  const go = (prep) => { let s = E.createWorld(W); if (prep) s = prep(s); for (let i = 0; i < 1440 && !(s.cases && s.cases.C1); i++) s = E.advance(W, s, 5); return s; };
+  const toCase = s => { const d = W.map.landmarks.find(l => l.id === 'desk'); s = E.dispatch(W, s, { type: 'MOVE_TO', x: d.x, y: d.y + 1 }); for (let i = 0; i < 200 && !s.trial; i++) s = E.advance(W, s, 4); return s; };
+  for (const [prep, want, inv] of [[null, 'T1', '#조사C1A'], [s => E.dispatch(W, s, { type: 'ACCOMPANY', npcId: 'companion' }), 'T1B', '#조사C1B']]) {
+    let s = go(prep); assert.ok(s.cases.C1, '사건 발견');
+    assert.ok(s.npcs.every(n => n.mode === 'accompany' || n.queued.some(t => t.id === 'gather_C1') || (n.intent && n.intent.id === 'gather_C1') || n.completed.includes('gather_C1')), '모두 현장으로');
+    s = toCase(s); assert.equal(W.trials[s.trial.i].code, 'C1', '현장 방에 들어가면 사건 대본');
+    assert.equal(s.player.items.work_order, undefined, '연쇄 시작에는 자료를 지급하지 않음');
+    s = E.trialStep(W, s, 'NEXT'); assert.ok(E.inInvestigation(W, s)); assert.ok(s.player.items.work_order !== undefined, '조사 시작 때 지급');
+    assert.ok(E.markers(W, s).includes(inv), '조사 표식 ' + inv);
+    assert.ok(s.npcs.every(n => !n.queued.some(t => t.id === 'gather_C1')), '조사 중엔 각자 일정');
+    const dl = s.trial.sub; s = E.advance(W, s, dl - s.clock + 5); assert.ok(!E.inInvestigation(W, s), '마감에 개정');
+    s = E.trialStep(W, s, 'NEXT'); assert.equal(W.trials[s.trial.i].code, want, '갈래별 재판 ' + want);
+    assert.ok(C.unpack(W, C.pack(W, s)).cases.C1, '코드 왕복');
+  }
+  // 막기: 유리와 동행 + 태수도 붙잡아 두면(동행은 한 명이라 태수의 전달은 남는다) → 여기서는 유리 동행 후 태수 동행으로 바꿔 전달을 막는다
+  let s = E.dispatch(W, E.createWorld(W), { type: 'ACCOMPANY', npcId: 'companion' });
+  for (let i = 0; i < 6; i++) s = E.advance(W, s, 5);
+  s = E.dispatch(W, s, { type: 'RELEASE', npcId: 'companion' });
+  const t = s.npcs.find(n => n.id === 'courier'); s.player.x = t.x; s.player.y = t.y + (E.walkable(W, t.x, t.y + 1) ? 1 : -1);
+  s = E.dispatch(W, s, { type: 'ACCOMPANY', npcId: 'courier' });
+  for (let i = 0; i < 600; i++) s = E.advance(W, s, 5);
+  if (s.npcs.find(n => n.id === 'courier').mode === 'accompany') assert.ok(!(s.cases && s.cases.C1), '전달을 막으면 사건 없음');
+});
 test('시선 대칭: 같은 방의 모든 두 칸에서 A가 B를 보면 B도 A를 본다', () => {
   const s = E.createWorld(W); let bad = 0, n = 0;
   for (let y = 0; y < W.map.height; y++) for (let x = 0; x < W.map.width; x++) {
