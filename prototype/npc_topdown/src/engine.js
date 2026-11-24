@@ -103,6 +103,7 @@ const TroemereiNPC = (() => {
       flags:Object.fromEntries((w.flagNames||[]).map(f=>[f,false])),
       logs:[],revision:0,pend:null,pk:'',pc:0};
     relInit(w,s.player);
+    s.player.look=null; // 체크인 전(첫 화면에서 외형을 고른다)
     addLog(w,s,'시뮬레이션이 시작되었다. NPC들은 각자의 일정에 따라 행동한다.','player');
     // Decisions exist from the first frame; the player can cancel a planned visit before movement.
     for(const n of s.npcs)decide(w,s,n);

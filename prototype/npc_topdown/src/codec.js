@@ -5,7 +5,9 @@ const TroemereiCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 10;
+  const VERSION = 11;
+  // 플레이어 외형 항목(체크인): 성별·앞머리·뒷머리·머리색·눈 모양·눈동자색·피부·옷·옷 색·장신구
+  const LOOK_KEYS = ['g', 'hf', 'hb', 'hc', 'eye', 'ec', 'sk', 'of', 'oc', 'ac'];
   const KINDS = ['', 'T', 'I', 'A', 'P', 'R'];
 
   function hash32(text) { let h = 0x811c9dc5; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
@@ -105,6 +107,8 @@ const TroemereiCodec = (() => {
     putMem(o, s.player.mem, m, clock);
     for (const it of w.items || []) { const v = (s.player.items || {})[it.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 0 = 아직 안 가짐
     { let gv = 0; (w.items || []).forEach((it, i) => { if ((s.player.given || {})[it.id]) gv += 2 ** i; }); o.uint(gv); } // 지배인이 지급한 자료
+    // 체크인 외형: 없으면 0. 있으면 1 + 항목 번호들 + 이름(UTF-8)
+    { const L = s.player.look; if (!L) o.uint(0); else { o.uint(1); for (const k of LOOK_KEYS) o.uint(Math.max(0, L[k] | 0)); const nb = Array.from(new TextEncoder().encode(String(L.name || '').slice(0, 12))); o.uint(nb.length); nb.forEach(v => o.byte(v)); } }
     for (const sc of w.scenes || []) { const v = (s.player.scenes || {})[sc.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 목격 장면 해금 시각
     let tk = 0; w.npcs.forEach((n, i) => { if ((s.player.talked || {})[n.id] !== undefined) tk |= 1 << i; }); o.uint(tk); // 말 걸어 본 인물
     const rs = (w.rel || {}).scales || [];
@@ -147,6 +151,7 @@ const TroemereiCodec = (() => {
     s.player.mem = getMem(r, m, clock); s.player.seen = {}; s.player.items = {};
     for (const it of w.items || []) { const v = r.uint(); if (v) s.player.items[it.id] = clock - (v - 1); }
     s.player.given = {}; { let gv = r.uint(); (w.items || []).forEach((it, i) => { if (Math.floor(gv / 2 ** i) % 2) s.player.given[it.id] = 1; }); }
+    { if (r.uint()) { const L = {}; for (const k of LOOK_KEYS) L[k] = r.uint(); const n = r.uint(), nb = []; for (let q = 0; q < n; q++) nb.push(r.byte()); L.name = new TextDecoder().decode(new Uint8Array(nb)); s.player.look = L; } else s.player.look = null; }
     s.player.scenes = {}; for (const sc of w.scenes || []) { const v = r.uint(); if (v) s.player.scenes[sc.id] = clock - (v - 1); }
     s.player.talked = {}; const tk = r.uint(); w.npcs.forEach((n, i) => { if (tk & (1 << i)) s.player.talked[n.id] = 0; });
     s.player.rel = {}; for (const spec of w.npcs) { const o = {}; for (const sc of ((w.rel || {}).scales || [])) if (spec.rel && spec.rel[sc.id] !== undefined) o[sc.id] = r.uint(); s.player.rel[spec.id] = o; }

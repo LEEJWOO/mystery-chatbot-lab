@@ -357,6 +357,11 @@ test('반론 보류: 입증 부족 지적(T1_R1H)은 쟁점을 보류로 두고 
   assert.ok(r.accepted && r.hold); assert.equal(r.state.trial.phase, 7); assert.equal(r.state.trial.hold & 1, 1);
   assert.equal(C.unpack(W, C.pack(W, r.state)).trial.hold, 1);
 });
+test('체크인 외형: 코드 왕복(한글 이름 포함)', () => {
+  const s = E.createWorld(W); assert.equal(s.player.look, null);
+  s.player.look = { g: 1, hf: 2, hb: 3, hc: 7, eye: 1, ec: 4, sk: 2, of: 4, oc: 5, ac: 3, name: '키와무 하지메' };
+  assert.deepEqual(C.unpack(W, C.pack(W, s)).player.look, s.player.look);
+});
 test('시선 대칭: 같은 방의 모든 두 칸에서 A가 B를 보면 B도 A를 본다', () => {
   const s = E.createWorld(W); let bad = 0, n = 0;
   for (let y = 0; y < W.map.height; y++) for (let x = 0; x < W.map.width; x++) {

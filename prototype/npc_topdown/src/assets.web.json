@@ -150,5 +150,64 @@
     ]
    }
   }
+ },
+ "avatar": {
+  "cw": 36,
+  "ch": 54,
+  "layers": [
+   "base",
+   "hair",
+   "top",
+   "bottom",
+   "skin"
+  ],
+  "dirs": {
+   "down": {
+    "idle": 0,
+    "walk": [
+     1,
+     2,
+     3,
+     4
+    ]
+   },
+   "up": {
+    "idle": 5,
+    "walk": [
+     6,
+     7,
+     8,
+     9
+    ]
+   },
+   "left": {
+    "idle": 10,
+    "walk": [
+     11,
+     12,
+     13,
+     14
+    ]
+   },
+   "right": {
+    "idle": 15,
+    "walk": [
+     16,
+     17,
+     18,
+     19
+    ]
+   }
+  },
+  "sheets": {
+   "short_pants": "8c33c7ba5ede.webp",
+   "short_skirt": "85709ac469a3.webp",
+   "messy_pants": "641168325f35.webp",
+   "messy_skirt": "30794767e4a7.webp",
+   "bob_pants": "ddc7bab2e068.webp",
+   "bob_skirt": "35ee23458840.webp",
+   "long_pants": "80b79fa4a688.webp",
+   "long_skirt": "3b3f61db5c35.webp"
+  }
  }
 }
