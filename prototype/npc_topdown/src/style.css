@@ -205,7 +205,6 @@
 @keyframes trspotf{from{opacity:0;transform:translateX(-50%) scale(.3)}to{opacity:1;transform:translateX(-50%) scale(1)}}
 @keyframes trhost{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%)}}
 /* 반론: 화면을 비스듬히 나눠 나와 상대가 맞선다 */
-.tr-stage.split{height:250px}
 .tr-split{position:absolute;inset:0;pointer-events:none}
 .tr-split-l{position:absolute;inset:0;clip-path:polygon(0 0,52% 0,38% 100%,0 100%);background:linear-gradient(120deg,#163252,#0a1220 70%);animation:trsplitl .45s cubic-bezier(.2,.9,.3,1) both}
 .tr-split-l .tr-me-sil{position:absolute;left:14px;bottom:-26px;width:150px;height:244px}
@@ -213,7 +212,6 @@
 .tr-split-seam{position:absolute;left:0;right:0;top:0;bottom:0;background:linear-gradient(to bottom right,transparent calc(50% - 2px),#fff 50%,transparent calc(50% + 2px));clip-path:polygon(50% 0,54% 0,40% 100%,36% 100%);background:#fff;box-shadow:0 0 18px #fff;animation:trseam .6s .25s both}
 .tr-split-tag{position:absolute;left:44%;top:46%;transform:translate(-50%,-50%) rotate(-12deg);padding:3px 16px;font-size:26px;font-weight:900;color:#fff;background:#c0303a;border:2px solid #fff;letter-spacing:4px;box-shadow:0 0 16px #c0303a;animation:trtag .5s .45s cubic-bezier(.2,1.6,.4,1) both}
 .tr-split-r{position:absolute;right:16px;top:86px;font-size:15px;color:#ffd3c6;text-shadow:0 0 8px #c0303a}
-.tr-stage.split .tr-actor{left:auto;right:-70px;width:360px;animation:trsplitr .45s cubic-bezier(.2,.9,.3,1) both}
 @keyframes trsplitl{from{transform:translateX(-60%)}to{transform:none}}
 @keyframes trsplitr{from{transform:translateX(60%)}to{transform:none}}
 @keyframes trseam{0%{opacity:0;transform:scaleY(0)}40%{opacity:1}100%{opacity:.85;transform:none}}
@@ -318,19 +316,20 @@
 .tr-ns-top b{padding:1px 7px;background:#d9443a;color:#fff;letter-spacing:2px;font-size:11px;transform:skewX(-12deg)}
 .tr-ns-top span{flex:1}.tr-ns-top button{height:24px;padding:0 9px;font-size:12px;border-radius:12px;background:#120f1ed0;border:1px solid #e9c98c66;color:#f2d79e}
 .tr-ns-guide{position:absolute;left:0;right:0;top:28px;font-size:11px;color:#c9bfa9;text-shadow:0 1px 3px #000}
-.tr-ns-say{position:absolute;left:-6px;right:-6px;top:118px;padding:8px 18px 10px;background:linear-gradient(90deg,transparent,#06040cd0 12%,#06040cd0 88%,transparent);animation:trnsin .5s ease-out,trnsdrift 9s linear .5s forwards}
-.tr-ns-say.alt{top:150px}
+.tr-ns-say{position:absolute;left:-6px;right:-6px;top:200px;padding:8px 18px 10px;background:linear-gradient(90deg,transparent,#06040cd0 12%,#06040cd0 88%,transparent);animation:trnsin .5s ease-out,trnsdrift 9s linear .5s forwards}
+.tr-ns-say.alt{top:214px}
 .tr-ns-say>b{font-size:12px;text-shadow:0 1px 2px #000}
 .tr-ns-text{margin-top:2px;font-size:17px;line-height:27px;font-weight:700;color:#fff;text-shadow:0 1px 0 #000,0 0 6px #000;word-break:keep-all}
 @keyframes trnsin{from{opacity:0}to{opacity:1}}
 @keyframes trnsdrift{from{transform:translateX(0)}to{transform:translateX(-12px)}}
-.tr-nseg{color:#ffb547;cursor:pointer;padding:0 1px;border-radius:3px;text-shadow:0 0 8px #ff8a1a,0 1px 0 #000;animation:trnsglow 1.2s ease-in-out infinite alternate}
-.tr-nseg.take{color:#8fe3ff;text-shadow:0 0 8px #2ab8ff,0 1px 0 #000}
+.tr-nseg{color:#fff;cursor:pointer;padding:0 1px;border-radius:3px;text-decoration:underline;text-decoration-color:#ffb54799;text-decoration-thickness:2px;text-underline-offset:5px}
+.tr-nseg.now{color:#ffb547;text-decoration:none;text-shadow:0 0 8px #ff8a1a,0 1px 0 #000;animation:trnsglow 1.2s ease-in-out infinite alternate}
+.tr-nseg.take{text-decoration-color:#5ccfff99}.tr-nseg.now.take{color:#8fe3ff;text-shadow:0 0 8px #2ab8ff,0 1px 0 #000}
 .tr-nseg.held{text-decoration:underline dotted;text-underline-offset:4px}
 .tr-nseg.broke{color:#ff4d4d;animation:trnsbreak .5s ease-out forwards}
 @keyframes trnsglow{from{filter:brightness(.9)}to{filter:brightness(1.25)}}
 @keyframes trnsbreak{0%{transform:none}30%{transform:scale(1.18) rotate(-3deg);filter:brightness(2)}100%{opacity:.25;letter-spacing:4px;filter:blur(1px)}}
-.tr-ns-dots{position:absolute;left:0;right:0;top:232px;display:flex;justify-content:center;gap:6px}
+.tr-ns-dots{position:absolute;left:0;right:0;top:46px;display:flex;justify-content:flex-start;gap:5px}
 .tr-ns-dots i{font-style:normal;font-size:11px;padding:2px 8px;border-radius:10px;background:#120f1eb0;color:#9d9282;border:1px solid #ffffff22}
 .tr-ns-dots i.on{color:#ffd28a;border-color:#ffb54788}
 .tr-ns-gun{position:absolute;left:0;right:0;bottom:0;padding:8px;background:#0a0813ee;border:1px solid #8a7550;border-radius:10px;display:grid;gap:6px}
@@ -378,13 +377,13 @@
 .tr-objc-band>i{position:absolute;height:3px;background:linear-gradient(90deg,transparent,#fff,transparent);animation:trobjline .6s .1s ease-out both}
 .tr-objc-band>i.s1{left:0;width:70%;top:26px}.tr-objc-band>i.s2{right:0;width:60%;bottom:30px;animation-delay:.2s}
 .tr-objc-face{position:absolute;left:10px;top:-10px;width:220px;height:200px;overflow:hidden;transform:skewY(9deg);-webkit-mask-image:linear-gradient(90deg,#000 65%,transparent);mask-image:linear-gradient(90deg,#000 65%,transparent);animation:trobjface 1.15s ease-out both}
-.tr-objc-word{position:absolute;right:30px;top:52px;transform:skewY(9deg) rotate(-6deg);font-size:46px;font-weight:900;color:#fff;letter-spacing:2px;-webkit-text-stroke:2px #c0504a;text-shadow:4px 4px 0 #c0504a;animation:trobjword 1.15s cubic-bezier(.2,1.6,.4,1) both}
-.tr-objc-name{position:absolute;right:36px;bottom:30px;transform:skewY(9deg);font-size:12px;color:#ffd0c8;letter-spacing:2px}
+.tr-objc-word{position:absolute;right:22px;top:300px;transform:rotate(-6deg);font-size:46px;font-weight:900;color:#fff;letter-spacing:2px;-webkit-text-stroke:2px #c0504a;text-shadow:4px 4px 0 #c0504a;animation:trobjword 1.15s cubic-bezier(.2,1.6,.4,1) both}
+.tr-objc-name{position:absolute;right:30px;top:360px;font-size:12px;color:#ffd0c8;letter-spacing:2px;animation:trobjword 1.15s both}
 @keyframes trobjdim{0%{opacity:0}15%,80%{opacity:.55}100%{opacity:0}}
 @keyframes trobjband{0%{transform:skewY(-9deg) translateX(-110%)}18%,82%{transform:skewY(-9deg) translateX(0)}100%{transform:skewY(-9deg) translateX(110%)}}
 @keyframes trobjline{from{transform:translateX(-100%);opacity:0}to{transform:translateX(30%);opacity:1}}
 @keyframes trobjface{0%{transform:skewY(9deg) translateX(-30px)}25%,100%{transform:skewY(9deg) translateX(0)}}
-@keyframes trobjword{0%,12%{opacity:0;transform:skewY(9deg) rotate(-6deg) scale(2.4)}30%{opacity:1;transform:skewY(9deg) rotate(-6deg) scale(1)}85%{opacity:1}100%{opacity:0}}
+@keyframes trobjword{0%,12%{opacity:0;transform:rotate(-6deg) scale(2.4)}30%{opacity:1;transform:rotate(-6deg) scale(1)}85%{opacity:1}100%{opacity:0}}
 /* 기억 현상: 암실 */
 .tr-dv-head{display:grid;gap:1px;text-align:center}.tr-dv-head b{font-size:13px;color:#f2d79e;letter-spacing:1px}.tr-dv-head span{font-size:11px;color:#b9ad96}
 .tr-dv{position:relative;height:230px;padding:10px;border-radius:12px;background:linear-gradient(#1a1418,#100c10);box-shadow:inset 0 0 0 1px #ffffff14;transition:background .8s}
@@ -409,3 +408,8 @@
 .tr-dv-hold{position:relative;height:44px;border-radius:10px;border:1px solid #ff6a5a66;background:#2a0b0b;color:#ffd8cf;font-size:13px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 .tr-dv-hold>i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7a1a1a,#c0504a);transition:width .05s linear}
 .tr-dv-hold>span{position:relative}
+
+.tr-objc-cut{position:absolute;left:-40px;top:96px;width:409px;height:238px;animation:trobjcut 1.15s cubic-bezier(.15,.9,.25,1) both}
+.tr-objc-cut .tr-objc-band{top:40px}
+@keyframes trobjcut{0%{transform:translateX(-105%);opacity:1}16%,84%{transform:translateX(0);opacity:1}100%{transform:translateX(105%);opacity:0}}
+.tr-ns-mag{scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent);padding-right:24px}.tr-ns-mag::-webkit-scrollbar{display:none}

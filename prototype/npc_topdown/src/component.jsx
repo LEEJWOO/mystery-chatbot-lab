@@ -65,8 +65,76 @@ function trAvatarPx(L, col, style) {
     {A.layers.map((_, r) => r === 0 ? null : <React.Fragment key={r}><div style={lay(r)} /><div style={{ position: 'absolute', inset: 0, background: m.cols[r], mixBlendMode: 'multiply', WebkitMaskImage: `url(${url})`, maskImage: `url(${url})`, WebkitMaskSize: `${W}px ${H}px`, maskSize: `${W}px ${H}px`, WebkitMaskPosition: at(r), maskPosition: at(r), WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }} /></React.Fragment>)}
     <div style={lay(0)} /></div>;
 }
-// 상반신 초상(임시 벡터). 360×540 좌표.
+// ---------- 파츠 초상·컷인 (TR_A.parts: tools/avatar_parts.py) ----------
+// 머리·눈썹·눈동자는 회색조 파츠에 SVG 그라데이션 맵(어두움→기본색→밝음)을 씌워 칠한다. 그림 서버 CORS가 필요 없다.
+const avMix = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+function trTintDefs(L) {
+  const hc = avC('hc', L.hc), ec = avC('ec', L.ec), ch = h => [1, 3, 5].map(i => (parseInt(h.slice(i, i + 2), 16) / 255).toFixed(3));
+  const f = (id, cs) => { const T = cs.map(ch), t = j => T.map(x => x[j]).join(' '); return <filter key={id} id={id} colorInterpolationFilters="sRGB"><feColorMatrix type="matrix" values=".3 .59 .11 0 0 .3 .59 .11 0 0 .3 .59 .11 0 0 0 0 0 1 0" />
+    <feComponentTransfer><feFuncR type="table" tableValues={t(0)} /><feFuncG type="table" tableValues={t(1)} /><feFuncB type="table" tableValues={t(2)} /></feComponentTransfer></filter>; };
+  // 밝은 머리색(금·백·은·분홍)은 그림자를 덜 어둡게
+  const lt = (parseInt(hc.slice(1, 3), 16) + parseInt(hc.slice(3, 5), 16) + parseInt(hc.slice(5, 7), 16)) / 765 > .55;
+  return <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs>
+    {f('trt-h' + L.hc, lt ? [avShade(hc, .35), avShade(hc, .6), avShade(hc, .82), hc, avMix(hc, '#ffffff', .6)] : [avShade(hc, .25), avShade(hc, .5), avShade(hc, .78), hc, avMix(hc, '#ffffff', .4)])}
+    {f('trt-b' + L.hc, [avShade(hc, .2), avShade(hc, .4), avShade(hc, .6), avShade(hc, .8), hc])}
+    {f('trt-e' + L.ec, [avShade(ec, .2), avShade(ec, .5), ec, avMix(ec, '#ffffff', .25), avMix(ec, '#ffffff', .6)])}</defs></svg>;
+}
+const AV_SKIN = [[1, 'brightness(1.04)'], [1, 'brightness(.95) saturate(1.06)'], [2, ''], [2, 'brightness(.86)'], [3, '']];
+function trPart(P, L, k, at) {
+  const m = P.map[k]; if (!m) return null;
+  const tint = m[6] === 'h' ? 'url(#trt-h' + L.hc + ')' : m[6] === 'b' ? 'url(#trt-b' + L.hc + ')' : m[6] === 'e' ? 'url(#trt-e' + L.ec + ')' : '';
+  return <div key={k + (at ? at.join(',') : '')} style={{ position: 'absolute', left: at ? at[0] : m[4], top: at ? at[1] : m[5], width: m[2], height: m[3], backgroundImage: `url(${trUrl(P.src)})`, backgroundSize: `${P.w}px ${P.h}px`, backgroundPosition: `${-m[0]}px ${-m[1]}px`, filter: [tint, at && at[2]].filter(Boolean).join(' ') || undefined, mixBlendMode: /fs\d/.test(k) ? 'multiply' : undefined }} />;
+}
+// 옷: 초상 좌표(240×280)에서 목 아래를 덮는다
+function trOutfit(L) {
+  const oc = avC('oc', L.oc), od = avShade(oc, .78), ol = avMix(oc, '#ffffff', .35), m = L.g === 0 ? 10 : 0, cx = 120;
+  const body = `M${cx - 21} 213 Q${cx - 44} 219 ${cx - 72 - m} 221 Q${30 - m} 226 ${20 - m} 256 L${14 - m} 281 L${230 + m} 281 L${222 + m} 256 Q${212 + m} 224 ${cx + 72 + m} 219 Q${cx + 44} 216 ${cx + 21} 211`;
+  const close = ` Q${cx} 234 ${cx - 21} 214 Z`, sh = <path d={`M${cx - 72 - m} 224 Q${cx - 20} 242 ${cx} 240 Q${cx + 22} 242 ${cx + 72 + m} 222`} fill="none" stroke={od} strokeWidth="2" opacity=".5" />;
+  const pieces = {
+    0: <><path d={body + close} fill={oc} /><path d={`M${cx - 23} 212 L${cx - 4} 238 L${cx - 30} 236 Z M${cx + 23} 210 L${cx + 4} 238 L${cx + 30} 234 Z`} fill="#f4f2ee" stroke={od} strokeWidth="1" />{[248, 262, 276].map(y => <circle key={y} cx={cx} cy={y} r="2" fill={od} />)}</>,
+    1: <><path d={`M${cx - 46} 222 Q${cx} 200 ${cx + 46} 220 L${cx + 52} 236 Q${cx} 222 ${cx - 52} 238 Z`} fill={od} /><path d={body + ` Q${cx} 222 ${cx - 21} 214 Z`} fill={oc} /><path d={`M${cx - 10} 232 L${cx - 12} 262 M${cx + 10} 231 L${cx + 12} 260`} stroke="#f2f2f2" strokeWidth="2" /></>,
+    2: <><path d={body + close} fill={oc} /><path d={`M${cx - 21} 214 L${cx} 270 L${cx + 21} 212 Z`} fill="#f2efe8" /><path d={`M${cx - 21} 214 L${cx - 40} 226 L${cx - 18} 250 L${cx} 270 Z M${cx + 21} 212 L${cx + 40} 224 L${cx + 18} 250 L${cx} 270 Z`} fill={od} /></>,
+    3: <><path d={body + ` Q${cx} 226 ${cx - 21} 214 Z`} fill={oc} /><path d={`M${cx - 22} 214 Q${cx} 230 ${cx + 22} 212`} fill="none" stroke={ol} strokeWidth="6" />{[0, 1, 2, 3, 4, 5].map(i => <path key={i} d={`M${46 + i * 30} 250 l0 30`} stroke={od} strokeWidth="1" opacity=".35" />)}</>,
+    4: <><path d={body + ` Q${cx} 240 ${cx - 21} 214 Z`} fill={oc} /><path d={`M${cx - 34} 224 Q${cx} 246 ${cx + 34} 222`} fill="none" stroke="#f4f2ee" strokeWidth="5" /><path d={`M${cx - 8} 240 l-10 10 l10 -2 l10 2 Z`} fill={avC('oc', (L.oc + 3) % 8)} /></>,
+    5: <><path d={body + close} fill={avShade('#2a2a33', 1)} /><path d={`M${cx - 21} 214 L${cx} 274 L${cx + 21} 212 Z`} fill="#f4f2ee" /><path d={`M${cx - 4} 232 L${cx + 4} 232 L${cx + 7} 270 L${cx} 278 L${cx - 7} 270 Z`} fill={oc} /><path d={`M${cx - 21} 214 L${cx - 38} 228 L${cx - 16} 252 L${cx} 274 Z M${cx + 21} 212 L${cx + 38} 226 L${cx + 16} 252 L${cx} 274 Z`} fill="#1c1c24" /></>,
+  };
+  return <svg width="240" height="280" viewBox="0 0 240 280" style={{ position: 'absolute', left: 0, top: 0 }}>{pieces[L.of] || pieces[0]}{sh}</svg>;
+}
+function trAccPortrait(L, E) {
+  const [a, b] = E, gl = '#3a3040';
+  if (L.ac === 1) return <svg width="240" height="280" style={{ position: 'absolute', left: 0, top: 0 }}><g fill="none" stroke={gl} strokeWidth="2"><circle cx={a[0]} cy={a[1]} r="15" /><circle cx={b[0]} cy={b[1]} r="15" /><path d={`M${a[0] + 15} ${a[1] - 2} Q${(a[0] + b[0]) / 2} ${(a[1] + b[1]) / 2 - 8} ${b[0] - 15} ${b[1] - 2}`} /></g></svg>;
+  if (L.ac === 2) return <svg width="240" height="280" style={{ position: 'absolute', left: 0, top: 0 }}><g fill="#ffffff22" stroke={gl} strokeWidth="2"><rect x={a[0] - 17} y={a[1] - 11} width="34" height="22" rx="3" /><rect x={b[0] - 17} y={b[1] - 11} width="34" height="22" rx="3" /><path d={`M${a[0] + 17} ${a[1] - 4} L${b[0] - 17} ${b[1] - 4}`} /></g></svg>;
+  if (L.ac === 3) return <svg width="240" height="280" style={{ position: 'absolute', left: 0, top: 0 }}><path d="M150 96 l20 -8 l3 6 l-20 8 Z" fill="#e9c98c" stroke="#8a6a30" /><circle cx="168" cy="90" r="4" fill="#d06a8a" /></svg>;
+  if (L.ac === 4) return <svg width="240" height="280" style={{ position: 'absolute', left: 0, top: 0 }}><path d="M160 74 l-18 -12 l2 22 Z M160 74 l20 -12 l-2 22 Z" fill="#c0504a" stroke="#7a2a2a" /><circle cx="160" cy="74" r="4" fill="#9a3a3a" /></svg>;
+  if (L.ac === 5) return <svg width="240" height="280" style={{ position: 'absolute', left: 0, top: 0 }}><circle cx="165" cy="168" r="3" fill="#e9c98c" stroke="#8a6a30" /><circle cx="165" cy="176" r="4.5" fill="#e9c98c" stroke="#8a6a30" /></svg>;
+  return null;
+}
+// 입식 초상: 240×280 좌표의 파츠를 scale 배로. 파츠가 없으면 임시 벡터.
+function trAvatarImg(L, scale, style) {
+  const P = TR_A.parts; if (!P) return null;
+  const sk = AV_SKIN[L.sk] || AV_SKIN[0], E = (P.eyes.p[L.eye] || P.eyes.p[0]), im = P.map['p.iris'];
+  return <div style={{ position: 'absolute', width: 240, height: 280, transform: `scale(${scale})`, transformOrigin: '0 0', ...style }}>{trTintDefs(L)}
+    {trPart(P, L, 'p.b' + L.hb)}
+    <div style={{ position: 'absolute', inset: 0, filter: sk[1] || undefined }}>{trPart(P, L, 'p.skin' + sk[0])}</div>
+    {trOutfit(L)}{trPart(P, L, 'p.ew' + L.eye)}
+    {E.map(([x, y], i) => <React.Fragment key={i}>{trPart(P, L, 'p.iris', [x - im[2] / 2, y - im[3] / 2])}{trPart(P, L, 'p.hl', [x - im[2] / 2, y - im[3] / 2])}</React.Fragment>)}
+    {trPart(P, L, 'p.el' + L.eye)}{trPart(P, L, 'p.brow' + (L.g === 0 ? 1 : 0))}{trPart(P, L, 'p.mouth')}{trPart(P, L, 'p.fs' + L.hf)}{trPart(P, L, 'p.f' + L.hf)}{trAccPortrait(L, E)}</div>;
+}
+// 반론 컷인: 틀(409×238) 안 사선 칸에 얼굴을 맞춘다
+function trCutinImg(L, style) {
+  const P = TR_A.parts; if (!P) return null;
+  const sk = AV_SKIN[L.sk] || AV_SKIN[0], E = P.eyes.c[L.eye] || P.eyes.c[0], ec = avC('ec', L.ec);
+  return <div style={{ position: 'absolute', width: 409, height: 238, ...style }}>{trTintDefs(L)}
+    <div style={{ position: 'absolute', inset: 0, clipPath: 'polygon(402px 31px,405px 31px,405px 186px,36px 186px)', background: 'linear-gradient(100deg,#06050a 30%,#1d1424)' }}>{trPart(P, L, 'c.bg')}
+      {trPart(P, L, 'c.b' + L.hb)}<div style={{ position: 'absolute', inset: 0, filter: sk[1] || undefined }}>{trPart(P, L, 'c.skin' + sk[0])}{trPart(P, L, 'c.ear' + sk[0])}</div>
+      {trPart(P, L, 'c.ew' + L.eye)}
+      <svg width="409" height="238" style={{ position: 'absolute', left: 0, top: 0 }}>{E.map(([x, y], i) => { const r = i ? 1 : .6; return <g key={i}><ellipse cx={x} cy={y + 2} rx={12 * r} ry={17 * r} fill={avShade(ec, .55)} /><ellipse cx={x} cy={y + 4} rx={9 * r} ry={13 * r} fill={ec} /><ellipse cx={x} cy={y + 3} rx={4.5 * r} ry={7 * r} fill={avShade(ec, .25)} /><circle cx={x - 4 * r} cy={y - 6 * r} r={3.4 * r} fill="#fff" /></g>; })}</svg>
+      {trPart(P, L, 'c.el' + L.eye)}{trPart(P, L, 'c.brow' + (L.g === 0 ? 1 : 0))}{trPart(P, L, 'c.mouth')}{trPart(P, L, 'c.fs' + L.hf)}{trPart(P, L, 'c.f' + L.hf)}</div>
+    {trPart(P, L, 'c.line')}</div>;
+}
+// 상반신 초상(임시 벡터). 360×540 좌표. 파츠가 있으면 파츠 초상을 쓴다.
 function trAvatar(L, style) {
+  if (TR_A.parts) { const w = style.width || 150; return <div style={{ ...style, overflow: 'hidden' }}>{trAvatarImg(L, w / 168, { left: -30 * w / 168, top: -40 * w / 168 })}</div>; }
   const hc = avC('hc', L.hc), hd = avShade(hc, .78), hl = avShade(hc, 1.15), sk = avC('sk', L.sk), sd = avShade(sk, .88), ec = avC('ec', L.ec), oc = avC('oc', L.oc), od = avShade(oc, .8), f = L.g === 1;
   const sh = f ? 96 : 112; // 어깨 반폭
   const back = [null,
@@ -576,7 +644,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         </div>
         <div className="ck-rule"><i /></div>
         <div className="ck-view">
-          <div className="ck-frame"><div className="ck-frame-in">{trAvatar(L, { position: 'absolute', left: -14, top: -4, width: 150, height: 225 })}</div>
+          <div className="ck-frame"><div className="ck-frame-in">{TR_A.parts ? trAvatarImg(L, .64, { left: -21, top: -32 }) : trAvatar(L, { position: 'absolute', left: -14, top: -4, width: 150, height: 225 })}</div>
             <svg className="ck-arch" viewBox="0 0 124 170" aria-hidden="true"><path d="M4 168 L4 62 Q4 4 62 4 Q120 4 120 62 L120 168 Z" /><path d="M10 162 L10 64 Q10 10 62 10 Q114 10 114 64 L114 162 Z" /></svg></div>
           <div className="ck-side"><div className="ck-cap">PREVIEW · 미리보기</div>
             <div className="ck-stage"><div className="ck-ped" /><div className="ck-px">{A ? trAvatarPx(L, col, { left: 0, bottom: 0, transform: 'scale(1.5)', transformOrigin: 'left bottom' }) : null}</div></div>
@@ -629,8 +697,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     let n = 0;
     const text = lines[li].map((x, i) => { const L = Array.from(x.t), vis = Math.max(0, Math.min(L.length, sh - n)); n += L.length; if (!vis) return null;
       const part = L.slice(0, vis).join(''); if (x.s < 0) return <span key={i}>{part}</span>;
-      const id = li + '.' + x.s, held = words.some(y => y.l === li && y.s === x.s);
-      return <span key={i} className={'tr-nseg' + (mode === 'take' ? ' take' : '') + (held ? ' held' : '') + (g.broke === id ? ' broke' : '')} onClick={e => onSeg(li, x.s, x.t, e)}>{part}</span>; });
+      const id = li + '.' + x.s, held = words.some(y => y.l === li && y.s === x.s), now = vis < L.length || (sh === n && sh < lens[li]);
+      return <span key={i} className={'tr-nseg' + (now ? ' now' : '') + (mode === 'take' ? ' take' : '') + (held ? ' held' : '') + (g.broke === id ? ' broke' : '')} onClick={e => onSeg(li, x.s, x.t, e)}>{part}</span>; });
     const S = g.shot;
     return <div className="tr-ns" ref={nsBox}>
       <div className="tr-ns-top"><b>NONSTOP</b><span>{ph.title}</span><button onClick={() => setG(o => ({ pause: !o.pause }))}>{g.pause ? '▶ 계속' : 'Ⅱ 멈춤'}</button></div>
@@ -832,7 +900,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
           {TR_A.bg && TR_A.bg['재판장'] ? <img src={trUrl(TR_A.bg['재판장'])} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .6 }} /> : <div className="tr-spot-light" />}
           {!mini && ch ? <div className="tr-actor"><div className="tr-actor-in">{trSprite(ch, trFace(ch, cur ? cur.face : ''), u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div></div> : null}
           {!mini && speakerId === 'host' ? <div className={'tr-actor host' + (T.phase === 0 && tv.idx === 0 ? ' enter' : '')}><div className="tr-hspot" /><div className="tr-hspot-floor" />{trHostSil()}</div> : null}
-          {split ? <div className="tr-objc"><div className="tr-objc-dim" /><div className="tr-objc-band"><i className="s1" /><i className="s2" /><div className="tr-objc-face">{state.player.look ? trAvatar(state.player.look, { position: 'absolute', left: -30, top: -128, width: 300, height: 450 }) : trMeSil()}</div><b className="tr-objc-word">반론!</b><span className="tr-objc-name">{state.player.look ? state.player.look.name : '나'}</span></div></div> : null}
+          {split ? <div className="tr-objc"><div className="tr-objc-dim" /><div className="tr-objc-cut">{state.player.look && TR_A.parts ? trCutinImg(state.player.look, { left: 0, top: 0 }) : <div className="tr-objc-band"><div className="tr-objc-face">{trMeSil()}</div></div>}</div><b className="tr-objc-word">반론!</b><span className="tr-objc-name">{state.player.look ? state.player.look.name : '나'}</span></div> : null}
           {stageFx === 'flash' ? <div className="tr-flash" /> : null}
           {cur && cur.cut ? <div className="tr-cutin"><div className="tr-cutband">{trPortrait(cur.who, 70, 84)}<b>{cur.cut}!</b></div></div> : null}
           {stageFx === 'crack' ? trShards() : null}
