@@ -69,6 +69,7 @@ function trCharSprite(c, animRef, movedRef, sel, bad) {
 
 // ---------- 관계 ----------
 const TR_REL = (TN_WORLD.rel || {}).scales || [];
+const trRelHidden = st => !!(st && st.flags && st.flags[TN_WORLD.realityFlag || 'true_route']); // 진엔딩 루트에서는 관계를 보여 주지 않는다
 const trRelName = id => (TR_REL.find(x => x.id === id) || { name: id }).name;
 // '신뢰 보통 · 애정 호감' (그 인물에게 있는 척도만)
 function trRelLine(st, id) {
@@ -76,6 +77,7 @@ function trRelLine(st, id) {
 }
 // 시험용 표시: 단계 칸
 function trRelBars(st, id, onRel) {
+  if (!onRel && trRelHidden(st)) return null;
   return TR_REL.map(sc => { const lv = TroemereiNPC.relLevel(TN_WORLD, st, id, sc.id); if (!lv) return null;
     return <div key={sc.id} className="tr-relrow"><span>{sc.name}</span><span className="tr-relpips">{sc.levels.map((_, i) => <i key={i} className={i < lv ? 'on ' + sc.id : ''} />)}</span><em>{sc.levels[lv - 1]}</em>
       {onRel ? <><button onClick={() => onRel(id, sc.id, -10)}>－</button><button onClick={() => onRel(id, sc.id, 10)}>＋</button></> : null}</div>; });
@@ -188,7 +190,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     if (!boot.base) return '';
     if (free) return '화면 밖 대화 · ' + trHM(boot.base.clock) + ' 시점에서 이어집니다';
     if (boot.ev && boot.ev.accepted) return (boot.base.logs.slice(-1)[0] || {}).text || '';
-    if (boot.rc) return trNpc(boot.rc.id).name + ' · ' + Object.entries(boot.rc.changed).map(([sc, d2]) => trRelName(sc) + (d2 > 0 ? ' ▲' : ' ▼')).join(' ');
+    if (boot.rc && !trRelHidden(boot.base)) return trNpc(boot.rc.id).name + ' · ' + Object.entries(boot.rc.changed).map(([sc, d2]) => trRelName(sc) + (d2 > 0 ? ' ▲' : ' ▼')).join(' ');
     return s && !lines.length && boot.base.pk ? '응답을 반영했습니다' : '';
   });
   const [manual, setManual] = useState('');
@@ -555,7 +557,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         {/* 무대: 말하는 사람의 모습(표정 조각)과 재판 참가자 자리 */}
         <div key={T.phase + '-' + speakerId + '-' + (stageFx || (cur && cur.cut) ? tv.idx : '') + (tv.reply ? 'r' : '')} className={'tr-stage' + (mini ? ' mini' : '') + (split ? ' split' : '') + (stageFx ? ' fx-' + stageFx : '')}>
           {TR_A.bg && TR_A.bg['재판장'] ? <img src={trUrl(TR_A.bg['재판장'])} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .6 }} /> : <div className="tr-spot-light" />}
-          {!mini && ch ? <div className="tr-actor">{trSprite(ch, trFace(ch, cur ? cur.face : ''), u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div> : null}
+          {!mini && ch ? <div className="tr-actor"><div className="tr-actor-in">{trSprite(ch, trFace(ch, cur ? cur.face : ''), u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div></div> : null}
           {!mini && speakerId === 'host' ? <div className="tr-actor host"><div className="tr-spot" /><div className="tr-spot-floor" />{trHostSil()}</div> : null}
           {split ? <div className="tr-split"><div className="tr-split-l">{trMeSil()}<b>나</b></div><div className="tr-split-seam" /><div className="tr-split-tag">반론</div><b className="tr-split-r">{trNpc(ph.npc).name}</b></div> : null}
           {stageFx === 'flash' ? <div className="tr-flash" /> : null}

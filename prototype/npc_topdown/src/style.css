@@ -141,7 +141,8 @@
 .tr-stage{position:absolute;left:0;right:0;top:0;height:300px;overflow:hidden}
 .tr-stage.mini{height:110px}
 .tr-spot-light{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,#f2e6c033,transparent 60%),radial-gradient(ellipse at 50% 100%,#3a2f5a66,transparent 70%)}
-.tr-actor{position:absolute;left:0;bottom:-170px;width:360px;height:528px;transform:scale(.82);transform-origin:50% 100%;animation:tractor .35s ease-out}
+.tr-actor{position:absolute;left:0;bottom:-170px;width:360px;height:528px;transform-origin:50% 100%;animation:tractor .35s ease-out}
+.tr-actor-in{position:absolute;inset:0;transform:scale(.82);transform-origin:50% 100%}
 .fx-shake .tr-actor{animation:trshake .4s 2}
 .fx-zoom .tr-actor{animation:trzoom .5s ease-out}
 .tr-flash{position:absolute;inset:0;background:#fff;animation:trflash .5s ease-out forwards;pointer-events:none}
@@ -178,8 +179,8 @@
 .tr-whisper{font-style:italic;color:#c9c0dc;font-size:14px;line-height:21px;max-width:280px;opacity:0;animation:trwhisper 1s ease-out 1s forwards}
 .tr-later{opacity:0;animation:trwhisper .6s ease-out 2.4s forwards}
 .tr-rewind{animation:trdream 2.4s ease-in-out}
-@keyframes tractor{from{opacity:0;transform:scale(.82) translateX(30px)}to{opacity:1;transform:scale(.82)}}
-@keyframes trzoom{0%{transform:scale(.82)}40%{transform:scale(.9)}100%{transform:scale(.82)}}
+@keyframes tractor{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes trzoom{0%{transform:none}40%{transform:scale(1.1)}100%{transform:none}}
 @keyframes trflash{from{opacity:.9}to{opacity:0}}
 @keyframes trcut{0%{transform:skewY(-8deg) translateX(110%)}18%{transform:skewY(-8deg) translateX(0)}80%{transform:skewY(-8deg) translateX(0);opacity:1}100%{transform:skewY(-8deg) translateX(-110%);opacity:0}}
 @keyframes trshard{0%{transform:none;opacity:1}30%{transform:none;opacity:1}100%{transform:translate(var(--dx),calc(var(--dy) + 260px)) rotate(25deg);opacity:0}}
@@ -213,7 +214,7 @@
 .tr-split-r{position:absolute;right:16px;top:86px;font-size:15px;color:#ffd3c6;text-shadow:0 0 8px #c0303a}
 .tr-stage.split .tr-actor{left:auto;right:-70px;width:360px;animation:trsplitr .45s cubic-bezier(.2,.9,.3,1) both}
 @keyframes trsplitl{from{transform:translateX(-60%)}to{transform:none}}
-@keyframes trsplitr{from{transform:scale(.82) translateX(60%)}to{transform:scale(.82)}}
+@keyframes trsplitr{from{transform:translateX(60%)}to{transform:none}}
 @keyframes trseam{0%{opacity:0;transform:scaleY(0)}40%{opacity:1}100%{opacity:.85;transform:none}}
 @keyframes trtag{from{opacity:0;transform:translate(-50%,-50%) rotate(-12deg) scale(2.4)}to{opacity:1;transform:translate(-50%,-50%) rotate(-12deg) scale(1)}}
 /* 체력이 깨진다 */
