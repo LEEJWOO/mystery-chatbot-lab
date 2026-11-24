@@ -315,6 +315,13 @@ test('세계 지문: 공지·사건·갈래·장면 조건이 바뀌면 이전 �
   assert.equal(mut(w => { w.items[0].desc = '다른 설명'; }), '허용');
   assert.equal(mut(w => { w.npcs[0].notes[0].text = '다른 메모'; }), '허용');
 });
+test('대화 중 증거 제시: 사건 규칙의 present는 그 증거를 낸 대화에서만, 코드 왕복', () => {
+  const W2 = JSON.parse(JSON.stringify(W)); W2.events.SHOW = { kinds: ['T'], present: 'memo_copy', flag: 'delivery_done', log: '사본을 보여 줌' };
+  const base = { ...E.createWorld(W2), pend: 'companion', pk: 'T', pv: '' };
+  assert.equal(E.applyEvent(W2, base, 'SHOW').accepted, false);
+  const withIt = { ...base, pv: 'memo_copy' }; assert.equal(E.applyEvent(W2, withIt, 'SHOW').accepted, true);
+  assert.equal(C.unpack(W2, C.pack(W2, withIt)).pv, 'memo_copy');
+});
 test('시선 대칭: 같은 방의 모든 두 칸에서 A가 B를 보면 B도 A를 본다', () => {
   const s = E.createWorld(W); let bad = 0, n = 0;
   for (let y = 0; y < W.map.height; y++) for (let x = 0; x < W.map.width; x++) {
