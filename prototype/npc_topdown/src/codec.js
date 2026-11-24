@@ -19,7 +19,7 @@ const TroemereiCodec = (() => {
     return hash32(JSON.stringify(strip({ id: w.map.id, v: w.version || 1, dv: w.dataVersion || 0, rows: w.map.rows, areas: w.map.areas.map(a => [a.x0, a.y0, a.x1, a.y1]),
       lm: w.map.landmarks, props: w.map.props || [], npcs: w.npcs, rules: w.onComplete || [], pl: w.player, facts: (w.facts || []).map(f => [f.id, f.code]),
       flags: w.flagNames || [], items: w.items || [], scenes: w.scenes || [], events: w.events || {}, branches: w.branches || [], notices: (w.notices || []).map(n => n.time),
-      cases: w.cases || [], rel: ((w.rel || {}).scales || []).map(x => [x.id, x.key, (x.levels || []).length]), relGain: [(w.rel || {}).aiStep || 0, (w.rel || {}).firstTalk || {}], slots: w.slots || [], markers: w.markers || [], trials: w.trials || [], chapter: w.chapter || 1, search: w.searchSeconds || 0 })));
+      cases: w.cases || [], rel: ((w.rel || {}).scales || []).map(x => [x.id, x.key, (x.levels || []).length, !!x.opposite]), relGain: [(w.rel || {}).aiStep || 0, (w.rel || {}).firstTalk || {}], slots: w.slots || [], markers: w.markers || [], trials: w.trials || [], chapter: w.chapter || 1, search: w.searchSeconds || 0 })));
   }
   function taskTable(w) {
     const list = [];
