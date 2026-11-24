@@ -67,12 +67,39 @@ function trCharSprite(c, animRef, movedRef, sel, bad) {
     {tag}</div>;
 }
 
+// ---------- 관계 ----------
+const TR_REL = (TN_WORLD.rel || {}).scales || [];
+const trRelName = id => (TR_REL.find(x => x.id === id) || { name: id }).name;
+// '신뢰 보통 · 애정 호감' (그 인물에게 있는 척도만)
+function trRelLine(st, id) {
+  return TR_REL.map(sc => { const lv = TroemereiNPC.relLevel(TN_WORLD, st, id, sc.id); return lv ? sc.name + ' ' + sc.levels[lv - 1] : ''; }).filter(Boolean).join(' · ');
+}
+// 시험용 표시: 단계 칸
+function trRelBars(st, id, onRel) {
+  return TR_REL.map(sc => { const lv = TroemereiNPC.relLevel(TN_WORLD, st, id, sc.id); if (!lv) return null;
+    return <div key={sc.id} className="tr-relrow"><span>{sc.name}</span><span className="tr-relpips">{sc.levels.map((_, i) => <i key={i} className={i < lv ? 'on ' + sc.id : ''} />)}</span><em>{sc.levels[lv - 1]}</em>
+      {onRel ? <><button onClick={() => onRel(id, sc.id, -10)}>－</button><button onClick={() => onRel(id, sc.id, 10)}>＋</button></> : null}</div>; });
+}
+// 진행자·나의 실루엣(얼굴 그림 없이)
+function trHostSil() {
+  return <svg className="tr-host-sil" viewBox="0 0 160 260" aria-hidden="true"><defs><linearGradient id="trhs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1d1830" /><stop offset="1" stopColor="#07060c" /></linearGradient></defs>
+    <path d="M80 18c22 0 36 17 36 40s-14 44-36 44-36-21-36-44 14-40 36-40z M32 122c12-10 30-14 48-14s36 4 48 14c14 12 22 40 24 138H8c2-98 10-126 24-138z" fill="url(#trhs)" stroke="#e9c98c" strokeOpacity=".55" strokeWidth="1.5" />
+    <path d="M66 122l14 10 14-10-4 18-10-6-10 6z" fill="#e9c98c" opacity=".7" /></svg>;
+}
+function trMeSil() {
+  return <svg className="tr-me-sil" viewBox="0 0 160 260" aria-hidden="true"><path d="M80 30c20 0 33 15 33 36s-13 40-33 40-33-19-33-40 13-36 33-36z M30 126c13-9 31-13 50-13s37 4 50 13c14 11 20 40 22 134H8c2-94 8-123 22-134z" fill="#0d1726" stroke="#8fc3ff" strokeOpacity=".7" strokeWidth="1.5" /></svg>;
+}
+
 // ---------- 재판 대본 도우미 ----------
-const trIdByName = name => name === '바쿠' ? 'baku' : name === '나' ? 'me' : ((TN_WORLD.npcs.find(n => n.name === name) || {}).id || '');
-// 조건: talked·seen(인물 id), fact, scene, item, flag. not:{…}은 반대. 여러 키는 모두 만족해야 함
-function trCond(st, c) {
+// 재판 진행자: 이름은 세계 데이터(host.name)에서만. 정체를 드러내는 이름은 화면에 쓰지 않는다.
+const TR_HOST = TN_WORLD.host || { name: '진행자' };
+const trIdByName = name => name === TR_HOST.name ? 'host' : name === '나' ? 'me' : ((TN_WORLD.npcs.find(n => n.name === name) || {}).id || '');
+// 조건: talked·seen(인물 id), fact, scene, item, flag, rel. not:{…}은 반대. 여러 키는 모두 만족해야 함
+// rel: {who?: 인물 id(없으면 그 줄의 화자), trust: [최소, 최대] 단계 또는 최소 단계 숫자, affection: …}
+function trCond(st, c, who) {
   if (!c) return true; const p = st.player;
-  if (c.not) return !trCond(st, c.not);
+  if (c.not) return !trCond(st, c.not, who);
+  if (c.rel) { const id = c.rel.who || who; for (const sc in c.rel) { if (sc === 'who') continue; const lv = TroemereiNPC.relLevel(TN_WORLD, st, id, sc), r = c.rel[sc], [a, b] = Array.isArray(r) ? r : [r, 99]; if (!lv || lv < a || lv > b) return false; } }
   if (c.talked && (p.talked || {})[c.talked] === undefined) return false;
   if (c.seen && !(p.seen || {})[c.seen]) return false;
   if (c.fact && !(p.mem || []).some(m => m[0] === c.fact)) return false;
@@ -84,7 +111,7 @@ function trCond(st, c) {
 // 대본 한 줄 → {who, face, text, fx, speed, cut}. 문자열 '이름(표정):대사' / '*서술'도 받는다. alt는 앞에서부터 조건이 맞는 첫 변형.
 function trLineOf(st, x) {
   if (typeof x === 'string') { const L = TroemereiTalk.parse(x)[0] || { text: x, narration: true }; return { who: L.narration ? '' : trIdByName(L.speaker), name: L.speaker, face: L.expression, text: L.text }; }
-  const alt = (x.alt || []).find(a => trCond(st, a.if));
+  const alt = (x.alt || []).find(a => trCond(st, a.if, x.who));
   return { ...x, ...(alt || {}), alt: undefined, if: undefined };
 }
 // 강조 표기: [[강조]] 붉게·굵게, <<크게>> 크고 금빛, ((속삭임)) 작고 흐리게
@@ -115,8 +142,8 @@ function trSprite(c, face, onBad, bad) {
   </div>;
 }
 
-// AI 출력: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 P에만 t='초', 사건 코드는 e='…')
-function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
+// AI 출력: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 P에만 t='초', 사건 코드는 e='…', 대화 상대의 마음 변화는 r='t+1')
+function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   const parsed = useMemo(() => TroemereiTalk.parse(d), [d]), lines = useMemo(() => TroemereiTalk.paginate(parsed), [parsed]);
   const free = !!String(f).trim();
   const [boot] = useState(() => {
@@ -128,13 +155,15 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
       if (free) return { base: { ...TroemereiNPC.clone(base), pend: null, pk: '', pc: 0 }, error: '', ev: null, heard: null };
       // 사건 코드·증언은 화면이 조건을 검사한 뒤에만 상태에 반영한다(대화 시간 반영 전에 검사).
       if (e) { const r = TroemereiNPC.applyEvent(TN_WORLD, base, e); base = r.state; ev = { code: String(e), accepted: r.accepted, reason: r.reason }; }
+      // 마음 변화(r): 대화(T·I)·반론(R) 상대에게만, 척도마다 ±1단계까지
+      let rc = null; if (r && base.pend && ['T', 'I', 'R'].includes(base.pk)) { const x = TroemereiNPC.applyRel(TN_WORLD, base, base.pend, r); base = x.state; if (Object.keys(x.changed).length) rc = { id: base.pend, changed: x.changed }; }
       // 재판 반론(R)의 응답: 사건 코드가 인정되면 다음 단계(applyEvent가 처리), 아니면 재판 체력 -1. 재판 중에는 시간이 흐르지 않는다.
       if (base.pk === 'R') {
         let tres = 'ok';
         if (!(ev && ev.accepted)) { const h = TroemereiNPC.trialHit(TN_WORLD, base); base = h.state; tres = h.result; }
-        return { base: TroemereiNPC.applyTalk(TN_WORLD, base, 0), error: '', ev, heard, rmode: true, tres };
+        return { base: TroemereiNPC.applyTalk(TN_WORLD, base, 0), error: '', ev, heard, rmode: true, tres, rc };
       }
-      return { base, error: '', ev, heard };
+      return { base, error: '', ev, heard, rc };
     } catch (err) { return { base: null, error: err.message, ev: null, heard: null }; }
   });
   const replySec = b => (b && b.pk === 'P' && String(t).trim() !== '') ? Math.max(0, Math.min(900, Math.floor(Number(t) || 0))) : TroemereiNPC.talkSeconds(b ? b.pc : 0, trChars(lines));
@@ -159,6 +188,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
     if (!boot.base) return '';
     if (free) return '화면 밖 대화 · ' + trHM(boot.base.clock) + ' 시점에서 이어집니다';
     if (boot.ev && boot.ev.accepted) return (boot.base.logs.slice(-1)[0] || {}).text || '';
+    if (boot.rc) return trNpc(boot.rc.id).name + ' · ' + Object.entries(boot.rc.changed).map(([sc, d2]) => trRelName(sc) + (d2 > 0 ? ' ▲' : ' ▼')).join(' ');
     return s && !lines.length && boot.base.pk ? '응답을 반영했습니다' : '';
   });
   const [manual, setManual] = useState('');
@@ -261,7 +291,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
   function npcContext(next, id) {
     const n = next.npcs.find(v => v.id === id), name = trNpc(id).name;
     const mem = (n.mem || []).slice(-5).map(m => trHM(m[2]) + ' ' + trMemCode(m[0], m[1]));
-    return [name + ' 상태: ' + TroemereiNPC.describe(TN_WORLD, next, n), mem.length ? name + ' 기억: ' + mem.join(' / ') : ''];
+    const rel = trRelLine(next, id);
+    return [name + ' 상태: ' + TroemereiNPC.describe(TN_WORLD, next, n), rel ? name + ' → 플레이어: ' + rel : '', mem.length ? name + ' 기억: ' + mem.join(' / ') : ''];
   }
   // 추리(A)·자유 행동(P): 지금 같은 방에서 보이는 사람과 그들이 하던 일(대상이 없으므로 현장 인물을 알려 준다)
   function presentLine(next) { const v = next.npcs.filter(n => trVisible(next, n)); return '함께 있는 사람: ' + (v.length ? v.map(n => trNpc(n.id).name + '(' + TroemereiNPC.describe(TN_WORLD, next, n) + ')').join(', ') : '없음'); }
@@ -335,16 +366,43 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
   }
   // ---------- 재판 ----------
   // ---------- 재판 ----------
-  const resetTv = { idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', voted: false, g: {} };
+  const resetTv = { idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', voted: false, g: {}, votes: null, vn: 0, rl: 0 };
   function trialWrong() { const h = TroemereiNPC.trialHit(TN_WORLD, state); setState(h.state); setTv(v => ({ ...v, drawer: false, fx: h.result })); if (h.result === 'hit') setTimeout(() => setTv(v => ({ ...v, fx: v.fx === 'hit' ? '' : v.fx })), 800); }
   // 정답: 도장(+모순이면 화면 깨짐) → 다음 단계
-  function trialRight(label, wait) { setTv(v => ({ ...v, drawer: false, fx: label || 'ok' })); setTimeout(() => { setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'NEXT')); setTv(v => ({ ...v, ...resetTv, fx: '' })); }, wait || 1100); }
-  function trialNext() { setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'NEXT')); setTv(v => ({ ...v, ...resetTv })); }
+  // 지금 끝내는 단계가 어떤 쟁점의 마지막 단계면, 그 쟁점의 답 카드가 표시줄로 날아간다
+  function flyFor(st, at) { const T = st.trial; if (!T) return null; const TR = TN_WORLD.trials[T.i], ph = TR.phases[at]; if (!ph || !ph.issue) return null;
+    let last = -1; TR.phases.forEach((p, i) => { if (p.issue === ph.issue) last = i; }); const k = (TR.issues || []).findIndex(x => x.id === ph.issue);
+    return last === at && k >= 0 ? { k, text: TR.issues[k].a } : null; }
+  function flyGo(fl) { if (fl) setTimeout(() => setTv(v => ({ ...v, fly: v.fly === fl ? null : v.fly })), 1500); return fl; }
+  function trialRight(label, wait) { const fl = flyFor(state, state.trial.phase); setTv(v => ({ ...v, drawer: false, fx: label || 'ok' })); setTimeout(() => { setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'NEXT')); setTv(v => ({ ...v, ...resetTv, fx: '', fly: flyGo(fl) })); }, wait || 1100); }
+  function trialNext() { const fl = flyFor(state, state.trial.phase); setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'NEXT')); setTv(v => ({ ...v, ...resetTv, fly: flyGo(fl) })); }
+  // 투표: 나 → 다른 참가자들이 한 명씩. 각자 자기 판단(ph.beliefs, 없으면 정답)대로 찍되, 나를 깊이 믿는 사람(신뢰 ph.follow단계 이상)은 내 표를 따른다.
+  // 최다 득표가 하나면 그 사람으로 결정(동률이면 표가 갈림 = 실패). 결정이 정답이면 다음, 아니면 체력 -1.
+  function castVote(ph) {
+    const me = tv.vote, voters = (ph.voters || TN_WORLD.npcs.map(n => n.id)).filter(id => id !== 'me');
+    const votes = [{ id: 'me', pick: me }, ...voters.map(id => ({ id, pick: TroemereiNPC.relLevel(TN_WORLD, state, id, 'trust') >= (ph.follow || 4) ? me : ((ph.beliefs || {})[id] || ph.answer) }))];
+    const cnt = {}; votes.forEach(x => { cnt[x.pick] = (cnt[x.pick] || 0) + 1; }); const top = Math.max(...Object.values(cnt)), tops = Object.keys(cnt).filter(k2 => cnt[k2] === top);
+    const result = tops.length === 1 ? tops[0] : '', gap = 520, t0 = votes.length * gap + 500;
+    setTv(v => ({ ...v, voted: true, votes, vn: 1, result }));
+    votes.forEach((_, i) => i && setTimeout(() => setTv(v => ({ ...v, vn: i + 1 })), i * gap));
+    setTimeout(() => setTv(v => ({ ...v, rl: 1 })), t0);
+    setTimeout(() => setTv(v => ({ ...v, rl: 2 })), t0 + 60);
+    setTimeout(() => setTv(v => ({ ...v, rl: 3 })), t0 + (result ? 2700 : 1400));
+    setTimeout(() => result === ph.answer ? trialRight('결정', 900) : (setTv(v => ({ ...v, ...resetTv })), trialWrong()), t0 + (result ? 3900 : 2600));
+  }
+  function trReel(ph, tv) {
+    const opts = ph.options, H = 120, idx = Math.max(0, opts.indexOf(tv.result)), strip = Array.from({ length: 7 }, () => opts).flat();
+    const y = tv.rl >= 2 && tv.result ? -(6 * opts.length + idx) * H : 0;
+    return <div className="tr-reelwrap"><div className="tr-reel-t">투표 결과</div>
+      {tv.result ? <div className="tr-reel"><div className="tr-reel-strip" style={{ transform: `translateY(${y}px)`, transition: tv.rl >= 2 ? 'transform 2.5s cubic-bezier(.12,.7,.18,1)' : 'none' }}>
+        {strip.map((id, i) => <div key={i} className="tr-reel-cell">{trPortrait(id, 96, 116)}</div>)}</div></div> : <div className="tr-reel split">표가 갈렸다</div>}
+      <div className={'tr-reel-name' + (tv.rl >= 3 ? ' on' : '')}>{tv.result ? trNpc(tv.result).name : '결정 없음'}</div></div>;
+  }
   function sendRebut(ph) {
     const msg = trText.trim(); if (!msg || busy) return;
     const it = (TN_WORLD.items || []).find(x => x.id === tv.ev), npc = trNpc(ph.npc), TR = TN_WORLD.trials[state.trial.i];
     const next = { ...TroemereiNPC.clone(state), pend: ph.npc, pk: 'R', pc: Array.from(msg).length };
-    const ctx = ['재판: ' + TR.title + ' · 반론 상대 ' + npc.name, npc.name + '의 주장: ' + ph.claim, '제시한 증거: ' + (it ? it.name + '(' + it.desc + ')' : '없음'), clueLine(next)];
+    const ctx = ['재판: ' + TR.title + ' · 반론 상대 ' + npc.name, trRelLine(next, ph.npc) ? npc.name + ' → 플레이어: ' + trRelLine(next, ph.npc) : '', npc.name + '의 주장: ' + ph.claim, '제시한 증거: ' + (it ? it.name + '(' + it.desc + ')' : '없음'), clueLine(next)];
     const message = TroemereiTalk.handoff({ kind: 'R', target: npc.name, where: '재판장', time: next.day + '일 ' + trHM(next.clock), marks: TroemereiNPC.markers(TN_WORLD, next), ctx, text: msg, code: TroemereiCodec.pack(TN_WORLD, next) });
     if (typeof sendMessage !== 'function') { setManual(message); return; }
     try { const r = sendMessage(message); setSent(message); setTrText(''); if (r && typeof r.then === 'function') r.then(v => { if (v === false) setSent(''); }, () => { setSent(''); setToast('전송 실패 · 다시 보내 주세요'); }); }
@@ -358,7 +416,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
     if (tv.reply && lines.length) {
       const L = lines[Math.min(tv.idx, lines.length - 1)]; total = lines.length;
       cur = { who: L.narration ? '' : trIdByName(L.speaker), name: L.speaker, face: L.expression, text: L.text };
-      onEnd = () => { setTv(v => ({ ...v, reply: false, ...resetTv, fx: boot.tres || '' })); if (boot.tres === 'hit' || boot.tres === 'ok') setTimeout(() => setTv(v => ({ ...v, fx: v.fx === boot.tres ? '' : v.fx })), 1000); };
+      onEnd = () => { const fl = boot.tres === 'ok' ? flyFor(state, state.trial.phase - 1) : null; setTv(v => ({ ...v, reply: false, ...resetTv, fx: boot.tres || '', fly: flyGo(fl) })); if (boot.tres === 'hit' || boot.tres === 'ok') setTimeout(() => setTv(v => ({ ...v, fx: v.fx === boot.tres ? '' : v.fx })), 1000); };
     } else if (ph.type === 'talk') {
       const all = ph.lines.map(x => trLineOf(state, x)); total = all.length; cur = all[Math.min(tv.idx, total - 1)]; onEnd = trialNext;
     }
@@ -367,12 +425,12 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
     const tapLine = () => { if (!cur) return; if (!done) { setTv(v => ({ ...v, shown: len })); return; } if (tv.idx + 1 < total) setTv(v => ({ ...v, idx: v.idx + 1, shown: 0 })); else onEnd && onEnd(); };
     const issues = TR.issues || [], solvedUntil = id => { let last = -1; TR.phases.forEach((p, i) => { if (p.issue === id) last = i; }); return last; };
     const issueOf = TR.phases.slice(0, T.phase + 1).reduce((a, p) => p.issue || a, '');
-    const stageFx = cur && cur.fx ? cur.fx : '', mini = !cur && ph.type !== 'trans';
+    const split = ph.type === 'rebut' && !cur && !sent, stageFx = cur && cur.fx ? cur.fx : '', mini = !cur && ph.type !== 'trans' && !split;
     const speakerId = cur ? cur.who : (ph.type === 'debate' ? ph.lines[tv.stmt].who : ph.type === 'rebut' ? ph.npc : '');
     let body = null;
     if (sent) body = <div className="tr-tcard"><div className="tr-mut">반론을 전달했습니다. 상대의 대답이 새 화면에서 이어집니다.</div></div>;
     else if (cur) body = <div className="tr-tbox2" onClick={tapLine}>
-      <div className="tr-name"><b style={{ color: cur.who && cur.who !== 'baku' ? trNpc(cur.who).color : '#e9c98c' }}>{cur.who === 'baku' ? '바쿠' : cur.who === 'me' ? '나' : cur.who ? (cur.name || trNpc(cur.who).name) : ''}</b><span>{tv.idx + 1}/{total}{done ? ' ▼' : ''}</span></div>
+      <div className="tr-name"><b style={{ color: cur.who && cur.who !== 'host' && cur.who !== 'me' ? trNpc(cur.who).color : '#e9c98c' }}>{cur.who === 'host' ? TR_HOST.name : cur.who === 'me' ? '나' : cur.who ? (cur.name || trNpc(cur.who).name) : ''}</b><span>{tv.idx + 1}/{total}{done ? ' ▼' : ''}</span></div>
       <div className={'tr-ttext' + (cur.who ? '' : ' narr')}>{trTyped(segs, tv.shown)}</div></div>;
     else if (ph.type === 'trans') {
       const k = issues.findIndex(x => x.id === ph.issue);
@@ -484,31 +542,36 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
     } else if (ph.type === 'vote') {
       body = <div className="tr-debate">
         <div className="tr-mut" style={{ textAlign: 'center' }}>투표 · {ph.question}</div>
-        <div className="tr-votes">{ph.options.map(id => <button key={id} className={'tr-vote' + (tv.vote === id ? ' on' : '')} onClick={() => !tv.voted && setTv(v => ({ ...v, vote: id }))}>{trPortrait(id, 76, 92)}<b>{trNpc(id).name}</b>
-          {tv.voted ? <span className="tr-bar"><i style={{ width: (id === ph.answer ? 100 : 0) + '%' }} /></span> : null}</button>)}</div>
-        <button className="tr-tbtn gold" disabled={!tv.vote || tv.voted} onClick={() => { setTv(v => ({ ...v, voted: true })); setTimeout(() => (tv.vote === ph.answer ? trialRight('정답') : (setTv(v => ({ ...v, voted: false })), trialWrong())), 1100); }}>투표한다</button></div>;
+        <div className="tr-votes">{ph.options.map(id => { const n = tv.votes ? tv.votes.slice(0, tv.vn).filter(x => x.pick === id).length : 0;
+          return <button key={id} className={'tr-vote' + (tv.vote === id ? ' on' : '')} onClick={() => !tv.voted && setTv(v => ({ ...v, vote: id }))}>{trPortrait(id, 76, 92)}<b>{trNpc(id).name}{tv.votes ? ' · ' + n + '표' : ''}</b>
+          {tv.votes ? <span className="tr-bar"><i style={{ width: (n / tv.votes.length * 100) + '%' }} /></span> : null}</button>; })}</div>
+        {tv.votes ? <div className="tr-voters">{tv.votes.map((x, i) => <span key={x.id} className={'tr-voter' + (i < tv.vn ? ' in' : '')}><b>{x.id === 'me' ? '나' : trNpc(x.id).name}</b>{i < tv.vn ? '→' + trNpc(x.pick).name : '…'}</span>)}</div> : null}
+        <button className="tr-tbtn gold" disabled={!tv.vote || tv.voted} onClick={() => castVote(ph)}>투표한다</button></div>;
     }
-    const maxHp = TR.hp || 5, ch = speakerId && speakerId !== 'baku' && speakerId !== 'me' ? (TR_A.chars || {})[speakerId] : null;
+    const maxHp = TR.hp || 5, ch = speakerId && speakerId !== 'host' && speakerId !== 'me' ? (TR_A.chars || {})[speakerId] : null;
     const crack = ['모순!'].includes(tv.fx);
     return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
       <div className="tr-card tr-court" style={{ transform: `scale(${scale})` }}>
         {/* 무대: 말하는 사람의 모습(표정 조각)과 재판 참가자 자리 */}
-        <div key={T.phase + '-' + speakerId + '-' + (stageFx || (cur && cur.cut) ? tv.idx : '') + (tv.reply ? 'r' : '')} className={'tr-stage' + (mini ? ' mini' : '') + (stageFx ? ' fx-' + stageFx : '')}>
+        <div key={T.phase + '-' + speakerId + '-' + (stageFx || (cur && cur.cut) ? tv.idx : '') + (tv.reply ? 'r' : '')} className={'tr-stage' + (mini ? ' mini' : '') + (split ? ' split' : '') + (stageFx ? ' fx-' + stageFx : '')}>
           {TR_A.bg && TR_A.bg['재판장'] ? <img src={trUrl(TR_A.bg['재판장'])} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .6 }} /> : <div className="tr-spot-light" />}
           {!mini && ch ? <div className="tr-actor">{trSprite(ch, trFace(ch, cur ? cur.face : ''), u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div> : null}
-          {!mini && speakerId === 'baku' ? <div className="tr-actor baku"><div className="tr-baku-sil">獏</div></div> : null}
+          {!mini && speakerId === 'host' ? <div className="tr-actor host"><div className="tr-spot" /><div className="tr-spot-floor" />{trHostSil()}</div> : null}
+          {split ? <div className="tr-split"><div className="tr-split-l">{trMeSil()}<b>나</b></div><div className="tr-split-seam" /><div className="tr-split-tag">반론</div><b className="tr-split-r">{trNpc(ph.npc).name}</b></div> : null}
           {stageFx === 'flash' ? <div className="tr-flash" /> : null}
           {cur && cur.cut ? <div className="tr-cutin"><div className="tr-cutband">{trPortrait(cur.who, 70, 84)}<b>{cur.cut}!</b></div></div> : null}
           {stageFx === 'crack' ? trShards() : null}
         </div>
         <div className={'tr-thead' + (tv.fx === 'hit' ? ' shake' : '')}><div><b>{TR.title}</b><div className="tr-mut">재판 · {T.phase + 1}/{TR.phases.length}</div></div>
-          <div className="tr-hp">{Array.from({ length: maxHp }, (_, i) => <i key={i} className={i < T.hp ? 'on' : ''} />)}</div>
+          <div className="tr-hp">{Array.from({ length: maxHp }, (_, i) => <i key={i} className={(i < T.hp ? 'on' : '') + (tv.fx === 'hit' && i === T.hp ? ' brk' : '')}>{tv.fx === 'hit' && i === T.hp ? <><u /><u /><u /><u /></> : null}</i>)}</div>
           <button className="tr-hbtn" onClick={() => setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'QUIT'))}>중단</button></div>
         {/* 쟁점 진행: 풀린 쟁점은 답이 붙고, 지금 쟁점은 빛난다 */}
-        <div className="tr-issues">{issues.map((x, i) => { const sv = T.phase > solvedUntil(x.id); return <div key={x.id} className={'tr-issue' + (sv ? ' done' : '') + (x.id === issueOf && !sv ? ' now' : '')}><i>{i + 1}</i>{sv ? x.a : x.id === issueOf ? x.q : '? ? ?'}</div>; })}</div>
+        <div className="tr-issues">{issues.map((x, i) => { const sv = T.phase > solvedUntil(x.id); return <div key={x.id} className={'tr-issue' + (sv ? ' done' : '') + (tv.fly && tv.fly.k === i ? ' pop' : '') + (x.id === issueOf && !sv ? ' now' : '')}><i>{i + 1}</i>{sv ? x.a : x.id === issueOf ? x.q : '? ? ?'}</div>; })}</div>
         <div className={'tr-tbody' + (tv.fx === 'hit' ? ' shake' : '')}>{body}</div>
         {tv.fx && !['hit', 'rewind', 'fail'].includes(tv.fx) ? <>{crack ? trShards() : null}<div className={'tr-stamp' + (crack ? ' big' : '')}>{tv.fx === 'ok' ? '반론 성공' : tv.fx}</div></> : null}
-        {tv.fx === 'hit' ? <div className="tr-stamp bad">빗나갔다</div> : null}
+        {tv.fx === 'hit' ? <><div className="tr-hurt" /><div className="tr-stamp bad">빗나갔다</div></> : null}
+        {tv.fly ? <div className="tr-fly" style={{ '--tx': ((tv.fly.k + .5) / Math.max(1, issues.length) * 100) + '%' }}><i>{tv.fly.k + 1}</i><b>{tv.fly.text}</b></div> : null}
+        {ph.type === 'vote' && tv.rl ? trReel(ph, tv) : null}
         {tv.fx === 'rewind' ? <div className="tr-rewind" onClick={() => setTv(v => ({ ...v, fx: '' }))}><div className="tr-ripple"><i /><i /><i /></div><div className="tr-clock"><b /></div>
           <div className="tr-whisper">뭐, 이런 전개도 가능하겠지만…… 그럴 리는 없지. 피곤한가?</div><span className="tr-mut tr-later">눌러서 계속</span></div> : null}
         {tv.fx === 'fail' || T.failed ? <div className="tr-rewind fail"><b>되돌릴 수 없다</b><span className="tr-mut">재판 실패</span><button className="tr-tbtn" onClick={() => setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'QUIT'))}>나가기 (시험)</button></div> : null}
@@ -627,7 +690,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '' }) {
       {ml ? <div className="tr-menu"><div className="tr-menu-h"><b>{ml.name}</b><span>{Math.abs(p.x - ml.x) + Math.abs(p.y - ml.y)}칸</span></div>
         <div className="tr-menu-g"><button onClick={() => menuDo('LOOK')}>관찰 0초</button><button onClick={() => menuDo('SEARCH')}>조사</button><button onClick={() => menuDo('GO')}>여기로 이동</button><button onClick={() => setMenu(null)}>닫기</button></div></div> : null}
       {sent ? <div className="tr-preview" style={{ left: 112 }}>전달했습니다. 새 화면에서 이어집니다.</div> : null}
-      {sheet ? trSheet({ ev: boot.ev, heard: heardRef.current || (k ? { raw: String(k), accepted: [], rejected: [], wait: true } : null), free, tab: sheet, setTab: setSheet, state, debug, setDebug, busy, rest: { h: restH, setH: setRestH, mi: restM, setMi: setRestM }, onSkip: skipTo, onTrial: code => { setState(TroemereiNPC.startTrial(TN_WORLD, state, code)); setSheet(''); setTv({ reply: false, idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', fx: '', voted: false, g: {} }); }, onTrialAt: (code, n) => { let x = TroemereiNPC.startTrial(TN_WORLD, state, code); for (let i = 0; i < n; i++) x = TroemereiNPC.trialStep(TN_WORLD, x, 'NEXT'); setState(x); setSheet(''); setTv({ reply: false, idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', fx: '', voted: false, g: {} }); }, onUnstuck: () => { const n = TroemereiNPC.dispatch(TN_WORLD, state, { type: 'UNSTUCK' }); setState(n); setSheet(''); setToast((n.logs[n.logs.length - 1] || {}).text || ''); }, pick, setPick,
+      {sheet ? trSheet({ onRel: (id, sc, d2) => setState(v => { const x = TroemereiNPC.clone(v); TroemereiNPC.relAdd(TN_WORLD, x, id, { [sc]: d2 }); return x; }), ev: boot.ev, heard: heardRef.current || (k ? { raw: String(k), accepted: [], rejected: [], wait: true } : null), free, tab: sheet, setTab: setSheet, state, debug, setDebug, busy, rest: { h: restH, setH: setRestH, mi: restM, setMi: setRestM }, onSkip: skipTo, onTrial: code => { setState(TroemereiNPC.startTrial(TN_WORLD, state, code)); setSheet(''); setTv({ reply: false, idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', fx: '', voted: false, g: {} }); }, onTrialAt: (code, n) => { let x = TroemereiNPC.startTrial(TN_WORLD, state, code); for (let i = 0; i < n; i++) x = TroemereiNPC.trialStep(TN_WORLD, x, 'NEXT'); setState(x); setSheet(''); setTv({ reply: false, idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', fx: '', voted: false, g: {} }); }, onUnstuck: () => { const n = TroemereiNPC.dispatch(TN_WORLD, state, { type: 'UNSTUCK' }); setState(n); setSheet(''); setToast((n.logs[n.logs.length - 1] || {}).text || ''); }, pick, setPick,
         onWait: sec => { act({ type: 'WAIT', seconds: sec }); setSheet(''); }, codeText, setCodeText,
         onRestore: () => { try { const v = TroemereiCodec.unpack(TN_WORLD, codeText.trim()); setState(TroemereiNPC.applyTalk(TN_WORLD, v, 0)); setSheet(''); setToast('상태 코드를 복원했습니다'); } catch (e) { setToast('복원 실패: ' + e.message); } },
         onFree: () => { setSheet('free'); setText(''); }, text, setText, send, sent }) : null}
@@ -648,7 +711,7 @@ const trStaticLayer = (() => {
   };
 })();
 
-function trSheet({ ev, heard, free, tab, setTab, state, debug, setDebug, busy, onSkip, onUnstuck, onTrial, onTrialAt, pick, setPick, rest, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
+function trSheet({ ev, heard, free, tab, setTab, state, debug, setDebug, busy, onSkip, onUnstuck, onTrial, onTrialAt, onRel, pick, setPick, rest, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
   const tabs = [['note', '수첩'], ['scene', '목격'], ['item', '증거'], ['clue', '단서'], ['rest', '휴식'], ['set', '설정']];
   const mem = (state.player.mem || []).slice().reverse();
   return <div className="tr-sheet">
@@ -667,6 +730,8 @@ function trSheet({ ev, heard, free, tab, setTab, state, debug, setDebug, busy, o
           <div className="tr-mut">단계 바로가기(시험용)</div>
           <div className="tr-grid h">{t.phases.map((ph, i) => <button key={i} disabled={busy || !!state.trial} title={ph.title || ph.type} onClick={() => onTrialAt(t.code, i)}>{i + 1}</button>)}</div>
           <div className="tr-mut">{t.phases.map((ph, i) => (i + 1) + '.' + ({ talk: '대사', debate: '증거 제시', pairs: '엇갈린 증언', combine: '구절 짝짓기', rebut: 'AI 반론', develop: '기억 현상', route: '동선 재현', strings: '실 엮기', dream: '꿈 조각', crystal: '진상 결정', vote: '투표' }[ph.type] || ph.type)).join(' · ')}</div></div>)}
+        <div className="tr-mut">관계 조절(시험용 · ±10점, 20점마다 한 단계)</div>
+        {TN_WORLD.npcs.map(n => <div key={n.id} className="tr-relbox"><b>{n.name}</b>{trRelBars(state, n.id, onRel)}</div>)}
         <div className="tr-mut">최근 기록</div>
         <div style={{ maxHeight: 130, overflowY: 'auto' }}>{state.logs.filter(e => debug || e.visible).slice(-20).reverse().map((e, i) => <div className="tr-row" key={i} style={{ fontSize: 12 }}><time>{trHM(e.time)}</time>{e.text}</div>)}</div>
         <label className="tr-mut"><input type="checkbox" checked={debug} onChange={e => setDebug(e.target.checked)} /> 디버그 (숨은 인물·기록 표시)</label>
@@ -731,13 +796,13 @@ function trNotebook(st, pick, setPick) {
     return <div className="tr-nb-detail">
       <button className="tr-back" onClick={() => setPick(null)}>‹ 수첩</button>
       <div style={{ display: 'flex', gap: 8 }}><div style={{ filter: known ? 'none' : 'brightness(0) opacity(.55)' }}>{trPortrait(n.id, 120, 170)}</div>
-        <div className="tr-slip" style={{ flex: 1 }}><b style={{ color: '#8a3b2b' }}>{known ? n.name : '???'}</b><div>{known ? n.profile : '아직 만나지 못했다'}</div></div></div>
+        <div className="tr-slip" style={{ flex: 1 }}><b style={{ color: '#8a3b2b' }}>{known ? n.name : '???'}</b><div>{known ? n.profile : '아직 만나지 못했다'}</div>{known ? trRelBars(st, n.id) : null}</div></div>
       <div className="tr-slips">{(n.notes || []).map((x, i) => trNoteOpen(st, n.id, x.unlock) ? <div key={i} className="tr-slip">· {x.text}</div> : <div key={i} className="tr-slip lock"><b>? ? ?</b></div>)}</div>
     </div>;
   }
   return <div className="tr-cards">{TN_WORLD.npcs.map(n => { const open = (n.notes || []).filter(x => trNoteOpen(st, n.id, x.unlock)).length, known = met(n);
     return <button key={n.id} className="tr-card2" onClick={() => setPick({ note: n.id })}><div style={{ filter: known ? 'none' : 'brightness(0) opacity(.55)' }}>{trPortrait(n.id, 70, 92)}</div>
-      <div style={{ flex: 1, minWidth: 0 }}><b>{known ? n.name : '???'}</b><div className="tr-mut2">{known ? n.profile : '아직 만나지 못했다'}</div><div className="tr-mut2">메모 {open} / {(n.notes || []).length}</div></div></button>; })}</div>;
+      <div style={{ flex: 1, minWidth: 0 }}><b>{known ? n.name : '???'}</b><div className="tr-mut2">{known ? n.profile : '아직 만나지 못했다'}</div><div className="tr-mut2">메모 {open} / {(n.notes || []).length}</div>{known ? trRelBars(st, n.id) : null}</div></button>; })}</div>;
 }
 function trScenes(st, pick, setPick) {
   const got = st.player.scenes || {}, list = TN_WORLD.scenes || [];

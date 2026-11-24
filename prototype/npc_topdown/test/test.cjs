@@ -309,9 +309,29 @@ test('세계 지문: 공지·사건·갈래·장면 조건이 바뀌면 이전 �
   assert.equal(mut(w => { w.events.TRUE.flag = 'delivery_done'; }), '거부');
   assert.equal(mut(w => { w.branches[0].letter = 'C'; }), '거부');
   assert.equal(mut(w => { w.scenes[1].radius = 3; }), '거부');
-  assert.equal(mut(w => { w.dataVersion = 2; }), '거부');
+  assert.equal(mut(w => { w.dataVersion = (w.dataVersion || 0) + 1; }), '거부');
+  assert.equal(mut(w => { w.rel.scales[0].levels.push('맹신'); }), '거부');
+  assert.equal(mut(w => { w.npcs[0].rel.trust = 60; }), '거부');
   assert.equal(mut(w => { w.items[0].desc = '다른 설명'; }), '허용');
   assert.equal(mut(w => { w.npcs[0].notes[0].text = '다른 메모'; }), '허용');
+});
+test('관계: 시작값·단계·첫 대화 보너스·AI r(±1단계 제한·대상만)·사건/단계 보상·코드 왕복', () => {
+  let s = E.createWorld(W);
+  assert.equal(E.relLevel(W, s, 'contact', 'trust'), 2, '도윤 신뢰 35 → 경계(2)');
+  assert.equal(E.relLevel(W, s, 'contact', 'affection'), 0, '도윤에게는 애정 척도 없음');
+  const near = JSON.parse(JSON.stringify(s)); const d = near.npcs.find(n => n.id === 'contact'); near.player.x = d.x; near.player.y = d.y + 1;
+  let t = E.dispatch(W, near, { type: 'TALK_REQUEST', npcId: 'contact', kind: 'T', chars: 5 });
+  if (t.pend === 'contact') assert.equal(t.player.rel.contact.trust, 41, '첫 대화 +6');
+  const r1 = E.applyRel(W, s, 'companion', 't+3a-1');
+  assert.equal(r1.state.player.rel.companion.trust, 50, '척도마다 한 번에 ±1단계(5점)까지');
+  assert.equal(r1.state.player.rel.companion.affection, 45);
+  assert.deepEqual(E.applyRel(W, s, 'contact', 'a+1').changed, {}, '없는 척도는 무시');
+  const r2 = E.applyRel(W, s, 'courier', '신뢰+1'); assert.equal(r2.state.player.rel.courier.trust, 55, '한글 척도 이름도 허용');
+  let x = E.clone(s); E.relAdd(W, x, 'librarian', { trust: 200 }); assert.equal(x.player.rel.librarian.trust, 100, '0~100으로 묶임');
+  assert.equal(E.relLevel(W, x, 'librarian', 'trust'), 5);
+  const back = C.unpack(W, C.pack(W, x)); assert.deepEqual(back.player.rel, x.player.rel, '코드 왕복');
+  let tr = E.startTrial(W, s, 'T1'); tr.trial.phase = 6; tr = E.trialStep(W, tr, 'NEXT');
+  assert.equal(tr.player.rel.librarian.trust, 46, '반론 단계를 넘기면 세린 신뢰 +6');
 });
 test('재판: 시작·단계 진행·체력·되감기(꿈)·실패(현실)·AI 반론 사건 코드는 그 단계에서만, 코드 왕복', () => {
   let s = E.startTrial(W, E.createWorld(W), 'T1');

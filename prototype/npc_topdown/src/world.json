@@ -410,7 +410,8 @@
  "player": {
   "x": 7,
   "y": 12,
-  "moveSeconds": 4
+  "moveSeconds": 4,
+  "sex": "m"
  },
  "npcs": [
   {
@@ -484,7 +485,12 @@
       "flag": "meeting_prevented"
      }
     }
-   ]
+   ],
+   "sex": "f",
+   "rel": {
+    "trust": 45,
+    "affection": 50
+   }
   },
   {
    "id": "contact",
@@ -509,7 +515,11 @@
       "fact": "met_doyun"
      }
     }
-   ]
+   ],
+   "sex": "m",
+   "rel": {
+    "trust": 35
+   }
   },
   {
    "id": "librarian",
@@ -560,7 +570,12 @@
       "talked": true
      }
     }
-   ]
+   ],
+   "sex": "f",
+   "rel": {
+    "trust": 40,
+    "affection": 45
+   }
   },
   {
    "id": "courier",
@@ -616,7 +631,11 @@
       "seen": true
      }
     }
-   ]
+   ],
+   "sex": "m",
+   "rel": {
+    "trust": 50
+   }
   }
  ],
  "onComplete": [
@@ -795,7 +814,7 @@
    "caption": "유리가 자료실 선반에 무언가를 두고 갔다."
   }
  ],
- "dataVersion": 1,
+ "dataVersion": 2,
  "trials": [
   {
    "id": "memo",
@@ -813,11 +832,11 @@
      "type": "talk",
      "lines": [
       {
-       "who": "baku",
+       "who": "host",
        "text": "여러분, 모이셨군요. 오늘 아침, 작업실 탁자의 작업 순서가 [[누군가의 메모 한 장]]으로 바뀌어 있었습니다."
       },
       {
-       "who": "baku",
+       "who": "host",
        "text": "누가 그 메모를 남겼는지 — 이 자리에서 밝혀 주시지요.",
        "speed": 0.7
       },
@@ -828,10 +847,27 @@
        "alt": [
         {
          "if": {
-          "talked": "courier"
+          "rel": {
+           "trust": [
+            4,
+            5
+           ]
+          }
          },
          "text": "에이, 살인 사건도 아닌데…… 뭐, 당신이 있으면 금방 끝나겠죠.",
          "face": "웃음"
+        },
+        {
+         "if": {
+          "rel": {
+           "trust": [
+            1,
+            2
+           ]
+          }
+         },
+         "text": "재판까지 해요? ……괜히 일 키우지 말자고요.",
+         "face": "놀람"
         }
        ]
       },
@@ -841,9 +877,25 @@
        "alt": [
         {
          "if": {
-          "talked": "contact"
+          "rel": {
+           "trust": [
+            3,
+            5
+           ]
+          }
          },
          "text": "……당신이 맡는다면, 빨리 끝나겠군."
+        },
+        {
+         "if": {
+          "rel": {
+           "trust": [
+            1,
+            1
+           ]
+          }
+         },
+         "text": "……당신이 끼면 더 길어지겠군."
         }
        ]
       },
@@ -905,15 +957,31 @@
        "alt": [
         {
          "if": {
-          "talked": "contact"
+          "rel": {
+           "trust": [
+            4,
+            5
+           ]
+          }
          },
          "text": "……역시 당신은 눈이 빠르군. 원본도 대조해 보지.",
          "face": "웃음"
+        },
+        {
+         "if": {
+          "rel": {
+           "trust": [
+            1,
+            2
+           ]
+          }
+         },
+         "text": "……사본 하나로 단정하긴 이르다. 원본이 먼저다."
         }
        ]
       },
       {
-       "who": "baku",
+       "who": "host",
        "text": "그렇다면 자료를 한데 놓고 맞대어 보시지요."
       }
      ]
@@ -1020,7 +1088,12 @@
      "npc": "librarian",
      "claim": "사본이 유리 씨 글씨라고 해서 원본도 유리 씨가 쓴 건 아니잖아요. 도윤 씨가 유리 씨 글씨를 흉내 냈을 수도 있고요.",
      "event": "T1_R1",
-     "issue": "i1"
+     "issue": "i1",
+     "rel": {
+      "librarian": {
+       "trust": 6
+      }
+     }
     },
     {
      "type": "talk",
@@ -1036,7 +1109,7 @@
        "text": "……정리하자면, 메모는 내가 [[받았다]]. 쓴 건 내가 아니야."
       },
       {
-       "who": "baku",
+       "who": "host",
        "text": "첫 번째 쟁점은 정리된 듯하군요. 그럼 다음으로."
       }
      ]
@@ -1050,7 +1123,7 @@
      "type": "talk",
      "lines": [
       {
-       "who": "baku",
+       "who": "host",
        "text": "아침 내내 작업실에 누가 있었는지, 여러분의 말씀을 다시 들어 보지요."
       },
       {
@@ -1190,7 +1263,7 @@
        "fx": "shake"
       },
       {
-       "who": "baku",
+       "who": "host",
        "text": "기억이란 묘한 것이지요. 흐릿했던 것도 맞는 조각을 대면 선명해지니까요."
       },
       {
@@ -1313,7 +1386,12 @@
        "doyun"
       ]
      ],
-     "issue": "i4"
+     "issue": "i4",
+     "rel": {
+      "companion": {
+       "trust": 5
+      }
+     }
     },
     {
      "type": "dream",
@@ -1331,7 +1409,7 @@
      "type": "talk",
      "lines": [
       {
-       "who": "baku",
+       "who": "host",
        "text": "이제 모든 조각이 모였습니다. 진상을 굳혀 보시지요.",
        "speed": 0.7,
        "fx": "flash"
@@ -1410,13 +1488,20 @@
       "contact",
       "librarian",
       "courier"
-     ]
+     ],
+     "follow": 4,
+     "beliefs": {
+      "companion": "companion",
+      "contact": "companion",
+      "librarian": "contact",
+      "courier": "contact"
+     }
     },
     {
      "type": "talk",
      "lines": [
       {
-       "who": "baku",
+       "who": "host",
        "text": "정답입니다. 메모를 남긴 분은 [[유리 님]]이었습니다.",
        "fx": "flash"
       },
@@ -1432,10 +1517,70 @@
        "alt": [
         {
          "if": {
-          "talked": "contact"
+          "rel": {
+           "trust": [
+            4,
+            5
+           ]
+          }
          },
          "text": "……다음엔 직접 말해. 그리고, 당신. 꽤 하는군.",
          "face": "웃음"
+        }
+       ]
+      },
+      {
+       "who": "companion",
+       "text": "……미안. 다음엔 꼭 말하고 갈게.",
+       "face": "불만",
+       "alt": [
+        {
+         "if": {
+          "rel": {
+           "affection": [
+            4,
+            5
+           ],
+           "trust": [
+            3,
+            5
+           ]
+          }
+         },
+         "text": "……고마워. 끝까지 내 쪽 이야기를 들어 줘서.",
+         "face": "웃음"
+        },
+        {
+         "if": {
+          "rel": {
+           "affection": [
+            4,
+            5
+           ],
+           "trust": [
+            1,
+            2
+           ]
+          }
+         },
+         "text": "……그래도 당신이 찾아 준 거라, 조금은 다행이야.",
+         "face": "웃음"
+        },
+        {
+         "if": {
+          "rel": {
+           "affection": [
+            1,
+            3
+           ],
+           "trust": [
+            1,
+            2
+           ]
+          }
+         },
+         "text": "……그렇게까지 몰아붙일 필요는 없었잖아.",
+         "face": "불만"
         }
        ]
       },
@@ -1469,5 +1614,40 @@
     }
    ]
   }
- ]
+ ],
+ "host": {
+  "name": "진행자"
+ },
+ "rel": {
+  "aiStep": 5,
+  "firstTalk": {
+   "trust": 6
+  },
+  "scales": [
+   {
+    "id": "trust",
+    "key": "t",
+    "name": "신뢰",
+    "levels": [
+     "적대",
+     "경계",
+     "보통",
+     "신뢰",
+     "깊은 신뢰"
+    ]
+   },
+   {
+    "id": "affection",
+    "key": "a",
+    "name": "애정",
+    "levels": [
+     "냉담",
+     "무심",
+     "보통",
+     "호감",
+     "애정"
+    ]
+   }
+  ]
+ }
 }

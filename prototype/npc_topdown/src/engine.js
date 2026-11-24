@@ -74,6 +74,7 @@ const TroemereiNPC = (() => {
         excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:[]})),
       flags:Object.fromEntries((w.flagNames||[]).map(f=>[f,false])),
       logs:[],revision:0,pend:null,pk:'',pc:0};
+    relInit(w,s.player);
     addLog(w,s,'시뮬레이션이 시작되었다. NPC들은 각자의 일정에 따라 행동한다.','player');
     // Decisions exist from the first frame; the player can cancel a planned visit before movement.
     for(const n of s.npcs)decide(w,s,n);
@@ -344,6 +345,7 @@ const TroemereiNPC = (() => {
     if(rule.trial){const T=state.trial,tr=T&&(w.trials||[])[T.i];
       if(!tr||tr.code!==rule.trial||T.phase!==rule.phase)return {state,accepted:false,reason:'지금 재판 단계와 맞지 않음'};}
     const s=clone(state);
+    relApplyMap(w,s,rule.rel);
     if(rule.trial){trialNext(w,s);return {state:s,accepted:true,reason:''};}
     if(rule.flag)s.flags[rule.flag]=true;
     addLog(w,s,rule.log||('사건 '+code+' 기록'),'world');
@@ -370,6 +372,21 @@ const TroemereiNPC = (() => {
     }
     out.state=s;return out;
   }
+  // ---------- 관계: 인물이 플레이어를 어떻게 여기는지(척도별 0~100 → 단계 1~N) ----------
+  // w.rel.scales=[{id,key,name,levels:[단계 이름…]}], 인물별 시작값은 npc.rel={trust:50,…}(없는 척도는 그 인물에게 없음)
+  function relScales(w){return (w.rel&&w.rel.scales)||[];}
+  function relInit(w,player){player.rel={};for(const n of w.npcs){const o={};for(const sc of relScales(w))if(n.rel&&n.rel[sc.id]!==undefined)o[sc.id]=n.rel[sc.id];player.rel[n.id]=o;}}
+  function relLevel(w,s,id,sc){const v=(((s.player||{}).rel||{})[id]||{})[sc];if(v===undefined)return 0;const S=relScales(w).find(x=>x.id===sc),N=((S&&S.levels)||[0,0,0,0,0]).length;return Math.min(N,Math.floor(v/(100/N))+1);}
+  function relAdd(w,s,id,d){if(!d||!id)return;const all=s.player.rel||(s.player.rel={}),r=all[id]||(all[id]={});for(const k in d)if(r[k]!==undefined)r[k]=Math.max(0,Math.min(100,r[k]+(d[k]|0)));}
+  // AI의 r='t+1a-1': 대화 상대의 마음 변화. 척도마다 한 번에 ±1단계(=aiStep점)까지만.
+  function applyRel(w,state,id,code){
+    const out={state,changed:{}};if(!code||!id)return out;
+    const s=clone(state),step=(w.rel&&w.rel.aiStep)||4,d={},re=/([A-Za-z가-힣]+)\s*([+-])\s*(\d)/g;let m;
+    while((m=re.exec(String(code)))){const sc=relScales(w).find(x=>x.key===m[1]||x.id===m[1]||x.name===m[1]);if(!sc||!+m[3])continue;d[sc.id]=(m[2]==='-'?-1:1)*step;}
+    const before=JSON.stringify((s.player.rel||{})[id]||{});relAdd(w,s,id,d);
+    if(JSON.stringify((s.player.rel||{})[id]||{})!==before)out.changed=d;out.state=s;return out;
+  }
+  function relApplyMap(w,s,map){if(map)for(const id in map)relAdd(w,s,id,map[id]);}
   // ---------- 재판(시제품) ----------
   // s.trial = {i: 재판 번호, phase: 단계, hp: 재판 전용 체력, sub: 단계 안 진행도}. 재판 중에는 시간이 흐르지 않는다.
   function startTrial(w,state,code){
@@ -380,10 +397,10 @@ const TroemereiNPC = (() => {
     s.player.route=[];addLog(w,s,'재판이 열렸다: '+tr.title,'player');return s;
   }
   function trialNext(w,s){
-    const tr=w.trials[s.trial.i];s.trial.phase++;s.trial.sub=0;
+    const tr=w.trials[s.trial.i],cur=tr.phases[s.trial.phase];if(cur)relApplyMap(w,s,cur.rel);s.trial.phase++;s.trial.sub=0;
     if(s.trial.phase>=tr.phases.length){if(tr.flag)s.flags[tr.flag]=true;addLog(w,s,'재판이 끝났다: '+tr.title,'player');s.trial=null;}
   }
-  // 틀림: 체력 -1. 0이 되면 꿈(노멀)에서는 바쿠가 그 단계를 되감고, 현실(진엔딩)에서는 실패로 끝난다.
+  // 틀림: 체력 -1. 0이 되면 꿈(노멀)에서는 그 단계로 되감기고, 현실(진엔딩)에서는 실패로 끝난다.
   function trialHit(w,state){
     const s=clone(state),T=s.trial;if(!T)return {state:s,result:''};
     T.hp--;if(T.hp>0)return {state:s,result:'hit'};
@@ -438,7 +455,7 @@ const TroemereiNPC = (() => {
       if(!n||manhattan(player,n)>1){addLog(w,s,'대화하려면 인물에게 접근해야 한다.','player');return s;}
       if(n.mode==='busy'&&n.intent&&n.intent.targetPlayer)finishCall(s,n);
       else if(n.mode==='busy'){addLog(w,s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
-      if(!player.talked)player.talked={};player.talked[n.id]=s.clock;
+      if(!player.talked)player.talked={};if(player.talked[n.id]===undefined)relAdd(w,s,n.id,(w.rel||{}).firstTalk);player.talked[n.id]=s.clock;
       s.pend=n.id;s.pk=action.kind||'T';s.pc=Math.max(0,Math.min(2000,action.chars|0));player.route=[];player.nextMoveAt=0;
     }else if(action.type==='WAIT')return advance(w,s,action.seconds||60);
     else if(action.type==='SEARCH'){
@@ -505,6 +522,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;
