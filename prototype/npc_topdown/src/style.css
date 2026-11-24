@@ -160,7 +160,7 @@
 .tr-issue.now{border-color:#f2c46d;color:#f6ead2;box-shadow:0 0 8px #f2c46d55;flex:2}.tr-issue.now i{background:#f2c46d;color:#120f1e}
 .tr-issue.done{border-color:#9a7ad8;color:#d9ccf5}.tr-issue.done i{background:#9a7ad8;color:#120f1e}
 .tr-tbox2{padding:9px 11px;background:#0a0813f0;border:1px solid #8a7550;border-radius:10px;min-height:118px;animation:trin .2s ease-out;box-shadow:0 -6px 20px #0009}
-.tr-em{color:#ff8a7a;font-weight:800}.tr-big{font-size:18px;color:#ffe3a0;font-weight:800}.tr-wh{font-size:12px;color:#9a90b0;font-style:italic}
+.trm-em{color:#ff8a7a;font-weight:800}.trm-big{font-size:18px;color:#ffe3a0;font-weight:800}.trm-wh{font-size:12px;color:#9a90b0;font-style:italic}
 .tr-trans{align-self:stretch;margin-bottom:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:200px;border-radius:14px;background:linear-gradient(135deg,#2a2140ee,#120f1eee);border:1px solid #9a7ad8;animation:trtrans .6s ease-out;text-align:center}
 .tr-trans-n{font-size:13px;letter-spacing:.4em;color:#c9b6f0}.tr-trans-q{font-size:22px;font-weight:800;color:#ffe3a0;padding:0 16px;text-shadow:0 0 14px #f2c46d66}
 .tr-wtabs{display:flex;gap:5px}.tr-card .tr-wtabs button{flex:1;display:flex;align-items:center;gap:5px;padding:3px;height:48px;border-radius:9px;background:#1f1a2e;font-size:12px}
@@ -252,3 +252,32 @@
 .tr-relbox{display:flex;flex-direction:column;padding:3px 6px;border-radius:6px;background:#ffffff0d}.tr-relbox .tr-relrow>span:first-child,.tr-relbox .tr-relrow em{color:#a9b6c2}
 .tr-offnote{position:absolute;right:6px;bottom:3px;font-size:9px;color:#c9d5e0;opacity:.55;pointer-events:none;text-shadow:0 1px 2px #000}
 .tr-card .tr-pres{border-color:#f2c46d;color:#f2d79e}.tr-drop button.on{border-color:#f2c46d}
+.tr-inv{position:absolute;left:6px;right:6px;top:54px;display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:12px;background:#2a1420e6;border:1px solid #e07a7a;border-radius:8px;color:#ffd9d2;z-index:3}
+.tr-inv b{color:#ffb0a0}.tr-inv span{flex:1}.tr-inv button{height:24px;font-size:11px}
+.tr-issue.hold{border-color:#e0a050;color:#ffd9a0;border-style:dashed}.tr-issue.hold i{background:#e0a050;color:#120f1e}
+/* v1.6 자유 대화 연출: 줄마다 인물 그림이 흔들리거나 다가선다 */
+.tr-tfx{position:absolute;inset:0;transform-origin:50% 100%}
+.tr-tfx.shake{animation:trshake .4s 2}.tr-tfx.zoom{animation:trzoom .5s ease-out}.tr-tfx.crack{animation:trshake .3s 3}
+.tr-talk .tr-flash{z-index:3}
+.tr-dbgrow{position:absolute;top:40px;left:6px;right:6px;display:flex;flex-wrap:wrap;gap:4px;z-index:6}
+.tr-dbgrow button{height:22px;padding:0 7px;font-size:11px;background:#1d2a36e6;border:1px dashed #8fb0c8;color:#cfe3f2;border-radius:6px}
+/* v1.6 체크인 카드 */
+.tr-ck{background:#efe6d2;color:#3a2e22;display:flex;flex-direction:column}
+.tr-ckhead{display:flex;align-items:baseline;gap:10px;padding:10px 14px 6px;border-bottom:2px solid #3a2e22}
+.tr-ckhead b{font-size:17px;letter-spacing:3px;font-family:serif}.tr-ckhead span{font-size:11px;color:#7a6a58}
+.tr-ckview{position:relative;height:190px;border-bottom:1px dashed #b9a88e;background:linear-gradient(#f6eedd,#e6dbc4);overflow:hidden}
+.tr-ckpx{position:absolute;left:190px;bottom:28px;width:58px;height:86px}
+.tr-cknote{position:absolute;left:180px;top:14px;font-size:11px;color:#7a6a58}
+.tr-ckform{flex:1;overflow-y:auto;padding:6px 12px}
+.tr-ckrow{display:flex;align-items:center;gap:8px;margin:5px 0}
+.tr-ckrow>span{width:44px;flex:none;font-size:12px;color:#5a4a3a;border-bottom:1px solid #c9b89e}
+.tr-ckrow>div{display:flex;flex-wrap:wrap;gap:4px}
+.tr-ckrow input{flex:1;height:26px;border:none;border-bottom:1px solid #3a2e22;background:transparent;font-size:15px;color:#2a2018;outline:none}
+.tr-card.tr-ck button.tr-ckc{height:22px;padding:0 7px;font-size:11px;border:1px solid #b9a88e;background:#f8f2e6;color:#5a4a3a;border-radius:4px}
+.tr-card.tr-ck button.tr-ckc.on{background:#3a2e22;color:#f6eedd;border-color:#3a2e22}
+.tr-card.tr-ck button.tr-sw{width:20px;height:20px;border-radius:50%;border:2px solid #f8f2e6;box-shadow:0 0 0 1px #b9a88e;padding:0}
+.tr-card.tr-ck button.tr-sw.on{box-shadow:0 0 0 2px #3a2e22}
+.tr-cksign{margin:8px 0 4px;font-size:10px;color:#8a7a68;border-top:1px solid #c9b89e;padding-top:4px}
+.tr-ckfoot{display:flex;gap:8px;justify-content:flex-end;padding:8px 12px;border-top:2px solid #3a2e22}
+.tr-card .tr-ckfoot button{height:30px;padding:0 16px;border:1px solid #3a2e22;background:#f8f2e6;color:#3a2e22}
+.tr-card .tr-ckfoot button.gold{background:#3a2e22;color:#f6d79e}

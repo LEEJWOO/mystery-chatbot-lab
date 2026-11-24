@@ -45,8 +45,34 @@ const TroemereiNPC = (() => {
   }
   function updateSeen(w,s){
     for(const n of s.npcs)if(sees(w,s.player,n))s.player.seen[n.id]=[areaOf(w,n.x,n.y),s.clock];
-    checkScenes(w,s);
+    checkScenes(w,s);checkCases(w,s);
   }
+  // ---------- 사건: 실제로 일어난 일(플래그) → 발견(시선) → 방송·집합 → 현장 방에 들어가면 사건 대본(집합·조사) → 갈래별 재판 ----------
+  // w.cases=[{id, flag, from(이 시각 이후 발견), spot(랜드마크), watchers:[NPC id], task(모두 현장으로 가는 일정), trial(집합·조사 대본 코드), notice}]
+  // s.cases[id] = [단계(1 발견·2 시작), 발견 시각, 발견자(0 플레이어, i+1 NPC)]
+  function checkCases(w,s){
+    if(!w.cases)return;if(!s.cases)s.cases={};
+    for(const c of w.cases){
+      const st=s.cases[c.id];const l=landmark(w,c.spot);if(!l)continue;
+      if(!st){
+        if(!s.flags[c.flag]||(c.from&&s.clock%DAY<secs(c.from)))continue;
+        let by=-1;if(sees(w,s.player,l))by=0;
+        else for(const id of c.watchers||[]){const i=s.npcs.findIndex(n=>n.id===id);if(i>=0&&sees(w,s.npcs[i],l)){by=i+1;break;}}
+        if(by<0)continue;
+        s.cases[c.id]=[1,s.clock,by];
+        addLog(w,s,(c.notice||'사건이 발견되었습니다.')+' (발견: '+(by===0?'당신':w.npcs[by-1].name)+')','world');
+        for(const n of s.npcs){ // 모두 현장으로
+          if(n.mode==='accompany')continue;
+          n.queued=n.queued.filter(t=>t.id!==c.task.id);n.queued.unshift(clone(c.task));
+          if(n.mode!=='busy'&&n.mode!=='paused'){n.intent=null;n.mode='idle';n.route=[];n.nextMoveAt=s.clock+2;}
+        }
+      }else if(st[0]===1&&!s.trial&&areaOf(w,s.player.x,s.player.y)===areaOf(w,l.x,l.y)){
+        const room=areaOf(w,l.x,l.y),all=s.npcs.every(n=>n.mode==='accompany'||areaOf(w,n.x,n.y)===room);
+        if(all||s.clock-st[1]>=(c.wait||600)){st[0]=2;openTrial(w,s,c.trial,false);}
+      }
+    }
+  }
+  function branchLetter(w,s){const b=(w.branches||[]).find(b=>!b.slot&&s.flags[b.flag]);return b?b.letter:'A';}
   // 목격 장면(앨범): 정해 둔 장면만 해금한다(목격 기록을 글로 쌓지 않는다).
   //  fact: 플레이어가 그 사실을 직접 보거나 겪었을 때(증언으로 들은 건 제외)
   //  npc+area(+from/to): 그 인물이 그 방에 있는 걸 그 시간대에 봤을 때
@@ -77,6 +103,7 @@ const TroemereiNPC = (() => {
       flags:Object.fromEntries((w.flagNames||[]).map(f=>[f,false])),
       logs:[],revision:0,pend:null,pk:'',pc:0};
     relInit(w,s.player);
+    s.player.look=null; // 체크인 전(첫 화면에서 외형을 고른다)
     addLog(w,s,'시뮬레이션이 시작되었다. NPC들은 각자의 일정에 따라 행동한다.','player');
     // Decisions exist from the first frame; the player can cancel a planned visit before movement.
     for(const n of s.npcs)decide(w,s,n);
@@ -136,6 +163,9 @@ const TroemereiNPC = (() => {
   }
   function isAvailable(s,n,t){
     if(n.excluded.includes(t.id)||n.completed.includes(t.id)&&t.once)return false;
+    // ifFlag: 그 플래그(배열이면 그중 하나)가 켜졌을 때만 / unlessFlag: 켜져 있으면 안 함
+    if(t.ifFlag&&![].concat(t.ifFlag).some(f=>s.flags[f]))return false;
+    if(t.unlessFlag&&[].concat(t.unlessFlag).some(f=>s.flags[f]))return false;
     const tod=s.clock%DAY; // 일정 시각은 '그날 기준'으로 비교한다(자정이 지나도 다음 날 다시 선택).
     if(tod<secs(t.from||'00:00') ||tod>=secs(t.until||'23:59'))return false;
     if(n.lastCompleted[t.id] && s.clock-n.lastCompleted[t.id]<(t.cooldownSeconds||0))return false;
@@ -270,8 +300,11 @@ const TroemereiNPC = (() => {
   }
   // 다음 예정 행동 시각으로 바로 건너뛴다(그 사이엔 아무도 움직이지 않으므로 1초씩 도는 것과 결과가 같다).
   // 긴 대기에서도 계산량이 '행동 횟수'에만 비례해 UUMMAI의 5초 실행 제한에 걸리지 않는다.
-  function nextDue(s){
+  function nextDue(s,w){
     let t=Infinity;
+    if(w&&inInvestigation(w,s))t=Math.min(t,Math.max(s.trial.sub,s.clock+1)); // 조사 마감
+    if(w)for(const c of w.cases||[]){const v=(s.cases||{})[c.id];if(v&&v[0]===1){const at=v[1]+(c.wait||600);if(at>s.clock)t=Math.min(t,at);}}
+    if(w)for(const c of w.cases||[])if(c.from&&s.flags[c.flag]&&!(s.cases||{})[c.id]){const at=Math.floor(s.clock/DAY)*DAY+secs(c.from);if(at>s.clock)t=Math.min(t,at);} // 발견 가능 시각
     if(s.player.route.length)t=Math.min(t,Math.max(s.player.nextMoveAt,s.clock+1));
     for(const n of s.npcs)if(n.mode!=='accompany')t=Math.min(t,Math.max(n.nextMoveAt,s.clock+1));
     return t;
@@ -279,13 +312,15 @@ const TroemereiNPC = (() => {
   function advance(w,state,seconds){
     const s=clone(state),end=s.clock+Math.max(0,Math.min(7200,Math.floor(seconds)));
     while(s.clock<end){
-      const t=nextDue(s);
+      if(s.trial&&!inInvestigation(w,s))break; // 재판 중에는 시간이 흐르지 않는다
+      const t=nextDue(s,w);
       if(t>end){s.clock=end;updateSeen(w,s);break;}
-      if(t-1>s.clock){s.clock=t-1;updateSeen(w,s);} // 직전 초까지 보이던 인물의 '마지막으로 본 시각'
+      if(t-1>s.clock){s.clock=t-1;updateSeen(w,s);if(s.trial&&!inInvestigation(w,s))break;} // 직전 초까지 보이던 인물의 '마지막으로 본 시각'
       s.clock=t;
       if(s.player.route.length&&s.player.nextMoveAt<=s.clock)stepPlayer(w,s);
       for(const n of s.npcs){if(n.mode!=='accompany'&&n.nextMoveAt<=s.clock)npcStep(w,s,n);}
-      updateSeen(w,s);
+      updateSeen(w,s);checkDeadline(w,s);
+      if(s.trial&&!inInvestigation(w,s))break; // 재판이 열리면 시간 정지(마감·집합 시작 순간에서 멈춤)
     }
     s.day=1+Math.floor(s.clock/DAY);
     s.revision++;
@@ -295,13 +330,15 @@ const TroemereiNPC = (() => {
   function advanceUntil(w,state,seconds,stop){
     const s=clone(state),end=s.clock+Math.max(0,Math.min(2*DAY,Math.floor(seconds)));let stopped=false;
     while(s.clock<end){
-      const t=nextDue(s);
+      if(s.trial&&!inInvestigation(w,s))break; // 재판 중에는 시간이 흐르지 않는다
+      const t=nextDue(s,w);
       if(t>end){s.clock=end;updateSeen(w,s);break;}
-      if(t-1>s.clock){s.clock=t-1;updateSeen(w,s);}
+      if(t-1>s.clock){s.clock=t-1;updateSeen(w,s);if(s.trial&&!inInvestigation(w,s))break;}
       s.clock=t;
       if(s.player.route.length&&s.player.nextMoveAt<=s.clock)stepPlayer(w,s);
       for(const n of s.npcs){if(n.mode!=='accompany'&&n.nextMoveAt<=s.clock)npcStep(w,s,n);}
-      updateSeen(w,s);
+      updateSeen(w,s);checkDeadline(w,s);
+      if(s.trial&&!inInvestigation(w,s))break; // 재판이 열리면 시간 정지(마감·집합 시작 순간에서 멈춤)
       if(stop&&stop(s)){stopped=true;break;}
     }
     s.day=1+Math.floor(s.clock/DAY);s.revision++;
@@ -325,10 +362,12 @@ const TroemereiNPC = (() => {
   function advanceSlow(w,state,seconds){
     const s=clone(state),end=s.clock+Math.max(0,Math.min(7200,Math.floor(seconds)));
     for(;s.clock<end;){
+      if(s.trial&&!inInvestigation(w,s))break; // 재판 중에는 시간이 흐르지 않는다
       s.clock++;
       if(s.player.route.length&&s.player.nextMoveAt<=s.clock)stepPlayer(w,s);
       for(const n of s.npcs){if(n.mode!=='accompany'&&n.nextMoveAt<=s.clock)npcStep(w,s,n);}
-      updateSeen(w,s);
+      updateSeen(w,s);checkDeadline(w,s);
+      if(s.trial&&!inInvestigation(w,s))break; // 재판이 열리면 시간 정지(마감·집합 시작 순간에서 멈춤)
     }
     s.day=1+Math.floor(s.clock/DAY);
     s.revision++;
@@ -349,7 +388,9 @@ const TroemereiNPC = (() => {
       if(!tr||tr.code!==rule.trial||T.phase!==rule.phase)return {state,accepted:false,reason:'지금 재판 단계와 맞지 않음'};}
     const s=clone(state);
     relApplyMap(w,s,rule.rel);
-    if(rule.trial){trialNext(w,s);return {state:s,accepted:true,reason:''};}
+    if(rule.trial){
+      if(rule.hold){const tr=w.trials[s.trial.i],ph=tr.phases[s.trial.phase],k=(tr.issues||[]).findIndex(x=>x.id===(ph&&ph.issue));if(k>=0)s.trial.hold=(s.trial.hold||0)|(1<<k);}
+      trialNext(w,s);return {state:s,accepted:true,reason:'',hold:!!rule.hold};}
     if(rule.flag)s.flags[rule.flag]=true;
     addLog(w,s,rule.log||('사건 '+code+' 기록'),'world');
     return {state:s,accepted:true,reason:''};
@@ -392,17 +433,44 @@ const TroemereiNPC = (() => {
   function relApplyMap(w,s,map){if(map)for(const id in map)relAdd(w,s,id,map[id]);}
   // ---------- 재판(시제품) ----------
   // s.trial = {i: 재판 번호, phase: 단계, hp: 재판 전용 체력, sub: 단계 안 진행도}. 재판 중에는 시간이 흐르지 않는다.
-  function startTrial(w,state,code){
-    const i=(w.trials||[]).findIndex(t=>t.code===code);if(i<0)return state;
-    const s=clone(state),tr=w.trials[i];s.trial={i,phase:0,hp:tr.hp||5,sub:0};
+  // 설정 메뉴의 시험 시작: 재판 자료를 모두 지급. 사건 연쇄로 열릴 때는 실제로 모은 것만(부족한 필수 자료는 지배인이 건넨다고 알림).
+  function startTrial(w,state,code){const s=clone(state);openTrial(w,s,code,true);return s;}
+  function openTrial(w,s,code,grantAll){
+    const i=(w.trials||[]).findIndex(t=>t.code===code);if(i<0)return;
+    const tr=w.trials[i];s.trial={i,phase:0,hp:tr.hp||5,sub:0,failed:0,hold:0};
     if(!s.player.items)s.player.items={};
-    for(const id of tr.evidence||[])if(s.player.items[id]===undefined)s.player.items[id]=s.clock; // 시험: 재판 자료로 지급
-    s.player.route=[];addLog(w,s,'재판이 열렸다: '+tr.title,'player');return s;
+    const miss=(tr.evidence||[]).filter(id=>s.player.items[id]===undefined);
+    if(!s.player.given)s.player.given={};
+    for(const id of miss){s.player.items[id]=s.clock;s.player.given[id]=1;}
+    if(miss.length&&!grantAll)addLog(w,s,'지배인이 미처 챙기지 못한 자료를 건넸다: '+miss.map(id=>((w.items||[]).find(x=>x.id===id)||{}).name).join(', '),'world');
+    s.player.route=[];addLog(w,s,(tr.kind==='case'?'사건: ':'재판이 열렸다: ')+tr.title,'player');enterPhase(w,s);
+  }
+  // 조사 단계에 들어가면: 마감 시각을 sub에 적고, 자료를 지급하고, 모인 사람들을 풀어 준다(각자 일정으로).
+  function enterPhase(w,s){
+    const T=s.trial;if(!T)return;const ph=w.trials[T.i].phases[T.phase];if(!ph||ph.type!=='investigate')return;
+    const cs=(w.cases||[]).find(c=>c.trial===w.trials[T.i].code),found=cs&&(s.cases||{})[cs.id]?s.cases[cs.id][1]:null;
+    T.sub=ph.until?Math.floor(s.clock/DAY)*DAY+secs(ph.until):(ph.afterFound!=null&&found!=null)?found+ph.afterFound*60:s.clock+(ph.minutes||30)*60;
+    T.sub=Math.max(T.sub,s.clock+300); // 최소 5분
+    if(!s.player.given)s.player.given={};
+    for(const id of ph.grant||[])if(s.player.items[id]===undefined){s.player.items[id]=s.clock;s.player.given[id]=1;}
+    for(const n of s.npcs){const g=n.queued.find(t=>/^gather_/.test(t.id));if(g){n.queued=n.queued.filter(t=>t!==g);}
+      if(n.intent&&/^gather_/.test(n.intent.id)){n.intent=null;n.mode='idle';n.route=[];n.busyUntil=0;n.nextMoveAt=s.clock+3;}}
+    addLog(w,s,'조사 시간이 시작되었다. 마감 '+clock(T.sub).slice(0,5),'world');
   }
   function trialNext(w,s){
     const tr=w.trials[s.trial.i],cur=tr.phases[s.trial.phase];if(cur)relApplyMap(w,s,cur.rel);s.trial.phase++;s.trial.sub=0;
-    if(s.trial.phase>=tr.phases.length){if(tr.flag)s.flags[tr.flag]=true;addLog(w,s,'재판이 끝났다: '+tr.title,'player');s.trial=null;}
+    if(s.trial.phase>=tr.phases.length){
+      if(tr.flag)s.flags[tr.flag]=true;s.trial=null;
+      // 연쇄: 집합·조사 대본이 끝나면 갈래에 맞는 재판으로(then: [{if:플래그, code}, …], 처음 맞는 것)
+      const nx=(tr.then||[]).find(t=>!t.if||s.flags[t.if]);
+      if(nx){openTrial(w,s,nx.code,false);return;}
+      addLog(w,s,(tr.kind==='case'?'사건 정리가 끝났다: ':'재판이 끝났다: ')+tr.title,'player');return;
+    }
+    enterPhase(w,s);
   }
+  function inInvestigation(w,s){const T=s.trial;return !!(T&&(w.trials[T.i].phases[T.phase]||{}).type==='investigate');}
+  // 시간이 흐를 때: 조사 마감이 되면 개정
+  function checkDeadline(w,s){if(inInvestigation(w,s)&&s.clock>=s.trial.sub){addLog(w,s,'조사 시간이 끝났다. 재판장으로 모인다.','world');trialNext(w,s);}}
   // 틀림: 체력 -1. 0이 되면 꿈(노멀)에서는 그 단계로 되감기고, 현실(진엔딩)에서는 실패로 끝난다.
   function trialHit(w,state){
     const s=clone(state),T=s.trial;if(!T)return {state:s,result:''};
@@ -418,7 +486,7 @@ const TroemereiNPC = (() => {
   // 로어북을 켜는 표식. 화면이 매 메시지 머리말에 붙인다(검색 범위 '현재 유저 입력만' 항목용).
   function markers(w,s){
     const out=['#장'+(w.chapter||1)];
-    if(s.trial&&w.trials&&w.trials[s.trial.i])out.push('#재판'+w.trials[s.trial.i].code);
+    if(s.trial&&w.trials&&w.trials[s.trial.i])out.push(inInvestigation(w,s)?'#조사'+w.trials[s.trial.i].code+branchLetter(w,s):'#재판'+w.trials[s.trial.i].code);
     // 시간대 갈래 표식: #1일저녁A. A는 인라인(메인), 조건이 맞으면 B·C…(어느 갈래인지는 화면이 판정)
     const sl=slotOf(w,s);
     if(sl){const b=(w.branches||[]).find(b=>(!b.flag||s.flags[b.flag])&&(!b.slot||b.slot===sl.day+'일'+sl.name));out.push('#'+sl.day+'일'+sl.name+(b?b.letter:'A'));}
@@ -467,7 +535,9 @@ const TroemereiNPC = (() => {
       if(!l)return s;
       const spots=[{x:l.x,y:l.y},...(l.hit||[]).map(h=>({x:h[0],y:h[1]}))];
       if(!spots.some(p=>manhattan(player,p)<=1)){addLog(w,s,'조사하려면 '+l.name+' 가까이 가야 한다.','player');return s;}
+      const wasInv=inInvestigation(w,s);
       const t=advance(w,s,w.searchSeconds||20);s=t;
+      if(wasInv&&!inInvestigation(w,s)){addLog(w,s,'조사하던 도중 마감이 되었다. 아무것도 챙기지 못했다.','player');return s;}
       const found=itemsAt(w,s,l.id);
       if(!s.player.items)s.player.items={};
       for(const it of found)s.player.items[it.id]=s.clock;
@@ -525,6 +595,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;

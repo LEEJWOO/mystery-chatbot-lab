@@ -35,7 +35,7 @@ test('코덱 왕복: 여러 시점에서 복원 후 같은 코드, 이어서 진
     assert.equal(pk(back), code);
     assert.equal(pk(E.advance(W, back, 120)), pk(E.advance(W, s, 120)), '복원 상태와 원래 상태의 진행 결과가 달라짐(' + i + ')');
   }
-  assert.ok(max < 220, '상태 코드가 너무 김: ' + max);
+  assert.ok(max < 260, '상태 코드가 너무 김: ' + max);
   console.log('   상태 코드 최대 길이', max, '자 / 원래 JSON', JSON.stringify(s).length, '자');
 });
 test('손상 검출: 한 글자 바뀌면 체크섬 오류, 다른 맵이면 거부', () => {
@@ -322,6 +322,46 @@ test('대화 중 증거 제시: 사건 규칙의 present는 그 증거를 낸 �
   const withIt = { ...base, pv: 'memo_copy' }; assert.equal(E.applyEvent(W2, withIt, 'SHOW').accepted, true);
   assert.equal(C.unpack(W2, C.pack(W2, withIt)).pv, 'memo_copy');
 });
+test('사건 연결: 실제 행동 → 발견 → 현장 입장 시 집합 → 조사(마감·자료) → 개정 → 갈래별 재판(A=T1, B=T1B), 막으면 사건 없음', () => {
+  const go = (prep) => { let s = E.createWorld(W); if (prep) s = prep(s); for (let i = 0; i < 1440 && !(s.cases && s.cases.C1); i++) s = E.advance(W, s, 5); return s; };
+  const toCase = s => { const d = W.map.landmarks.find(l => l.id === 'desk'); s = E.dispatch(W, s, { type: 'MOVE_TO', x: d.x, y: d.y + 1 }); for (let i = 0; i < 200 && !s.trial; i++) s = E.advance(W, s, 4); return s; };
+  for (const [prep, want, inv] of [[null, 'T1', '#조사C1A'], [s => { s = E.dispatch(W, s, { type: 'ACCOMPANY', npcId: 'companion' }); for (let i = 0; i < 6; i++) s = E.advance(W, s, 5); return E.dispatch(W, s, { type: 'RELEASE', npcId: 'companion' }); }, 'T1B', '#조사C1B']]) {
+    let s = go(prep); assert.ok(s.cases.C1, '사건 발견');
+    assert.ok(s.npcs.every(n => n.mode === 'accompany' || n.queued.some(t => t.id === 'gather_C1') || (n.intent && n.intent.id === 'gather_C1') || n.completed.includes('gather_C1')), '모두 현장으로');
+    s = toCase(s); assert.equal(W.trials[s.trial.i].code, 'C1', '현장 방에 들어가면(모두 모이거나 10분 뒤) 사건 대본');
+    const room = E.areaOf(W, s.player.x, s.player.y); assert.ok(s.npcs.every(n => E.areaOf(W, n.x, n.y) === room) || s.clock - s.cases.C1[1] >= 600, '집합 조건');
+    assert.equal(s.player.items.work_order, undefined, '연쇄 시작에는 자료를 지급하지 않음');
+    s = E.trialStep(W, s, 'NEXT'); assert.ok(E.inInvestigation(W, s)); assert.ok(s.player.items.work_order !== undefined && s.player.given.work_order, '조사 시작 때 지급(출처: 지배인)');
+    assert.equal(s.trial.sub, s.cases.C1[1] + 50 * 60 > s.clock + 300 ? s.cases.C1[1] + 50 * 60 : s.clock + 300, '마감은 발견 시각 + 50분');
+    assert.ok(E.markers(W, s).includes(inv), '조사 표식 ' + inv);
+    assert.ok(s.npcs.every(n => !n.queued.some(t => t.id === 'gather_C1')), '조사 중엔 각자 일정');
+    const dl = s.trial.sub; const t30 = E.applyTalk(W, E.advance(W, s, dl - s.clock - 1), 30); assert.equal(t30.clock, dl, '마감을 넘기는 대화도 시간은 마감에서 멈춤');
+    const lm = W.map.landmarks.find(l => l.id === 'archive'); let sr = E.advance(W, s, dl - s.clock - 5); sr.player.x = lm.x; sr.player.y = lm.y + 1; const got = E.dispatch(W, sr, { type: 'SEARCH', landmark: 'archive' });
+    assert.ok(!E.inInvestigation(W, got) && got.player.items.memo_copy === sr.player.items.memo_copy, '마감에 걸친 조사는 성공하지 않음');
+    s = E.advance(W, s, dl - s.clock + 5); assert.ok(!E.inInvestigation(W, s), '마감에 개정');
+    s = E.trialStep(W, s, 'NEXT'); assert.equal(W.trials[s.trial.i].code, want, '갈래별 재판 ' + want);
+    assert.ok(C.unpack(W, C.pack(W, s)).cases.C1, '코드 왕복');
+  }
+  // 막기: 유리와 동행 + 태수도 붙잡아 두면(동행은 한 명이라 태수의 전달은 남는다) → 여기서는 유리 동행 후 태수 동행으로 바꿔 전달을 막는다
+  let s = E.dispatch(W, E.createWorld(W), { type: 'ACCOMPANY', npcId: 'companion' });
+  for (let i = 0; i < 6; i++) s = E.advance(W, s, 5);
+  s = E.dispatch(W, s, { type: 'RELEASE', npcId: 'companion' });
+  const t = s.npcs.find(n => n.id === 'courier'); s.player.x = t.x; s.player.y = t.y + (E.walkable(W, t.x, t.y + 1) ? 1 : -1);
+  s = E.dispatch(W, s, { type: 'ACCOMPANY', npcId: 'courier' });
+  for (let i = 0; i < 600; i++) s = E.advance(W, s, 5);
+  if (s.npcs.find(n => n.id === 'courier').mode === 'accompany') assert.ok(!(s.cases && s.cases.C1), '전달을 막으면 사건 없음');
+});
+test('반론 보류: 입증 부족 지적(T1_R1H)은 쟁점을 보류로 두고 다음 단계로, 코드 왕복', () => {
+  let s = E.startTrial(W, E.createWorld(W), 'T1'); for (let i = 0; i < 6; i++) s = E.trialStep(W, s, 'NEXT');
+  const r = E.applyEvent(W, { ...E.clone(s), pend: 'librarian', pk: 'R' }, 'T1_R1H');
+  assert.ok(r.accepted && r.hold); assert.equal(r.state.trial.phase, 7); assert.equal(r.state.trial.hold & 1, 1);
+  assert.equal(C.unpack(W, C.pack(W, r.state)).trial.hold, 1);
+});
+test('체크인 외형: 코드 왕복(한글 이름 포함)', () => {
+  const s = E.createWorld(W); assert.equal(s.player.look, null);
+  s.player.look = { g: 1, hf: 2, hb: 3, hc: 7, eye: 1, ec: 4, sk: 2, of: 4, oc: 5, ac: 3, name: '키와무 하지메' };
+  assert.deepEqual(C.unpack(W, C.pack(W, s)).player.look, s.player.look);
+});
 test('시선 대칭: 같은 방의 모든 두 칸에서 A가 B를 보면 B도 A를 본다', () => {
   const s = E.createWorld(W); let bad = 0, n = 0;
   for (let y = 0; y < W.map.height; y++) for (let x = 0; x < W.map.width; x++) {
@@ -354,7 +394,7 @@ test('재판: 시작·단계 진행·체력·되감기(꿈)·실패(현실)·AI 
   assert.deepEqual([s.trial.phase, s.trial.hp], [0, 5]); assert.ok(s.player.items.memo_copy !== undefined, '재판 자료 지급');
   assert.ok(E.markers(W, s).includes('#재판T1'));
   const RB = W.events.T1_R1.phase; for (let i = 0; i < RB; i++) s = E.trialStep(W, s, 'NEXT'); assert.equal(s.trial.phase, RB);
-  const back = C.unpack(W, C.pack(W, s)); assert.deepEqual(back.trial, { i: 0, phase: RB, hp: 5, sub: 0, failed: 0 });
+  const back = C.unpack(W, C.pack(W, s)); assert.deepEqual(back.trial, { i: 0, phase: RB, hp: 5, sub: 0, failed: 0, hold: 0 });
   const r = { ...E.clone(s), pend: 'librarian', pk: 'R' };
   assert.equal(E.applyEvent(W, r, 'T1_R1').state.trial.phase, RB + 1, '반론 성공 → 다음 단계');
   const early = { ...E.clone(E.trialStep(W, E.startTrial(W, E.createWorld(W), 'T1'), 'NEXT')), pend: 'librarian', pk: 'R' };

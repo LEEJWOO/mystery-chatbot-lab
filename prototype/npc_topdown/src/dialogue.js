@@ -2,14 +2,17 @@
    대사 형식(d 속성): 줄 구분은 |, 인물 대사는 `이름:대사` 또는 `이름(표정):대사`, 서술은 `*서술`.
    색·속도·크기 같은 연출 기본값은 JSX가 가진다(AI가 매번 적지 않는다). */
 const TroemereiTalk = (() => {
-  const LINE = /^([^:：*|()]{1,20})(?:\(([^()]{1,12})\))?\s*[:：]\s*(.+)$/s;
+  const LINE = /^([^:：*|()]{1,20})(?:\(([^()]{1,20})\))?\s*[:：]\s*(.+)$/s;
+  // 괄호 안: 표정과 움직임을 · , / 로 함께 쓸 수 있다. 예) 유리(놀람·흔들림):…  움직임: 흔들림·다가섬·번쩍·깨짐
+  const FX = { '흔들림': 'shake', '흔들': 'shake', shake: 'shake', '다가섬': 'zoom', '다가': 'zoom', zoom: 'zoom', '번쩍': 'flash', flash: 'flash', '깨짐': 'crack', crack: 'crack' };
+  function face(expr) { const t = String(expr || '').split(/[·,\/\s]+/).filter(Boolean); return { expression: t.filter(x => !FX[x]).join(' '), fx: (t.map(x => FX[x]).find(Boolean)) || '' }; }
   function parse(raw) {
     if (!raw) return [];
     return String(raw).split('|').map(x => x.trim()).filter(Boolean).slice(0, 24).map(part => {
       if (part[0] === '*') return { speaker: '', expression: '', text: part.slice(1).trim().slice(0, 600), narration: true };
       const m = LINE.exec(part);
       if (!m || /^\d+$/.test(m[1].trim())) return { speaker: '', expression: '', text: part.slice(0, 600), narration: true };
-      return { speaker: m[1].trim(), expression: (m[2] || '').trim(), text: m[3].trim().slice(0, 600), narration: false };
+      return { speaker: m[1].trim(), ...face(m[2]), text: m[3].trim().slice(0, 600), narration: false };
     }).filter(x => x.text);
   }
   // 화면 3줄에 넘치는 발화는 같은 화자의 여러 페이지로 나눈다(전각 1칸, 반각 0.55칸 기준).

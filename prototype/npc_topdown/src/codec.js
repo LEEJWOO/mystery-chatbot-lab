@@ -5,7 +5,9 @@ const TroemereiCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 8;
+  const VERSION = 11;
+  // 플레이어 외형 항목(체크인): 성별·앞머리·뒷머리·머리색·눈 모양·눈동자색·피부·옷·옷 색·장신구
+  const LOOK_KEYS = ['g', 'hf', 'hb', 'hc', 'eye', 'ec', 'sk', 'of', 'oc', 'ac'];
   const KINDS = ['', 'T', 'I', 'A', 'P', 'R'];
 
   function hash32(text) { let h = 0x811c9dc5; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
@@ -17,13 +19,14 @@ const TroemereiCodec = (() => {
     return hash32(JSON.stringify(strip({ id: w.map.id, v: w.version || 1, dv: w.dataVersion || 0, rows: w.map.rows, areas: w.map.areas.map(a => [a.x0, a.y0, a.x1, a.y1]),
       lm: w.map.landmarks, props: w.map.props || [], npcs: w.npcs, rules: w.onComplete || [], pl: w.player, facts: (w.facts || []).map(f => [f.id, f.code]),
       flags: w.flagNames || [], items: w.items || [], scenes: w.scenes || [], events: w.events || {}, branches: w.branches || [], notices: (w.notices || []).map(n => n.time),
-      rel: ((w.rel || {}).scales || []).map(x => [x.id, x.key, (x.levels || []).length]), relGain: [(w.rel || {}).aiStep || 0, (w.rel || {}).firstTalk || {}], slots: w.slots || [], markers: w.markers || [], trials: w.trials || [], chapter: w.chapter || 1, search: w.searchSeconds || 0 })));
+      cases: w.cases || [], rel: ((w.rel || {}).scales || []).map(x => [x.id, x.key, (x.levels || []).length]), relGain: [(w.rel || {}).aiStep || 0, (w.rel || {}).firstTalk || {}], slots: w.slots || [], markers: w.markers || [], trials: w.trials || [], chapter: w.chapter || 1, search: w.searchSeconds || 0 })));
   }
   function taskTable(w) {
     const list = [];
     const add = t => { if (t && t.id && !list.some(x => x.id === t.id)) list.push(t); };
     for (const n of w.npcs) for (const t of n.agenda || []) add(t);
     for (const r of w.onComplete || []) add(r.queueTask);
+    for (const c of w.cases || []) add(c.task); // 사건 발견 시 모두 현장으로
     return list;
   }
   function meta(w) {
@@ -103,11 +106,15 @@ const TroemereiCodec = (() => {
     o.byte(s.player.x); o.byte(s.player.y); putRoute(o, s.player, s.player.route); putTime(o, s.player.route.length ? s.player.nextMoveAt : 0, clock);
     putMem(o, s.player.mem, m, clock);
     for (const it of w.items || []) { const v = (s.player.items || {})[it.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 0 = 아직 안 가짐
+    { let gv = 0; (w.items || []).forEach((it, i) => { if ((s.player.given || {})[it.id]) gv += 2 ** i; }); o.uint(gv); } // 지배인이 지급한 자료
+    // 체크인 외형: 없으면 0. 있으면 1 + 항목 번호들 + 이름(UTF-8)
+    { const L = s.player.look; if (!L) o.uint(0); else { o.uint(1); for (const k of LOOK_KEYS) o.uint(Math.max(0, L[k] | 0)); const nb = Array.from(new TextEncoder().encode(String(L.name || '').slice(0, 12))); o.uint(nb.length); nb.forEach(v => o.byte(v)); } }
     for (const sc of w.scenes || []) { const v = (s.player.scenes || {})[sc.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 목격 장면 해금 시각
     let tk = 0; w.npcs.forEach((n, i) => { if ((s.player.talked || {})[n.id] !== undefined) tk |= 1 << i; }); o.uint(tk); // 말 걸어 본 인물
     const rs = (w.rel || {}).scales || [];
     for (const spec of w.npcs) for (const sc of rs) if (spec.rel && spec.rel[sc.id] !== undefined) { const v = ((s.player.rel || {})[spec.id] || {})[sc.id]; o.uint(Math.max(0, Math.min(100, v === undefined ? spec.rel[sc.id] : v))); } // 관계 값
-    if (s.trial) { o.uint(s.trial.i + 1); o.uint(s.trial.phase); o.uint(s.trial.hp); o.uint(s.trial.sub); o.uint(s.trial.failed ? 1 : 0); } else o.uint(0); // 재판 진행
+    for (const c of w.cases || []) { const v = (s.cases || {})[c.id]; if (!v) o.uint(0); else { o.uint(v[0]); o.uint(Math.max(0, clock - v[1])); o.uint(v[2]); } } // 사건 진행
+    if (s.trial) { o.uint(s.trial.i + 1); o.uint(s.trial.phase); o.uint(s.trial.hp); o.uint(s.trial.sub); o.uint(s.trial.failed ? 1 : 0); o.uint(s.trial.hold || 0); } else o.uint(0); // 재판 진행
     for (const spec of w.npcs) { const v = (s.player.seen || {})[spec.id]; if (!v) o.uint(0); else { o.uint(v[0] + 2); o.uint(Math.max(0, clock - v[1])); } }
     for (const spec of w.npcs) {
       const n = s.npcs.find(x => x.id === spec.id);
@@ -143,10 +150,13 @@ const TroemereiCodec = (() => {
     s.player = { x: px, y: py }; s.player.route = getRoute(r, s.player); s.player.nextMoveAt = getTime(r, clock);
     s.player.mem = getMem(r, m, clock); s.player.seen = {}; s.player.items = {};
     for (const it of w.items || []) { const v = r.uint(); if (v) s.player.items[it.id] = clock - (v - 1); }
+    s.player.given = {}; { let gv = r.uint(); (w.items || []).forEach((it, i) => { if (Math.floor(gv / 2 ** i) % 2) s.player.given[it.id] = 1; }); }
+    { if (r.uint()) { const L = {}; for (const k of LOOK_KEYS) L[k] = r.uint(); const n = r.uint(), nb = []; for (let q = 0; q < n; q++) nb.push(r.byte()); L.name = new TextDecoder().decode(new Uint8Array(nb)); s.player.look = L; } else s.player.look = null; }
     s.player.scenes = {}; for (const sc of w.scenes || []) { const v = r.uint(); if (v) s.player.scenes[sc.id] = clock - (v - 1); }
     s.player.talked = {}; const tk = r.uint(); w.npcs.forEach((n, i) => { if (tk & (1 << i)) s.player.talked[n.id] = 0; });
     s.player.rel = {}; for (const spec of w.npcs) { const o = {}; for (const sc of ((w.rel || {}).scales || [])) if (spec.rel && spec.rel[sc.id] !== undefined) o[sc.id] = r.uint(); s.player.rel[spec.id] = o; }
-    const ti = r.uint(); s.trial = ti ? { i: ti - 1, phase: r.uint(), hp: r.uint(), sub: r.uint(), failed: r.uint() } : null;
+    s.cases = {}; for (const c of w.cases || []) { const st = r.uint(); if (st) s.cases[c.id] = [st, clock - r.uint(), r.uint()]; }
+    const ti = r.uint(); s.trial = ti ? { i: ti - 1, phase: r.uint(), hp: r.uint(), sub: r.uint(), failed: r.uint(), hold: r.uint() } : null;
     if (s.trial && !(w.trials || [])[s.trial.i]) throw Error('상태 코드의 재판 번호가 세계 데이터에 없습니다');
     for (const spec of w.npcs) { const a = r.uint(); if (a) s.player.seen[spec.id] = [a - 2, clock - r.uint()]; }
     s.npcs = w.npcs.map(() => {
