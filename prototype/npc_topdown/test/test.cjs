@@ -362,6 +362,16 @@ test('체크인 외형: 코드 왕복(한글 이름 포함)', () => {
   s.player.look = { g: 1, hf: 2, hb: 3, hc: 7, eye: 1, ec: 4, sk: 2, of: 4, oc: 5, ac: 3, name: '키와무 하지메' };
   assert.deepEqual(C.unpack(W, C.pack(W, s)).player.look, s.player.look);
 });
+test('말 걸기: 2칸 이내·시야 트임이면 상대가 일하는 중이어도 가능, 대화 시간만큼 그 일이 늦어짐', () => {
+  let s = E.createWorld(W); for (let i = 0; i < 400; i++) { s = E.advance(W, s, 5); if (s.npcs.some(n => n.mode === 'busy' && !n.intent?.targetPlayer)) break; }
+  const n = s.npcs.find(v => v.mode === 'busy' && !v.intent?.targetPlayer); assert.ok(n, '일하는 인물');
+  const spot = [[0, 2], [2, 0], [0, -2], [-2, 0], [1, 1], [-1, 1], [1, -1], [-1, -1], [0, 1], [1, 0]].map(([dx, dy]) => ({ x: n.x + dx, y: n.y + dy })).find(p => E.walkable(W, p.x, p.y) && !s.npcs.some(v => v.x === p.x && v.y === p.y) && E.lineOfSight(W, p, n));
+  s.player.x = spot.x; s.player.y = spot.y;
+  const t = E.dispatch(W, s, { type: 'TALK_REQUEST', npcId: n.id, kind: 'T', chars: 5 }); assert.equal(t.pend, n.id);
+  const before = t.npcs.find(v => v.id === n.id).busyUntil, after = E.applyTalk(W, t, 30).npcs.find(v => v.id === n.id);
+  assert.ok(after.busyUntil >= before + 30 || after.mode !== 'busy', '하던 일이 늦어짐');
+  const far = E.clone(s); far.player.x = n.x + 6; assert.notEqual(E.dispatch(W, far, { type: 'TALK_REQUEST', npcId: n.id }).pend, n.id, '멀면 불가');
+});
 test('시선 대칭: 같은 방의 모든 두 칸에서 A가 B를 보면 B도 A를 본다', () => {
   const s = E.createWorld(W); let bad = 0, n = 0;
   for (let y = 0; y < W.map.height; y++) for (let x = 0; x < W.map.width; x++) {

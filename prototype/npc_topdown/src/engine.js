@@ -525,9 +525,9 @@ const TroemereiNPC = (() => {
     }else if(action.type==='TALK_REQUEST'){
       // 대화는 AI가 응답한 뒤 applyTalk()로 시간을 반영한다. 여기서는 대상만 잠근다.
       const n=node(s,action.npcId);
-      if(!n||manhattan(player,n)>1){addLog(w,s,'대화하려면 인물에게 접근해야 한다.','player');return s;}
+      // 2칸 이내 + 시야가 트여 있으면 상대가 바빠도 말은 걸 수 있다(들어줄지는 AI가 상태를 보고 정한다)
+      if(!n||manhattan(player,n)>(w.talkRange||2)||!lineOfSight(w,player,n)){addLog(w,s,'대화하려면 인물에게 더 다가가야 한다.','player');return s;}
       if(n.mode==='busy'&&n.intent&&n.intent.targetPlayer)finishCall(s,n);
-      else if(n.mode==='busy'){addLog(w,s,'현재 진행 중인 행동이 있어 대화를 나누기 어렵다.','player');return s;}
       if(!player.talked)player.talked={};if(player.talked[n.id]===undefined)relAdd(w,s,n.id,(w.rel||{}).firstTalk);player.talked[n.id]=s.clock;
       s.pend=n.id;s.pk=action.kind||'T';s.pc=Math.max(0,Math.min(2000,action.chars|0));player.route=[];player.nextMoveAt=0;
     }else if(action.type==='WAIT')return advance(w,s,action.seconds||60);
@@ -571,7 +571,9 @@ const TroemereiNPC = (() => {
     let s=clone(state);
     if(s.pend===undefined)s.pend=null;
     const n=s.pend?node(s,s.pend):null;
-    if(n&&n.mode!=='accompany'){n.mode='paused';n.busyUntil=s.clock+sec;n.nextMoveAt=n.busyUntil;}
+    // 하던 일이 있으면(일하는 중·만남 대기) 그 일이 대화한 만큼 늦어진다. 아니면 그 자리에 멈춰 대화.
+    if(n&&(n.mode==='busy'||n.mode==='paused')){n.busyUntil=Math.max(n.busyUntil||s.clock,s.clock)+sec;n.nextMoveAt=Math.max(n.nextMoveAt,n.busyUntil);}
+    else if(n&&n.mode!=='accompany'){n.mode='paused';n.busyUntil=s.clock+sec;n.nextMoveAt=n.busyUntil;}
     s.player.route=[];s.player.nextMoveAt=0;s.pend=null;s.pk='';s.pc=0;
     if(sec>0){addLog(w,s,(n?w.npcs.find(x=>x.id===n.id).name+'와(과) ':'')+'대화하며 '+sec+'초가 지났다.','player');s=advance(w,s,sec);}
     else s.revision++;
