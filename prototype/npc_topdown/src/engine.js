@@ -24,7 +24,9 @@ const TroemereiNPC = (() => {
     blockCache.set(w,b);return b;
   }
   // 두 칸 사이 직선(브레젠험)이 막힌 칸을 지나지 않으면 보인다.
-  function lineOfSight(w,a,b){
+  // 대칭 판정: A→B와 B→A 직선이 둘 다 막히지 않아야 보인다(방향에 따라 결과가 달라지지 않게)
+  function lineOfSight(w,a,b){return losOne(w,a,b)&&losOne(w,b,a);}
+  function losOne(w,a,b){
     const B=blockers(w);let x=a.x,y=a.y;const dx=abs(b.x-a.x),dy=-abs(b.y-a.y),sx=a.x<b.x?1:-1,sy=a.y<b.y?1:-1;let err=dx+dy;
     while(!(x===b.x&&y===b.y)){const e2=2*err;if(e2>=dy){err+=dy;x+=sx;}if(e2<=dx){err+=dx;y+=sy;}if(x===b.x&&y===b.y)break;if(B.has(posKey(x,y)))return false;}
     return true;

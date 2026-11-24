@@ -197,8 +197,8 @@
 
 /* v1.3 진행자 등장: 위에서 조명이 내려오고 실루엣이 떠오른다 */
 .tr-actor.host{display:block;transform:none;bottom:0;height:300px;animation:none}
-.tr-spot{position:absolute;left:50%;top:-20px;width:300px;height:330px;transform:translateX(-50%);transform-origin:50% 0;background:conic-gradient(from 160deg at 50% 0,transparent 0deg,#fff4d433 14deg,#fff4d455 20deg,#fff4d433 26deg,transparent 40deg);filter:blur(2px);animation:trspot .9s cubic-bezier(.2,.8,.2,1) both}
-.tr-spot-floor{position:absolute;left:50%;bottom:6px;width:210px;height:34px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(#fff4d466,transparent 70%);animation:trspotf .9s .3s both}
+.tr-hspot{position:absolute;left:50%;top:-20px;width:300px;height:330px;transform:translateX(-50%);transform-origin:50% 0;background:conic-gradient(from 160deg at 50% 0,transparent 0deg,#fff4d433 14deg,#fff4d455 20deg,#fff4d433 26deg,transparent 40deg);filter:blur(2px);animation:trspot .9s cubic-bezier(.2,.8,.2,1) both}
+.tr-hspot-floor{position:absolute;left:50%;bottom:6px;width:210px;height:34px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(#fff4d466,transparent 70%);animation:trspotf .9s .3s both}
 .tr-host-sil{position:absolute;left:50%;bottom:0;width:160px;height:260px;transform:translateX(-50%);animation:trhost .8s .45s both;filter:drop-shadow(0 0 10px #e9c98c44)}
 @keyframes trspot{0%{transform:translateX(-50%) scaleY(0);opacity:0}60%{opacity:1}100%{transform:translateX(-50%) scaleY(1);opacity:1}}
 @keyframes trspotf{from{opacity:0;transform:translateX(-50%) scale(.3)}to{opacity:1;transform:translateX(-50%) scale(1)}}
@@ -237,14 +237,14 @@
 .tr-voter{font-size:11px;padding:2px 7px;border-radius:9px;background:#1f1a2e;color:#6d6580;border:1px solid #3a3448}
 .tr-voter.in{color:#f6ead2;border-color:#f2c46d88;animation:trvin .3s ease-out}.tr-voter b{margin-right:3px}
 @keyframes trvin{from{transform:scale(1.4);background:#4a3a20}to{transform:none}}
-.tr-reelwrap{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#07060ccc;animation:trfade .3s}
+.tr-reelwrap{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#07060ccc;animation:trfadein .3s}
 .tr-reel-t{font-size:16px;letter-spacing:6px;color:#f2d79e}
 .tr-reel{width:110px;height:120px;overflow:hidden;border:3px solid #f2c46d;border-radius:10px;background:#1a1526;box-shadow:0 0 24px #f2c46d66, inset 0 14px 14px -10px #000, inset 0 -14px 14px -10px #000}
 .tr-reel.split{display:grid;place-items:center;font-size:16px;color:#ff9a8a;border-color:#ff9a8a}
 .tr-reel-cell{height:120px;display:grid;place-items:center}
 .tr-reel-name{font-size:20px;font-weight:800;color:#f6ead2;opacity:0;transform:scale(.6)}
 .tr-reel-name.on{opacity:1;transform:none;transition:all .3s cubic-bezier(.2,1.6,.4,1)}
-@keyframes trfade{from{opacity:0}to{opacity:1}}
+@keyframes trfadein{from{opacity:0}to{opacity:1}}
 /* 관계 표시 */
 .tr-relrow{display:flex;align-items:center;gap:5px;font-size:11px;margin-top:2px}.tr-relrow>span:first-child{width:24px;color:#7a6a58}
 .tr-relpips{display:flex;gap:2px}.tr-relpips i{width:9px;height:9px;border-radius:2px;background:#d8ccb4}.tr-relpips i.on.trust{background:#4a8ad0}.tr-relpips i.on.affection{background:#d05a7a}
