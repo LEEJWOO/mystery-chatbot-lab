@@ -170,6 +170,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   });
   const replySec = b => (b && b.pk === 'P' && String(t).trim() !== '') ? Math.max(0, Math.min(900, Math.floor(Number(t) || 0))) : TroemereiNPC.talkSeconds(b ? b.pc : 0, trChars(lines));
   const pendNpc = boot.base && boot.base.pend;
+  const stRef = useRef(null), trLock = useRef('');
   const [state, setState] = useState(() => !boot.base ? null : boot.rmode ? boot.base : (s && !lines.length) ? TroemereiNPC.applyTalk(TN_WORLD, boot.base, replySec(boot.base)) : boot.base);
   const [talk, setTalk] = useState(() => boot.base && lines.length && !boot.rmode ? { npc: free ? null : pendNpc || null, idx: 0, shown: 0, cut: false, fresh: false } : null);
   // 받은 응답의 대화 시간을 이미 반영했는지(대사가 있으면 다 읽거나 끊을 때 반영).
@@ -298,6 +299,11 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   }
   // 추리(A)·자유 행동(P): 지금 같은 방에서 보이는 사람과 그들이 하던 일(대상이 없으므로 현장 인물을 알려 준다)
   function presentLine(next) { const v = next.npcs.filter(n => trVisible(next, n)); return '함께 있는 사람: ' + (v.length ? v.map(n => trNpc(n.id).name + '(' + TroemereiNPC.describe(TN_WORLD, next, n) + ')').join(', ') : '없음'); }
+  function evidLine(next) { const it = (TN_WORLD.items || []).filter(x => (next.player.items || {})[x.id] !== undefined); return it.length ? '내 증거: ' + it.map(x => x.name).join(', ') : ''; }
+  // A·P: 현장 인물마다 관계와 최근 기억(코드). 반응할 사람이 아는 것만 넘긴다.
+  function presentCtx(next) { return next.npcs.filter(n => trVisible(next, n)).flatMap(n => npcContext(next, n.id).slice(1)); }
+  function settledLine(next) { const T = next.trial; if (!T) return ''; const TR = TN_WORLD.trials[T.i]; const done = (TR.issues || []).filter(x => { let last = -1; TR.phases.forEach((p, i) => { if (p.issue === x.id) last = i; }); return last >= 0 && T.phase > last; });
+    return done.length ? '재판에서 확정된 것: ' + done.map(x => x.q + ' → ' + x.a).join(' / ') : ''; }
   function clueLine(next) { const c = (next.player.mem || []).slice(-6).map(m => trFact(m[0], m[1], 'player')); return c.length ? '내 단서: ' + c.join(' / ') : ''; }
   function applyReply(kind) {
     if (!lines.length || consumed) return state;
@@ -323,10 +329,10 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     if (id) {
       next = TroemereiNPC.dispatch(TN_WORLD, next, { type: 'TALK_REQUEST', npcId: id, kind, chars });
       if (next.pend !== id) { setToast('지금은 말을 걸 수 없습니다'); return; }
-      target = trNpc(id).name; ctx = [...npcContext(next, id), opt && opt.situation, clueLine(next)];
+      target = trNpc(id).name; ctx = [...npcContext(next, id), opt && opt.situation, clueLine(next), evidLine(next)];
     } else {
       next = { ...TroemereiNPC.clone(next), pk: kind === 'T' ? 'P' : kind, pc: chars, pend: null };
-      ctx = [presentLine(next), clueLine(next)];
+      ctx = [presentLine(next), ...presentCtx(next), clueLine(next), evidLine(next)];
     }
     const code = TroemereiCodec.pack(TN_WORLD, next);
     const message = TroemereiTalk.handoff({ kind: id ? kind : (kind === 'T' ? 'P' : kind), target, cut, where: trArea(next.player.x, next.player.y), time: next.day + '일 ' + trHM(next.clock), marks: TroemereiNPC.markers(TN_WORLD, next), ctx, text: msg, code });
@@ -366,31 +372,39 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const cl = TroemereiNPC.caller(TN_WORLD, s2); setWokeBy(r.stopped && cl ? cl.id : '');
     setToast(r.stopped ? (who.length ? trJosa(who.join('·'), '이', '가') + ' 다가와서 쉬던 것을 멈췄다' : lg ? lg.text : '무슨 일이 생겨 멈췄다') : note ? '공지 · ' + trHM(note.t) + ' ' + note.n.text + (note.n.place ? ' (' + note.n.place + ')' : '') : TroemereiNPC.clock(s2.clock).slice(0, 5) + '까지 쉬었다');
   }
-  // ---------- 재판 ----------
+  stRef.current = state;
+  if (!state || !state.trial) trLock.current = '';
   // ---------- 재판 ----------
   const resetTv = { idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', voted: false, g: {}, votes: null, vn: 0, rl: 0 };
-  function trialWrong() { const h = TroemereiNPC.trialHit(TN_WORLD, state); setState(h.state); setTv(v => ({ ...v, drawer: false, fx: h.result })); if (h.result === 'hit') setTimeout(() => setTv(v => ({ ...v, fx: v.fx === 'hit' ? '' : v.fx })), 800); }
+  const trKey = st => st && st.trial ? st.trial.i + ':' + st.trial.phase : '';
+  const trAt = key => key && trKey(stRef.current) === key; // 타이머가 돌 때 아직 그 재판·그 단계인가
+  const trNextIf = key => setState(v => trKey(v) === key ? TroemereiNPC.trialStep(TN_WORLD, v, 'NEXT') : v);
+  function trialWrong(key) { if (key && !trAt(key)) return; const cur = stRef.current || state; if (!cur.trial || trLock.current === trKey(cur)) return; const h = TroemereiNPC.trialHit(TN_WORLD, cur); setState(h.state); trLock.current = ''; setTv(v => ({ ...v, drawer: false, fx: h.result })); if (h.result === 'hit') setTimeout(() => setTv(v => ({ ...v, fx: v.fx === 'hit' ? '' : v.fx })), 800); }
   // 정답: 도장(+모순이면 화면 깨짐) → 다음 단계
   // 지금 끝내는 단계가 어떤 쟁점의 마지막 단계면, 그 쟁점의 답 카드가 표시줄로 날아간다
   function flyFor(st, at) { const T = st.trial; if (!T) return null; const TR = TN_WORLD.trials[T.i], ph = TR.phases[at]; if (!ph || !ph.issue) return null;
     let last = -1; TR.phases.forEach((p, i) => { if (p.issue === ph.issue) last = i; }); const k = (TR.issues || []).findIndex(x => x.id === ph.issue);
     return last === at && k >= 0 ? { k, text: TR.issues[k].a } : null; }
   function flyGo(fl) { if (fl) setTimeout(() => setTv(v => ({ ...v, fly: v.fly === fl ? null : v.fly })), 1500); return fl; }
-  function trialRight(label, wait) { const fl = flyFor(state, state.trial.phase); setTv(v => ({ ...v, drawer: false, fx: label || 'ok' })); setTimeout(() => { setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'NEXT')); setTv(v => ({ ...v, ...resetTv, fx: '', fly: flyGo(fl) })); }, wait || 1100); }
-  function trialNext() { const fl = flyFor(state, state.trial.phase); setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'NEXT')); setTv(v => ({ ...v, ...resetTv, fly: flyGo(fl) })); }
+  function trialRight(label, wait) {
+    const key = trKey(state); if (!key || trLock.current === key) return; trLock.current = key; // 연출 대기 중 중복 입력 잠금
+    const fl = flyFor(state, state.trial.phase); setTv(v => ({ ...v, drawer: false, fx: label || 'ok' }));
+    setTimeout(() => { if (!trAt(key)) return; trNextIf(key); setTv(v => ({ ...v, ...resetTv, fx: '', fly: flyGo(fl) })); }, wait || 1100);
+  }
+  function trialNext() { const key = trKey(state); if (!key || trLock.current === key) return; trLock.current = key; const fl = flyFor(state, state.trial.phase); trNextIf(key); setTv(v => ({ ...v, ...resetTv, fly: flyGo(fl) })); }
   // 투표: 나 → 다른 참가자들이 한 명씩. 각자 자기 판단(ph.beliefs, 없으면 정답)대로 찍되, 나를 깊이 믿는 사람(신뢰 ph.follow단계 이상)은 내 표를 따른다.
   // 최다 득표가 하나면 그 사람으로 결정(동률이면 표가 갈림 = 실패). 결정이 정답이면 다음, 아니면 체력 -1.
   function castVote(ph) {
     const me = tv.vote, voters = (ph.voters || TN_WORLD.npcs.map(n => n.id)).filter(id => id !== 'me');
     const votes = [{ id: 'me', pick: me }, ...voters.map(id => ({ id, pick: TroemereiNPC.relLevel(TN_WORLD, state, id, 'trust') >= (ph.follow || 4) ? me : ((ph.beliefs || {})[id] || ph.answer) }))];
     const cnt = {}; votes.forEach(x => { cnt[x.pick] = (cnt[x.pick] || 0) + 1; }); const top = Math.max(...Object.values(cnt)), tops = Object.keys(cnt).filter(k2 => cnt[k2] === top);
-    const result = tops.length === 1 ? tops[0] : '', gap = 520, t0 = votes.length * gap + 500;
+    const result = tops.length === 1 ? tops[0] : '', gap = 520, t0 = votes.length * gap + 500, key = trKey(state); if (tv.voted || trLock.current === key) return;
     setTv(v => ({ ...v, voted: true, votes, vn: 1, result }));
     votes.forEach((_, i) => i && setTimeout(() => setTv(v => ({ ...v, vn: i + 1 })), i * gap));
     setTimeout(() => setTv(v => ({ ...v, rl: 1 })), t0);
     setTimeout(() => setTv(v => ({ ...v, rl: 2 })), t0 + 60);
     setTimeout(() => setTv(v => ({ ...v, rl: 3 })), t0 + (result ? 2700 : 1400));
-    setTimeout(() => result === ph.answer ? trialRight('결정', 900) : (setTv(v => ({ ...v, ...resetTv })), trialWrong()), t0 + (result ? 3900 : 2600));
+    setTimeout(() => { if (!trAt(key)) return; result === ph.answer ? trialRight('결정', 900) : (setTv(v => ({ ...v, ...resetTv })), trialWrong(key)); }, t0 + (result ? 3900 : 2600));
   }
   function trReel(ph, tv) {
     const opts = ph.options, H = 120, idx = Math.max(0, opts.indexOf(tv.result)), strip = Array.from({ length: 7 }, () => opts).flat();
@@ -404,7 +418,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const msg = trText.trim(); if (!msg || busy) return;
     const it = (TN_WORLD.items || []).find(x => x.id === tv.ev), npc = trNpc(ph.npc), TR = TN_WORLD.trials[state.trial.i];
     const next = { ...TroemereiNPC.clone(state), pend: ph.npc, pk: 'R', pc: Array.from(msg).length };
-    const ctx = ['재판: ' + TR.title + ' · 반론 상대 ' + npc.name, trRelLine(next, ph.npc) ? npc.name + ' → 플레이어: ' + trRelLine(next, ph.npc) : '', npc.name + '의 주장: ' + ph.claim, '제시한 증거: ' + (it ? it.name + '(' + it.desc + ')' : '없음'), clueLine(next)];
+    const ctx = ['재판: ' + TR.title + ' · 반론 상대 ' + npc.name, trRelLine(next, ph.npc) ? npc.name + ' → 플레이어: ' + trRelLine(next, ph.npc) : '', npc.name + '의 주장: ' + ph.claim, '제시한 증거: ' + (it ? it.name + '(' + it.desc + ')' : '없음'), settledLine(next), clueLine(next), evidLine(next)];
     const message = TroemereiTalk.handoff({ kind: 'R', target: npc.name, where: '재판장', time: next.day + '일 ' + trHM(next.clock), marks: TroemereiNPC.markers(TN_WORLD, next), ctx, text: msg, code: TroemereiCodec.pack(TN_WORLD, next) });
     if (typeof sendMessage !== 'function') { setManual(message); return; }
     try { const r = sendMessage(message); setSent(message); setTrText(''); if (r && typeof r.then === 'function') r.then(v => { if (v === false) setSent(''); }, () => { setSent(''); setToast('전송 실패 · 다시 보내 주세요'); }); }
@@ -558,7 +572,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div key={T.phase + '-' + speakerId + '-' + (stageFx || (cur && cur.cut) ? tv.idx : '') + (tv.reply ? 'r' : '')} className={'tr-stage' + (mini ? ' mini' : '') + (split ? ' split' : '') + (stageFx ? ' fx-' + stageFx : '')}>
           {TR_A.bg && TR_A.bg['재판장'] ? <img src={trUrl(TR_A.bg['재판장'])} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .6 }} /> : <div className="tr-spot-light" />}
           {!mini && ch ? <div className="tr-actor"><div className="tr-actor-in">{trSprite(ch, trFace(ch, cur ? cur.face : ''), u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div></div> : null}
-          {!mini && speakerId === 'host' ? <div className="tr-actor host"><div className="tr-spot" /><div className="tr-spot-floor" />{trHostSil()}</div> : null}
+          {!mini && speakerId === 'host' ? <div className="tr-actor host"><div className="tr-hspot" /><div className="tr-hspot-floor" />{trHostSil()}</div> : null}
           {split ? <div className="tr-split"><div className="tr-split-l">{trMeSil()}<b>나</b></div><div className="tr-split-seam" /><div className="tr-split-tag">반론</div><b className="tr-split-r">{trNpc(ph.npc).name}</b></div> : null}
           {stageFx === 'flash' ? <div className="tr-flash" /> : null}
           {cur && cur.cut ? <div className="tr-cutin"><div className="tr-cutband">{trPortrait(cur.who, 70, 84)}<b>{cur.cut}!</b></div></div> : null}

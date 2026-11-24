@@ -315,6 +315,15 @@ test('세계 지문: 공지·사건·갈래·장면 조건이 바뀌면 이전 �
   assert.equal(mut(w => { w.items[0].desc = '다른 설명'; }), '허용');
   assert.equal(mut(w => { w.npcs[0].notes[0].text = '다른 메모'; }), '허용');
 });
+test('시선 대칭: 같은 방의 모든 두 칸에서 A가 B를 보면 B도 A를 본다', () => {
+  const s = E.createWorld(W); let bad = 0, n = 0;
+  for (let y = 0; y < W.map.height; y++) for (let x = 0; x < W.map.width; x++) {
+    if (!E.walkable(W, x, y)) continue;
+    for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const b = { x: x + dx, y: y + dy }; if (!E.walkable(W, b.x, b.y)) continue; n++;
+      if (E.lineOfSight(W, { x, y }, b) !== E.lineOfSight(W, b, { x, y })) bad++; }
+  }
+  assert.ok(n > 1000); assert.equal(bad, 0);
+});
 test('관계: 시작값·단계·첫 대화 보너스·AI r(±1단계 제한·대상만)·사건/단계 보상·코드 왕복', () => {
   let s = E.createWorld(W);
   assert.equal(E.relLevel(W, s, 'contact', 'trust'), 2, '도윤 신뢰 35 → 경계(2)');
