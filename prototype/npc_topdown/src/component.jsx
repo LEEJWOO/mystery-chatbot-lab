@@ -186,6 +186,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   const [sheet, setSheet] = useState('');
   const [drop, setDrop] = useState(false);
   const [text, setText] = useState('');
+  const [pres, setPres] = useState(''); // 대화 중 제시할 증거(소지품 id)
   const [codeText, setCodeText] = useState('');
   const [toast, setToast] = useState(() => {
     if (!boot.base) return '';
@@ -321,7 +322,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     return TroemereiNPC.applyTalk(TN_WORLD, base, kind === 'I' ? TroemereiTalk.partialSeconds(lines, fi, fs, boot.base.pc) : full);
   }
   function send(kind, opt) {
-    const msg = (opt && opt.text) || text.trim(); if (!msg || busy) return;
+    const pIt = !opt && pres ? (TN_WORLD.items || []).find(x => x.id === pres) : null;
+    const msg = (opt && opt.text) || text.trim() || (pIt ? '(' + pIt.name + '을(를) 내민다)' : ''); if (!msg || busy) return;
     const chars = Array.from(msg).length;
     let next = applyReply(kind), target = '', ctx = [], cut = '';
     if (kind === 'I') { const [os, oc] = TroemereiTalk.origPos(lines, farRef.current[0], farRef.current[1]); cut = `${os + 1}/${parsed.length}:${oc}`; }
@@ -329,9 +331,10 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     if (id) {
       next = TroemereiNPC.dispatch(TN_WORLD, next, { type: 'TALK_REQUEST', npcId: id, kind, chars });
       if (next.pend !== id) { setToast('지금은 말을 걸 수 없습니다'); return; }
-      target = trNpc(id).name; ctx = [...npcContext(next, id), opt && opt.situation, clueLine(next), evidLine(next)];
+      target = trNpc(id).name; ctx = [...npcContext(next, id), opt && opt.situation, pIt ? '제시한 증거: ' + pIt.name + '(' + pIt.desc + ')' : '', clueLine(next), evidLine(next)];
+      next = { ...next, pv: pIt ? pIt.id : '' };
     } else {
-      next = { ...TroemereiNPC.clone(next), pk: kind === 'T' ? 'P' : kind, pc: chars, pend: null };
+      next = { ...TroemereiNPC.clone(next), pk: kind === 'T' ? 'P' : kind, pc: chars, pend: null, pv: '' };
       ctx = [presentLine(next), ...presentCtx(next), clueLine(next), evidLine(next)];
     }
     const code = TroemereiCodec.pack(TN_WORLD, next);
@@ -342,14 +345,14 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const fail = err => { setState(prev.state); setConsumed(prev.consumed); setSent(''); setToast('전송 실패: ' + ((err && err.message) || '알 수 없는 오류') + ' · 다시 보내 주세요'); };
     try {
       const r = sendMessage(message);
-      setState(next); setConsumed(true); setSent(message); setText(''); setDrop(false);
+      setState(next); setConsumed(true); setSent(message); setText(''); setDrop(false); setPres('');
       if (r && typeof r.then === 'function') r.then(v => { if (v === false) fail(); }, fail);
     } catch (e) { fail(e); }
   }
   function heardToast() { const h = heardRef.current; if (h && h.accepted.length) setToast('단서 추가: ' + trNpc(boot.base.pend).name + '의 증언 ' + h.accepted.length + '건'); }
   function endTalk() {
     if (!consumed) { const nx = applyReply('T'); setState(nx); setConsumed(true); heardToast(); }
-    setTalk(null); setText(''); setDrop(false);
+    setTalk(null); setText(''); setDrop(false); setPres('');
   }
   function talkAction(type) {
     let next = applyReply(talk.cut ? 'I' : 'T'); setConsumed(true); heardToast();
@@ -645,12 +648,14 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
             {drop && n ? <div className="tr-drop">
               {n.mode === 'accompany' ? <button onClick={() => talkAction('RELEASE')}>동행 종료</button> : <button disabled={n.mode === 'busy' || (n.intent && !n.intent.interruptible)} onClick={() => talkAction('ACCOMPANY')}>동행 요청</button>}
               <button onClick={() => talkAction('LOOK')}>관찰 (0초)</button>
-              <button disabled>증거 제시 (준비 중)</button>
+              {(TN_WORLD.items || []).filter(it => (state.player.items || {})[it.id] !== undefined).map(it => <button key={it.id} className={pres === it.id ? 'on' : ''} onClick={() => { setPres(v => v === it.id ? '' : it.id); setDrop(false); }}>제시: {it.name}</button>)}
+              {!(TN_WORLD.items || []).some(it => (state.player.items || {})[it.id] !== undefined) ? <button disabled>제시할 증거 없음</button> : null}
             </div> : null}
             <div className="tr-in-top">{n ? <button onClick={() => setDrop(v => !v)}>행동 ▾</button> : null}<button onClick={() => setText(v => v + '**')}>*</button><button onClick={() => setText(v => v + '""')}>"</button>
+              {pres ? <button className="tr-pres" onClick={() => setPres('')}>제시: {((TN_WORLD.items || []).find(x => x.id === pres) || {}).name} ✕</button> : null}
               <span style={{ flex: 1 }} />{talk.cut ? <span className="tr-mut">끊은 뒤 대사는 무효</span> : !line ? <button onClick={endTalk}>대화 끝</button> : null}</div>
             <div style={{ display: 'flex', gap: 4 }}><textarea className="tr-ta" rows={2} value={text} placeholder={n ? def.name + '에게 할 말이나 행동' : '이어서 할 행동'} onChange={e => setText(e.target.value.slice(0, 500))} />
-              <button className="tr-send" disabled={!text.trim()} onClick={() => send(talk.cut ? 'I' : 'T')}>보내기</button></div>
+              <button className="tr-send" disabled={!text.trim() && !pres} onClick={() => send(talk.cut ? 'I' : 'T')}>보내기</button></div>
           </div> : null}
           {sent ? <div className="tr-box" style={{ bottom: 5 }}><div className="tr-line" style={{ height: 'auto' }}>전달했습니다. AI 응답의 새 화면에서 이어집니다.</div></div> : null}
           {manual ? <div className="tr-box" style={{ bottom: 5 }}><div className="tr-mut">자동 전송을 쓸 수 없는 환경입니다. 아래 내용을 복사해 채팅 입력창에 보내 주세요.</div>
@@ -688,6 +693,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       </div>
       <div className="tr-hud"><span className="tr-pill tr-area"><i />{RM.name}</span><span className="tr-pill tr-time">{state.day}일 {TroemereiNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
         <button className="tr-hbtn" onClick={() => setSheet('rest')}>휴식</button><button className="tr-hbtn" onClick={() => setSheet('note')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>
+      <div className="tr-offnote">입력창에 직접 치면 마지막 전송 시점으로 돌아갑니다</div>
       <div className="tr-toast">{toast || (recent ? trHM(recent.time) + ' ' + recent.text : nextNote ? '다음 공지 ' + trHM(nextNote.t) + ' ' + nextNote.n.text + (nextNote.n.place ? ' · ' + nextNote.n.place : '') : '인물·물건을 누르면 행동을 고를 수 있다')}</div>
       {caller && !found && !menu && !preview ? <div className="tr-call"><div><b>{trJosa(trNpc(caller.id).name, '이', '가')}</b> 다가와 말을 걸었다{wokeBy === caller.id ? ' · 깜빡 잠들어 있었다' : ''}</div>
         <div style={{ display: 'flex', gap: 5, marginTop: 5 }}><button className="tr-callyes" disabled={busy} onClick={() => answerCall(caller.id)}>돌아본다</button><button disabled={busy} onClick={() => { act({ type: 'DISMISS_CALL', npcId: caller.id }); setWokeBy(''); }}>나중에</button></div></div> : null}

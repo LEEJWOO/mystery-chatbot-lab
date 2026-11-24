@@ -5,7 +5,7 @@ const TroemereiCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 7;
+  const VERSION = 8;
   const KINDS = ['', 'T', 'I', 'A', 'P', 'R'];
 
   function hash32(text) { let h = 0x811c9dc5; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
@@ -99,7 +99,7 @@ const TroemereiCodec = (() => {
     const fb = Math.ceil(m.flags.length / 8);
     for (let i = 0; i < fb; i++) { let v = 0; for (let j = 0; j < 8; j++) if (s.flags[m.flags[i * 8 + j]]) v |= 1 << j; o.byte(v); }
     o.uint(s.pend ? s.npcs.findIndex(n => n.id === s.pend) + 1 : 0);
-    o.byte(Math.max(0, KINDS.indexOf(s.pk || ''))); o.uint(s.pc || 0);
+    o.byte(Math.max(0, KINDS.indexOf(s.pk || ''))); o.uint(s.pc || 0); o.uint(s.pv ? (w.items || []).findIndex(x => x.id === s.pv) + 1 : 0); // 대화 중 제시한 증거
     o.byte(s.player.x); o.byte(s.player.y); putRoute(o, s.player, s.player.route); putTime(o, s.player.route.length ? s.player.nextMoveAt : 0, clock);
     putMem(o, s.player.mem, m, clock);
     for (const it of w.items || []) { const v = (s.player.items || {})[it.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 0 = 아직 안 가짐
@@ -138,7 +138,7 @@ const TroemereiCodec = (() => {
     s.revision = r.uint(); s.day = r.uint(); const clock = s.clock = r.uint(); s.rng = r.u32();
     s.flags = {}; const fb = Math.ceil(m.flags.length / 8);
     for (let i = 0; i < fb; i++) { const v = r.byte(); for (let j = 0; j < 8 && i * 8 + j < m.flags.length; j++) s.flags[m.flags[i * 8 + j]] = !!(v & (1 << j)); }
-    const pend = r.uint(); s.pk = KINDS[r.byte()] || ''; s.pc = r.uint();
+    const pend = r.uint(); s.pk = KINDS[r.byte()] || ''; s.pc = r.uint(); const pv = r.uint(); s.pv = pv ? ((w.items || [])[pv - 1] || {}).id || '' : '';
     const px = r.byte(), py = r.byte();
     s.player = { x: px, y: py }; s.player.route = getRoute(r, s.player); s.player.nextMoveAt = getTime(r, clock);
     s.player.mem = getMem(r, m, clock); s.player.seen = {}; s.player.items = {};

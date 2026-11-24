@@ -343,6 +343,7 @@ const TroemereiNPC = (() => {
     const kinds=rule.kinds||(rule.kind?[rule.kind]:null);
     if(kinds&&!kinds.includes(state.pk))return {state,accepted:false,reason:'대화 종류가 맞지 않음'};
     if(rule.npcs&&!rule.npcs.includes(state.pend))return {state,accepted:false,reason:'이 인물에게는 인정되지 않음'};
+    if(rule.present&&state.pv!==rule.present)return {state,accepted:false,reason:'그 증거를 제시하지 않음'};
     if(rule.flag&&state.flags[rule.flag])return {state,accepted:false,reason:'이미 기록됨'};
     if(rule.trial){const T=state.trial,tr=T&&(w.trials||[])[T.i];
       if(!tr||tr.code!==rule.trial||T.phase!==rule.phase)return {state,accepted:false,reason:'지금 재판 단계와 맞지 않음'};}

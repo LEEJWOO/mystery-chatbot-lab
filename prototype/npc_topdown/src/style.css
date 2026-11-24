@@ -250,3 +250,5 @@
 .tr-relpips{display:flex;gap:2px}.tr-relpips i{width:9px;height:9px;border-radius:2px;background:#d8ccb4}.tr-relpips i.on.trust{background:#4a8ad0}.tr-relpips i.on.affection{background:#d05a7a}
 .tr-relrow em{font-style:normal;color:#5a4a3a}.tr-relrow button{height:18px;min-width:20px;padding:0 4px;font-size:11px}
 .tr-relbox{display:flex;flex-direction:column;padding:3px 6px;border-radius:6px;background:#ffffff0d}.tr-relbox .tr-relrow>span:first-child,.tr-relbox .tr-relrow em{color:#a9b6c2}
+.tr-offnote{position:absolute;right:6px;bottom:3px;font-size:9px;color:#c9d5e0;opacity:.55;pointer-events:none;text-shadow:0 1px 2px #000}
+.tr-card .tr-pres{border-color:#f2c46d;color:#f2d79e}.tr-drop button.on{border-color:#f2c46d}
