@@ -440,6 +440,20 @@
      "onAccompany": "cancel"
     },
     {
+     "id": "handover_taesu",
+     "kind": "meet",
+     "targetNpc": "courier",
+     "ifFlag": "meeting_prevented",
+     "from": "09:00",
+     "until": "12:00",
+     "durationSeconds": 30,
+     "priority": 95,
+     "weight": 1,
+     "once": true,
+     "interruptible": true,
+     "onComplete": "yuri_handover"
+    },
+    {
      "id": "garden_break",
      "kind": "visit",
      "landmark": "garden",
@@ -609,7 +623,7 @@
      "id": "deliver_for_yuri",
      "kind": "meet",
      "targetNpc": "contact",
-     "ifFlag": "meeting_prevented",
+     "ifFlag": "memo_with_taesu",
      "from": "09:00",
      "until": "12:00",
      "durationSeconds": 40,
@@ -704,6 +718,17 @@
    "setFlag": "memo_handed",
    "publicLog": "태수가 도윤에게 무언가를 건넸다.",
    "fact": "taesu_delivered"
+  },
+  {
+   "id": "yuri_handover",
+   "when": {
+    "npc": "companion",
+    "task": "handover_taesu",
+    "targetNpc": "courier"
+   },
+   "setFlag": "memo_with_taesu",
+   "publicLog": "유리가 태수에게 무언가를 건넸다.",
+   "fact": "yuri_handover"
   }
  ],
  "flagNames": [
@@ -714,7 +739,8 @@
   "trial_only",
   "trial_memo_done",
   "memo_handed",
-  "order_changed"
+  "order_changed",
+  "memo_with_taesu"
  ],
  "facts": [
   {
@@ -730,8 +756,7 @@
   {
    "id": "missed_doyun",
    "self": {
-    "companion": "플레이어와 동행하게 되어, 도윤에게 줄 업무 메모를 태수에게 맡겼다",
-    "courier": "유리에게 도윤 몫의 업무 메모를 받아 두었다"
+    "companion": "플레이어와 동행하느라 도윤에게 메모를 직접 전하지 못했다"
    },
    "seen": "",
    "player": "",
@@ -764,6 +789,16 @@
    },
    "seen": "태수가 도윤에게 종이를 건네는 걸 봤다",
    "player": "태수가 도윤에게 종이를 건넸다"
+  },
+  {
+   "id": "yuri_handover",
+   "code": "H3Y6",
+   "self": {
+    "companion": "도윤에게 줄 업무 메모를 태수에게 맡겼다",
+    "courier": "유리에게 도윤 몫의 업무 메모를 받았다"
+   },
+   "seen": "유리가 태수에게 종이를 건네는 걸 봤다",
+   "player": "유리가 태수에게 종이를 건넸다"
   }
  ],
  "chapter": 1,
@@ -788,6 +823,17 @@
    ],
    "trial": "T1",
    "phase": 6
+  },
+  "T1_R1H": {
+   "kinds": [
+    "R"
+   ],
+   "npcs": [
+    "librarian"
+   ],
+   "trial": "T1",
+   "phase": 6,
+   "hold": true
   }
  },
  "markers": [
@@ -887,7 +933,7 @@
    "caption": "유리가 자료실 선반에 무언가를 두고 갔다."
   }
  ],
- "dataVersion": 4,
+ "dataVersion": 5,
  "trials": [
   {
    "id": "memo",
@@ -897,6 +943,7 @@
    "flag": "trial_memo_done",
    "evidence": [
     "memo_copy",
+    "memo_note",
     "button",
     "work_order"
    ],
@@ -999,14 +1046,17 @@
       {
        "who": "librarian",
        "text": "순서표에 붙은 메모, 글씨가 도윤 씨 본인 글씨 같던데요. 혼자 바꾸고 잊은 거 아닐까요?",
-       "answer": "memo_copy"
+       "answers": [
+        "memo_note",
+        "memo_copy"
+       ]
       },
       {
        "who": "contact",
        "text": "……난 그런 메모 쓴 적 없어."
       }
      ],
-     "win": "메모 사본의 글씨는 도윤이 아니라 유리의 것이다.",
+     "win": "순서표에 붙은 메모(원본)와 사본 모두 둥근 글씨에 「유」 서명이다. 도윤의 각진 글씨가 아니다.",
      "issue": "i1"
     },
     {
@@ -1020,13 +1070,13 @@
       },
       {
        "who": "companion",
-       "text": "에, 에이, 그 사본은 그냥 내가 정리하려고 둔 거고!",
+       "text": "에, 에이, 그건 그냥 내가 쓴 업무 메모고!",
        "face": "놀람",
        "fx": "zoom"
       },
       {
        "who": "contact",
-       "text": "……사본의 글씨가 유리 것이라면, 원본도 확인해 볼 가치가 있어.",
+       "text": "……글씨가 유리 것이라면, 사본과 원본을 맞대 볼 가치가 있어.",
        "alt": [
         {
          "if": {
@@ -1037,7 +1087,7 @@
            ]
           }
          },
-         "text": "……역시 당신은 눈이 빠르군. 원본도 대조해 보지.",
+         "text": "……역시 당신은 눈이 빠르군. 사본과 원본을 맞대 보지.",
          "face": "웃음"
         },
         {
@@ -1049,7 +1099,7 @@
            ]
           }
          },
-         "text": "……사본 하나로 단정하긴 이르다. 원본이 먼저다."
+         "text": "……글씨 하나로 단정하긴 이르다. 사본과 원본을 맞대 봐야지."
         }
        ]
       },
@@ -1075,7 +1125,7 @@
       {
        "title": "바뀐 작업 순서표",
        "parts": [
-        "09:10 메모 부착",
+        "{{fact:memo_attached}} 메모 부착",
         "부착 확인: 도윤",
         "오후 작업 순서가 바뀜"
        ]
@@ -1099,7 +1149,7 @@
         2,
         0
        ],
-       "fact": "메모 사본의 글씨는 유리의 것이다"
+       "fact": "사본의 글씨는 명부에 적힌 유리의 글씨체와 같다"
       },
       {
        "a": [
@@ -1118,10 +1168,10 @@
         1
        ],
        "b": [
-        2,
-        1
+        1,
+        2
        ],
-       "fact": "도윤은 메모를 붙였을 뿐, 쓴 사람은 아니다"
+       "fact": "도윤은 붙인 메모대로 작업 순서를 바꿨다"
       }
      ],
      "issue": "i1"
@@ -1166,7 +1216,8 @@
       "librarian": {
        "trust": 6
       }
-     }
+     },
+     "holdEvent": "T1_R1H"
     },
     {
      "type": "talk",
@@ -1175,11 +1226,28 @@
        "who": "librarian",
        "text": "……유리 씨가 직접 건네고, 같은 글씨로 사본까지 남겼다면 흉내 낼 이유가 없네요. 제가 성급했어요.",
        "face": "놀람",
-       "speed": 0.8
+       "speed": 0.8,
+       "alt": [
+        {
+         "if": {
+          "hold": "i1"
+         },
+         "text": "……흉내 냈다고 단정할 근거가 없다는 건 인정할게요. 누가 썼는지는 끝까지 지켜보죠.",
+         "face": "놀람"
+        }
+       ]
       },
       {
        "who": "contact",
-       "text": "……정리하자면, 메모는 유리가 써서 내게 건넸다. 나는 [[받았을 뿐]]이야."
+       "text": "……정리하자면, 메모는 유리가 써서 내게 건넸다. 나는 [[받았을 뿐]]이야.",
+       "alt": [
+        {
+         "if": {
+          "hold": "i1"
+         },
+         "text": "……쓴 사람은 아직 정해지지 않았다. 다만 내가 받은 건 사실이야."
+        }
+       ]
       },
       {
        "who": "host",
@@ -1197,7 +1265,7 @@
      "lines": [
       {
        "who": "host",
-       "text": "아침 내내 작업실에 누가 있었는지, 여러분의 말씀을 다시 들어 보지요."
+       "text": "태수 님, 아침에 작업실을 비운 적은 없었는지 다시 여쭙지요."
       },
       {
        "who": "courier",
@@ -1560,8 +1628,8 @@
      "beliefs": {
       "companion": "companion",
       "contact": "companion",
-      "librarian": "contact",
-      "courier": "contact"
+      "librarian": "companion",
+      "courier": "companion"
      }
     },
     {
@@ -1662,12 +1730,13 @@
     {
      "id": "i1",
      "q": "메모를 쓴 사람은?",
-     "a": "유리"
+     "a": "유리",
+     "confirmAt": 21
     },
     {
      "id": "i2",
-     "q": "아침에 작업실을 지킨 사람은?",
-     "a": "아무도 없었다"
+     "q": "태수는 아침 내내 작업실에 있었나?",
+     "a": "아니다, 게시판에도 갔다"
     },
     {
      "id": "i3",
@@ -1696,7 +1765,17 @@
       {
        "who": "host",
        "text": "모이셨군요. 오늘 아침, 작업실의 [[작업 순서표]]가 누군가의 메모로 바뀌어 있었습니다.",
-       "fx": "flash"
+       "fx": "flash",
+       "alt": [
+        {
+         "if": {
+          "not": {
+           "allHere": true
+          }
+         },
+         "text": "모이신 분들부터 말씀드리지요. 오늘 아침, 작업실의 [[작업 순서표]]가 누군가의 메모로 바뀌어 있었습니다."
+        }
+       ]
       },
       {
        "who": "contact",
@@ -1713,12 +1792,14 @@
          },
          "text": "……붙인 건 나다. 받은 대로 붙였을 뿐이야."
         }
-       ]
+       ],
+       "here": true
       },
       {
        "who": "courier",
        "text": "근데 그 메모, 누가 쓴 거예요?",
-       "face": "놀람"
+       "face": "놀람",
+       "here": true
       },
       {
        "who": "companion",
@@ -1729,10 +1810,11 @@
          "if": {
           "flag": "meeting_prevented"
          },
-         "text": "난 아침 내내 같이 다녔잖아. 그치?",
-         "face": "웃음"
+         "text": "난 그 메모, 직접 전하러 가지는 못했어.",
+         "face": "놀람"
         }
-       ]
+       ],
+       "here": true
       },
       {
        "who": "host",
@@ -1747,11 +1829,11 @@
     },
     {
      "type": "investigate",
-     "minutes": 40,
      "grant": [
       "work_order"
      ],
-     "declare": true
+     "declare": true,
+     "afterFound": 50
     },
     {
      "type": "talk",
@@ -1809,7 +1891,7 @@
      "lines": [
       {
        "who": "host",
-       "text": "메모는 작업 순서표에 붙어 있었습니다. 다만 오늘 아침 [[유리 님]]은 줄곧 한 분과 함께 다니셨지요."
+       "text": "메모는 작업 순서표에 붙어 있었습니다. 다만 오늘 아침 [[유리 님]]은 작업실에 직접 가지 않으셨다지요."
       },
       {
        "who": "librarian",
@@ -1829,7 +1911,7 @@
      "lines": [
       {
        "who": "courier",
-       "text": "유리 씨는 작업실 근처에도 안 왔어요. 아침 내내 다른 데 있었다니까요."
+       "text": "유리 씨는 작업실에 안 왔어요. 그건 확실해요."
       },
       {
        "who": "librarian",
@@ -1848,7 +1930,7 @@
      "lines": [
       {
        "who": "companion",
-       "text": "맞아, 그거 내가 쓴 거야. 근데 난 계속 같이 있었는데……?",
+       "text": "맞아, 그거 내가 쓴 거야. 근데 직접 가져가지는 않았는데……?",
        "face": "놀람"
       },
       {
@@ -1972,7 +2054,13 @@
        "who": "",
        "text": "소동은 웃음으로 끝났다."
       }
-     ]
+     ],
+     "beliefs": {
+      "companion": "courier",
+      "contact": "courier",
+      "librarian": "courier",
+      "courier": "courier"
+     }
     }
    ]
   }
@@ -2033,7 +2121,8 @@
     "weight": 1,
     "interruptible": false,
     "once": true
-   }
+   },
+   "wait": 600
   }
  ]
 }

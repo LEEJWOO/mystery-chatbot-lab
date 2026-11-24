@@ -5,7 +5,7 @@ const TroemereiCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 9;
+  const VERSION = 10;
   const KINDS = ['', 'T', 'I', 'A', 'P', 'R'];
 
   function hash32(text) { let h = 0x811c9dc5; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; }
@@ -104,12 +104,13 @@ const TroemereiCodec = (() => {
     o.byte(s.player.x); o.byte(s.player.y); putRoute(o, s.player, s.player.route); putTime(o, s.player.route.length ? s.player.nextMoveAt : 0, clock);
     putMem(o, s.player.mem, m, clock);
     for (const it of w.items || []) { const v = (s.player.items || {})[it.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 0 = 아직 안 가짐
+    { let gv = 0; (w.items || []).forEach((it, i) => { if ((s.player.given || {})[it.id]) gv += 2 ** i; }); o.uint(gv); } // 지배인이 지급한 자료
     for (const sc of w.scenes || []) { const v = (s.player.scenes || {})[sc.id]; o.uint(v === undefined ? 0 : clock - v + 1); } // 목격 장면 해금 시각
     let tk = 0; w.npcs.forEach((n, i) => { if ((s.player.talked || {})[n.id] !== undefined) tk |= 1 << i; }); o.uint(tk); // 말 걸어 본 인물
     const rs = (w.rel || {}).scales || [];
     for (const spec of w.npcs) for (const sc of rs) if (spec.rel && spec.rel[sc.id] !== undefined) { const v = ((s.player.rel || {})[spec.id] || {})[sc.id]; o.uint(Math.max(0, Math.min(100, v === undefined ? spec.rel[sc.id] : v))); } // 관계 값
     for (const c of w.cases || []) { const v = (s.cases || {})[c.id]; if (!v) o.uint(0); else { o.uint(v[0]); o.uint(Math.max(0, clock - v[1])); o.uint(v[2]); } } // 사건 진행
-    if (s.trial) { o.uint(s.trial.i + 1); o.uint(s.trial.phase); o.uint(s.trial.hp); o.uint(s.trial.sub); o.uint(s.trial.failed ? 1 : 0); } else o.uint(0); // 재판 진행
+    if (s.trial) { o.uint(s.trial.i + 1); o.uint(s.trial.phase); o.uint(s.trial.hp); o.uint(s.trial.sub); o.uint(s.trial.failed ? 1 : 0); o.uint(s.trial.hold || 0); } else o.uint(0); // 재판 진행
     for (const spec of w.npcs) { const v = (s.player.seen || {})[spec.id]; if (!v) o.uint(0); else { o.uint(v[0] + 2); o.uint(Math.max(0, clock - v[1])); } }
     for (const spec of w.npcs) {
       const n = s.npcs.find(x => x.id === spec.id);
@@ -145,11 +146,12 @@ const TroemereiCodec = (() => {
     s.player = { x: px, y: py }; s.player.route = getRoute(r, s.player); s.player.nextMoveAt = getTime(r, clock);
     s.player.mem = getMem(r, m, clock); s.player.seen = {}; s.player.items = {};
     for (const it of w.items || []) { const v = r.uint(); if (v) s.player.items[it.id] = clock - (v - 1); }
+    s.player.given = {}; { let gv = r.uint(); (w.items || []).forEach((it, i) => { if (Math.floor(gv / 2 ** i) % 2) s.player.given[it.id] = 1; }); }
     s.player.scenes = {}; for (const sc of w.scenes || []) { const v = r.uint(); if (v) s.player.scenes[sc.id] = clock - (v - 1); }
     s.player.talked = {}; const tk = r.uint(); w.npcs.forEach((n, i) => { if (tk & (1 << i)) s.player.talked[n.id] = 0; });
     s.player.rel = {}; for (const spec of w.npcs) { const o = {}; for (const sc of ((w.rel || {}).scales || [])) if (spec.rel && spec.rel[sc.id] !== undefined) o[sc.id] = r.uint(); s.player.rel[spec.id] = o; }
     s.cases = {}; for (const c of w.cases || []) { const st = r.uint(); if (st) s.cases[c.id] = [st, clock - r.uint(), r.uint()]; }
-    const ti = r.uint(); s.trial = ti ? { i: ti - 1, phase: r.uint(), hp: r.uint(), sub: r.uint(), failed: r.uint() } : null;
+    const ti = r.uint(); s.trial = ti ? { i: ti - 1, phase: r.uint(), hp: r.uint(), sub: r.uint(), failed: r.uint(), hold: r.uint() } : null;
     if (s.trial && !(w.trials || [])[s.trial.i]) throw Error('상태 코드의 재판 번호가 세계 데이터에 없습니다');
     for (const spec of w.npcs) { const a = r.uint(); if (a) s.player.seen[spec.id] = [a - 2, clock - r.uint()]; }
     s.npcs = w.npcs.map(() => {
