@@ -290,6 +290,7 @@ function trTyped(segs, n) {
   return out;
 }
 // 화면이 깨지는 조각(반론·모순 연출)
+const trItem = id => TN_WORLD.items.find(x => x.id === id);
 // 증거 그림: 자산에 그림이 있으면 그것, 없으면 종류별 임시 아이콘
 function trItemPic(it, size) {
   const u = ((TR_A.items || {})[it.id]);
@@ -358,8 +359,6 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   // 반론: 상대 주장이 흐르다(0) → 끊고 들어가는 컷인(1) → 반론 입력(2)
   useEffect(() => { const R = rbRef.current; if (!R) return; const id = setTimeout(() => setTv(v => { const g = v.g || {};
     if ((g.rb || 0) === 0) { const rs = (g.rs || 0) + 1; return { ...v, g: { ...g, rs, rb: rs > R.cut ? 1 : 0 } }; } return g.rb === 1 ? { ...v, g: { ...g, rb: 2 } } : v; }), R.rb === 1 ? 1150 : R.ms); return () => clearTimeout(id); });
-  // 기억 현상: 누르고 있는 동안 현상이 진행된다
-  useEffect(() => { if (!devRef.current) return; const id = setTimeout(() => setTv(v => ({ ...v, g: { ...v.g, dev: Math.min(100, ((v.g || {}).dev || 0) + 2) } })), 45); return () => clearTimeout(id); });
   // 논스톱 증언: 한 글자씩 천천히 → 잠시 머문 뒤 다음 사람 → 끝나면 처음부터(멈춤·발사 중엔 정지)
   useEffect(() => { const N = nsRef.current; if (!N) return; const id = setTimeout(() => setTv(v => { const g = v.g || {}, li = g.li || 0, sh = (g.sh || 0) + 1;
     return { ...v, g: sh > N.lens[li] + N.hold ? { ...g, li: (li + 1) % N.lens.length, sh: 0 } : { ...g, sh } }; }), N.ms); return () => clearTimeout(id); });
@@ -387,7 +386,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   const [sent, setSent] = useState('');
   const [scale, setScale] = useState(1);
   const [badImg, setBadImg] = useState({}); // 불러오지 못한 그림은 임시 그림으로 대체
-  const rbRef = useRef(null), devRef = useRef(null);
+  const rbRef = useRef(null);
   const nsBox = useRef(null), nsGun = useRef(null), nsRef = useRef(null);
   const outRef = useRef(null), padRef = useRef(null), svgRef = useRef(null), farRef = useRef([0, 0]), heardRef = useRef(null);
   // 걷기 연출: 인물별 직전 칸·방향·걸음 수. 칸이 바뀌면 그쪽을 보고 한 걸음 걷는다(우는 좌 그림을 뒤집음).
@@ -408,7 +407,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     if (typeof ResizeObserver === 'function' && outRef.current) { const ro = new ResizeObserver(fit); ro.observe(outRef.current); return () => ro.disconnect(); }
     if (typeof window !== 'undefined') { window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit); }
   }, []);
-  typeRef.current = null; nsRef.current = null; rbRef.current = null; devRef.current = null; // 재판 화면이 그려질 때만 다시 채운다
+  typeRef.current = null; nsRef.current = null; rbRef.current = null; // 재판 화면이 그려질 때만 다시 채운다
   const tlines = talk && talk.local ? talk.local : lines; // 디버그 시험 대사는 AI 응답과 따로(시간·기억에 반영 안 함)
   const line = talk && !talk.fresh && !talk.done ? tlines[talk.idx] : null;
   const segsL = line ? trSegs(line.text) : [], chars = Array.from(segsL.map(g => g.t).join('')); // 강조 표기를 뺀 실제 글자
@@ -714,33 +713,42 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       {S ? <div className={'tr-bul ' + S.kind + (S.back ? ' back' : '') + (S.ok ? ' ok' : '')} style={{ '--x0': S.x0 + 'px', '--y0': S.y0 + 'px', '--x1': S.x1 + 'px', '--y1': S.y1 + 'px' }}><span className={'tr-blade' + (S.kind === 'take' || (sel && sel.k === 'w') ? ' word' : '')}>{S.t}</span></div> : null}
     </div>;
   }
-  // ---------- 기억 현상: 암실에서 사진을 현상하듯 → 흐린 곳을 확대해 증거로 초점을 맞춘다 ----------
-  function trDevelop(ph, evid) {
-    const g = tv.g || {}, dev = g.dev || 0, dn = g.done || [], left = ph.spots.length - dn.length, bg = trUrl((TR_A.bg || {})[ph.bg]), ch = (TR_A.chars || {})[ph.who];
-    const setG = o => setTv(v => ({ ...v, g: { ...v.g, ...o } })), wet = dev < 100;
-    devRef.current = g.hold && wet ? 1 : null;
-    const k = Math.max(0, Math.min(evid.length - 1, g.ei || 0)), it = evid[k], sp = g.pick !== undefined ? ph.spots[g.pick] : null;
-    const f = dev / 100, clear = !wet && left === 0;
-    const imgF = wet ? `grayscale(1) contrast(${0.2 + f * 0.9}) brightness(${2.2 - f * 1.25})` : clear ? 'none' : 'grayscale(.85) sepia(.35) contrast(1.05)';
-    const focus = () => { if (!sp || !it) return; if (sp.answer === it.id) { setG({ fix: g.pick }); const at = g.pick; setTimeout(() => setG({ done: [...dn, at], pick: undefined, fix: undefined }), 750); } else trialWrong(); };
+  // ---------- 꿈 조각 잇기: 사선으로 나뉜 '전 → 후' 두 장면. 「?」 칸만 바꿀 수 있다 ----------
+  // 장면 = { bg, who, pose, obj, at }. rounds[i].ask = [['a'|'b', 칸], ...]
+  function trDream(ph) {
+    const g = tv.g || {}, ri = Math.min(state.trial.sub || 0, ph.rounds.length - 1), R = ph.rounds[ri], pick = (g.r || {})[ri] || {};
+    const OPT = { who: [...(ph.cast || []), ''], pose: ['서 있음', '달림', '건넴'], at: ['손', '바닥', '선반', '탁자', '순서표'], bg: ph.rooms || ['자료실', '작업실', '정원', '광장'], obj: [...(ph.objs || []), ''] };
+    const NAME = { who: '누가', pose: '자세', at: '물건 자리', bg: '장소', obj: '물건' }, ask = R.ask.map(([side, f]) => side + '.' + f);
+    const val = (side, f) => ask.includes(side + '.' + f) ? pick[side + '.' + f] : R[side][f];
+    const cyc = (side, f, d) => { const k = side + '.' + f, o = OPT[f], cur = pick[k], n = cur === undefined ? (d > 0 ? 0 : o.length - 1) : (o.indexOf(cur) + d + o.length) % o.length;
+      setTv(v => ({ ...v, g: { ...v.g, bad: 0, r: { ...(v.g.r || {}), [ri]: { ...pick, [k]: o[n] } } } })); };
+    const label = (f, x) => x === undefined ? '?' : f === 'who' ? (x ? trNpc(x).name : '아무도 없음') : f === 'obj' ? (x ? (trItem(x) || {}).name || x : '없음') : x;
+    const room = name => { const b = (TR_A.bg || {})[name]; if (b) return { backgroundImage: `url(${trUrl(b)})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+      const A = (TN_WORLD.map.areas || []).find(x => x.name === name), M = TR_A.map; if (!A || !M) return { background: '#1a1626' };
+      const w = (A.x1 - A.x0 + 1) * TR_CELL, k = 230 / w; // 그 방 부분만 확대
+      return { backgroundImage: `url(${trUrl(M.src)})`, backgroundSize: `${M.w * k}px ${M.h * k}px`, backgroundPosition: `${-A.x0 * TR_CELL * k}px ${-A.y0 * TR_CELL * k + 20}px` }; };
+    const scene = side => { const bg = val(side, 'bg'), who = val(side, 'who'), pose = val(side, 'pose'), obj = val(side, 'obj'), at = val(side, 'at'), L = side === 'a', cx = L ? 26 : 74;
+      const ch = who ? (TR_A.chars || {})[who] : null, it = obj ? trItem(obj) : null, run = pose === '달림', give = pose === '건넴';
+      const atPos = { 손: [cx + (L ? 9 : -9), 52], 바닥: [cx + (L ? 12 : -12), 84], 선반: [L ? 10 : 90, 26], 탁자: [cx + (L ? 14 : -14), 66], 순서표: [L ? 16 : 82, 25] };
+      const ip = at && atPos[at] ? atPos[at] : null;
+      return <div className={'tr-dr-pane ' + (L ? 'a' : 'b')}>
+        <div className="tr-dr-bg" style={bg === undefined ? { background: '#120f1c' } : room(bg)} />
+        {at === '선반' ? <i className="tr-dr-prop shelf" style={{ left: ip[0] + '%' }} /> : at === '탁자' ? <i className="tr-dr-prop desk" style={{ left: ip[0] + '%' }} /> : at === '순서표' ? <i className="tr-dr-prop board" style={{ left: ip[0] + '%' }} /> : null}
+        {who === undefined ? <div className="tr-dr-ghost" style={{ left: cx + '%' }}>?</div>
+          : ch ? <div className={'tr-dr-who' + (run ? ' run' : '') + (give ? ' give' : '')} style={{ left: cx + '%' }}><img src={trUrl(ch.src)} alt="" />{run ? <i className="tr-dr-speed" /> : null}</div> : null}
+        {pose === undefined && who ? <b className="tr-dr-q" style={{ left: cx + '%', top: '40%' }}>?</b> : null}
+        {it && ip ? <div className={'tr-dr-item' + (give && at === '손' ? ' give' : '')} style={{ left: ip[0] + '%', top: ip[1] + '%' }}>{trItemPic(it, 30)}</div> : it && at === undefined ? <b className="tr-dr-q" style={{ left: (L ? 40 : 60) + '%', top: '62%' }}>?</b> : null}
+        <span className="tr-dr-tag">{L ? '전' : '후'}</span></div>; };
+    const done = ask.every(k => pick[k] !== undefined);
+    const submit = () => { const ok = R.ask.every(([side, f]) => pick[side + '.' + f] === R[side][f]);
+      if (!ok) { setTv(v => ({ ...v, g: { ...v.g, bad: (v.g.bad || 0) + 1 } })); trialWrong(); return; }
+      if (ri + 1 >= ph.rounds.length) trialRight('이어졌다'); else { setToast('조각 ' + (ri + 1) + ' 이어짐'); setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'SUB')); } };
     return <div className="tr-debate">
-      <div className="tr-dv-head"><b>{ph.title}</b><span>{wet ? '인화지를 현상액에 담가, 기억이 떠오를 때까지 누르고 있는다' : clear ? '기억이 선명해졌다' : '흐린 곳을 눌러 확대하고, 맞는 증거로 초점을 맞춘다 · 남은 곳 ' + left}</span></div>
-      <div className={'tr-dv' + (wet ? ' wet' : '') + (clear ? ' clear' : '')}>
-        <div className="tr-dv-paper"><div className="tr-photoin" style={{ filter: imgF, opacity: wet ? 0.15 + f * 0.85 : 1 }}>
-          {bg ? <img src={bg} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
-          {ch ? <img src={trUrl(ch.src)} alt="" style={{ position: 'absolute', right: 10, bottom: -60, height: 300 }} /> : null}</div>
-          {!wet ? ph.spots.map((q, i) => dn.includes(i) ? null : <button key={i} className={'tr-dv-spot' + (g.pick === i ? ' on' : '') + (g.fix === i ? ' fix' : '')} style={{ left: q.x + '%', top: q.y + '%', width: (q.w || 26) + '%', height: (q.h || 22) + '%' }} onClick={() => setG({ pick: i })}><i /></button>) : null}
-          {wet ? <div className="tr-dv-liquid" /> : null}
-          {!wet && !clear ? <div className="tr-dv-grain" /> : null}</div>
-        {sp ? <div className="tr-dv-loupe" style={{ left: Math.min(70, sp.x + (sp.w || 26) / 2) + '%', top: Math.max(52, Math.min(70, sp.y + (sp.h || 22) / 2)) + '%' }}><div className="tr-dv-lens" style={{ backgroundImage: bg ? `url(${bg})` : 'none', backgroundPosition: (sp.x + (sp.w || 26) / 2) + '% ' + (sp.y + (sp.h || 22) / 2) + '%' }} /><b>{sp.label}</b></div> : null}
-      </div>
-      {wet ? <button className="tr-dv-hold" onPointerDown={e => { e.preventDefault(); setG({ hold: true }); }} onPointerUp={() => setG({ hold: false })} onPointerLeave={() => setG({ hold: false })} onPointerCancel={() => setG({ hold: false })}>
-        <i style={{ width: dev + '%' }} /><span>{g.hold ? '현상 중… ' + dev + '%' : dev ? '계속 누르고 있기 · ' + dev + '%' : '누르고 있기 — 현상 시작'}</span></button>
-      : clear ? <><div className="tr-vn"><div className="tr-vn-name" style={{ '--c': '#8a7550' }}>기억</div><div className="tr-ttext">{ph.caption}</div></div><button className="tr-tbtn gold" onClick={() => trialRight('현상 완료')}>기억을 굳힌다</button></>
-      : sp && it ? <div className="tr-evc"><button className="tr-evc-nav" disabled={evid.length < 2} onClick={() => setG({ ei: (k + evid.length - 1) % evid.length })}>‹</button>
-          <div key={it.id} className="tr-evc-card" onClick={focus}><div className="tr-evc-pic">{trItemPic(it, 52)}</div><div className="tr-evc-txt"><b>{it.name}</b><span>{it.desc}</span></div><div className="tr-evc-tag">눌러서 초점</div></div>
-          <button className="tr-evc-nav" disabled={evid.length < 2} onClick={() => setG({ ei: (k + 1) % evid.length })}>›</button><i className="tr-evc-n">{k + 1}/{evid.length}</i></div>
-      : <div className="tr-mut" style={{ textAlign: 'center' }}>사진 위의 흐린 곳을 누른다</div>}
+      <div className="tr-dv-head"><b>{ph.title} · 조각 {ri + 1}/{ph.rounds.length}</b><span>{R.cap || ph.guide}</span></div>
+      <div className={'tr-dr' + (g.bad ? ' bad' : '')} key={ri + '.' + (g.bad || 0)}>{scene('a')}{scene('b')}<svg className="tr-dr-cut" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="58" y1="0" x2="42" y2="100" /></svg><i className="tr-dr-arrow">▶</i></div>
+      <div className="tr-dr-ctl">{R.ask.map(([side, f]) => { const k = side + '.' + f; return <div key={k} className={'tr-dr-row' + (pick[k] === undefined ? ' empty' : '')}>
+        <span>{side === 'a' ? '전' : '후'} · {NAME[f]}</span><button onClick={() => cyc(side, f, -1)}>‹</button><b>{label(f, pick[k])}</b><button onClick={() => cyc(side, f, 1)}>›</button></div>; })}</div>
+      <button className="tr-tbtn gold" disabled={!done || !!tv.fx} onClick={submit}>{done ? '이 흐름으로 이어 붙인다' : '「?」를 모두 채운다'}</button>
     </div>;
   }
   // ---------- 반론: 비주얼 노벨식. 상대가 말하는 도중 끊고 들어간다 ----------
@@ -830,8 +838,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div className="tr-docs">{ph.docs.map((d, di) => <div key={di} className="tr-doc"><b>{d.title}</b>{d.parts.map((t, i) => <button key={i} className={'tr-part' + (sel.some(x => x[0] === di && x[1] === i) ? ' on' : '')} onClick={() => tap(di, i)}>{t}</button>)}</div>)}</div>
         <div className="tr-facts">{got.map(k => <div key={k} className={'tr-fact' + (g.fresh === k ? ' fresh' : '')}>◆ {ph.combos[k].fact}</div>)}{Array.from({ length: ph.combos.length - got.length }, (_, i) => <div key={'x' + i} className="tr-fact lock">? ? ?</div>)}</div>
         <button className="tr-tbtn gold" disabled={sel.length < 2} onClick={tryIt}>맞대 보기</button></div>;
-    } else if (ph.type === 'develop') body = trDevelop(ph, evid);
-    else if (ph.type === 'route') {
+    } else if (ph.type === 'route') {
       const g = tv.g, path = g.path || [ph.start], C = 11, M = TN_WORLD.map, last = path[path.length - 1];
       const tap = e => { if (g.ok) return; const r = e.currentTarget.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * M.width), y = Math.floor((e.clientY - r.top) / r.height * M.height);
         if (path.length > 1 && x === last[0] && y === last[1]) { setTv(v => ({ ...v, g: { ...v.g, path: path.slice(0, -1) } })); return; }
@@ -850,24 +857,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div className="tr-mut" style={{ textAlign: 'center' }}>{path.length - 1}칸 · 이웃 칸을 눌러 잇고, 끝 칸을 다시 누르면 지운다</div>
         <div style={{ display: 'flex', gap: 5 }}><button className="tr-tbtn" disabled={g.ok} onClick={() => setTv(v => ({ ...v, g: { ...v.g, path: [ph.start] } }))}>처음부터</button>
           <button className="tr-tbtn gold" style={{ flex: 2 }} disabled={path.length < 3 || g.ok} onClick={() => { if (check()) { setTv(v => ({ ...v, g: { ...v.g, ok: true } })); setTimeout(() => trialRight('동선 일치'), 1000); } else trialWrong(); }}>이 길이었다</button></div></div>;
-    } else if (ph.type === 'strings') {
-      const g = tv.g, es = g.es || [], key = (a2, b2) => [a2, b2].sort().join('|'), W2 = 348, H2 = 250, pos = id => { const n = ph.nodes.find(x => x.id === id); return [n.x / 100 * W2, n.y / 100 * H2]; };
-      const tapN = id => setTv(v => { const a2 = v.g.a; if (!a2) return { ...v, g: { ...v.g, a: id } }; if (a2 === id) return { ...v, g: { ...v.g, a: '' } };
-        const k = key(a2, id), cs = v.g.es || []; return { ...v, g: { ...v.g, a: '', es: cs.includes(k) ? cs.filter(x => x !== k) : [...cs, k] } }; });
-      const want = ph.edges.map(e => key(e[0], e[1])), ok = es.filter(x => want.includes(x)).length;
-      body = <div className="tr-debate"><div className="tr-mut" style={{ textAlign: 'center' }}>{ph.title} · {ph.guide}</div>
-        <div className="tr-cork" style={{ height: H2 }}><svg style={{ position: 'absolute', inset: 0 }} width="100%" height="100%">{es.map(k => { const [a2, b2] = k.split('|'), p1 = pos(a2), p2 = pos(b2); return <line key={k} className="tr-draw" pathLength="1" x1={p1[0]} y1={p1[1]} x2={p2[0]} y2={p2[1]} stroke="#c0303a" strokeWidth="2.5" />; })}</svg>
-          {ph.nodes.map(n => <button key={n.id} className={'tr-pin' + (g.a === n.id ? ' on' : '')} style={{ left: n.x + '%', top: n.y + '%' }} onClick={() => tapN(n.id)}>{n.label}</button>)}</div>
-        <div className="tr-mut" style={{ textAlign: 'center' }}>실 {es.length}개 · 핀 둘을 차례로 누르면 걸고, 다시 누르면 뗀다</div>
-        <button className="tr-tbtn gold" disabled={!es.length} onClick={() => (ok === want.length && es.length === want.length ? trialRight('관계 확정') : (setToast('맞게 걸린 실 ' + ok + ' / ' + want.length), trialWrong()))}>이렇게 이어진다</button></div>;
-    } else if (ph.type === 'dream') {
-      const n = ph.pieces.length, order = ph.pieces.map((_, i) => i).sort((a2, b2) => ((a2 * 3 + 1) % n) - ((b2 * 3 + 1) % n));
-      body = <div className="tr-debate">
-        <div className="tr-mut" style={{ textAlign: 'center' }}>{ph.title} · {ph.guide}</div>
-        <div className="tr-line2">{ph.pieces.map((p2, i) => <div key={i} className={'tr-slot' + (i < T.sub ? ' on' : '')}>{i < T.sub ? <><i>{i + 1}</i>{p2}</> : <i>{i + 1}</i>}</div>)}</div>
-        <div className="tr-sky">{order.filter(i => i >= T.sub).map((i, k) => <button key={i} className="tr-bub" style={{ animationDelay: (k * .7) + 's', left: (8 + (k % 2) * 46) + '%', top: (6 + Math.floor(k / 2) * 46) + '%' }}
-          onClick={() => { if (i === T.sub) { if (T.sub + 1 >= n) trialRight('이어졌다'); else setState(v => TroemereiNPC.trialStep(TN_WORLD, v, 'SUB')); } else trialWrong(); }}>{ph.pieces[i]}</button>)}</div></div>;
-    } else if (ph.type === 'crystal') {
+    } else if (ph.type === 'dream') body = trDream(ph);
+    else if (ph.type === 'crystal') {
       // 진상 결정: 모서리를 누르면 그 자리 단서 다섯 장이 부채꼴로 펼쳐진다
       const g = tv.g, put = g.put || {}, open = g.open, R2 = 88, cx = 174, cy = 118;
       const pts = ph.slots.map((_, i) => { const a2 = -Math.PI / 2 + i * 2 * Math.PI / ph.slots.length; return [cx + R2 * Math.cos(a2), cy + R2 * Math.sin(a2)]; });
