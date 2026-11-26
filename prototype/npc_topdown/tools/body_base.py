@@ -327,6 +327,13 @@ def cmd_headfix(a):
     ref = head & ~face & (O[..., 3] > 200) & (hO[..., 2] > .6) & (hO[..., 1] > .12)
     hairO = (nearest(O[..., :3], palette(O[ref][:, :3], 12, 3)) < 22) if ref.sum() > 100 else np.zeros((H, W), bool)
     useF = nd.binary_closing((face & ~hairO) | boxes, iterations=1)
+    # 얼굴 가까이 머리카락 위에 남은 작은 이목구비 조각(눈꼬리·눈썹 끝 등): 원본이 더 어둡고 작은 덩어리면 결과 쪽
+    dO = (F[..., :3].mean(2) - O[..., :3].mean(2)) > 25
+    near = nd.binary_dilation(face, iterations=30) & head & ~useF
+    lab, n = nd.label(nd.binary_dilation(dO & near, iterations=1))
+    for i, sl in enumerate(nd.find_objects(lab)):
+        if sl is not None and (lab[sl] == i + 1).sum() < 120:
+            useF[sl] |= (lab[sl] == i + 1)
     w = nd.gaussian_filter(useF.astype(np.float32), 1.0); w[~head] = 1
     for i in range(8):
         y = chin - 4 + i
