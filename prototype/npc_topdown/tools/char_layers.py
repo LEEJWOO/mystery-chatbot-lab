@@ -10,8 +10,10 @@
 
 원본 폴더의 파일 이름 규칙: 번호-직업-자세-표정.png (+ 표정본은 -mask.png 짝)
   자세: default / think / point / crossed, 평상시 = neutral (자세마다 1장, 투명 PNG)
+  레이어 방식(선택): 번호-직업-자세-body.png(맨몸 기준판, 화면 바탕) + 번호-직업-자세-outfit-이름.png(의상, outfit_layer.py 결과)
+    → 화면 조립: 몸 → 의상(인물의 wear 값, 기본 casual) → 표정
 - 표정 조각은 tools/expr_extract.py 로 뽑는다(경계 처리 + 눈 색 맞춤).
-- 자세마다 두 눈 위치를 찾아 eye=[x,y], ed=눈 사이 거리 로 적는다 → 화면이 자세를 바꿔도 머리 크기·위치를 맞춘다.
+- 자세마다 두 눈 위치(eye, ed)를 적는다 — 작은 얼굴 썸네일 자르기·하라구로 그늘 위치용. 스탠딩 표시는 인물별 disp{s,y}만 쓴다(자동 맞춤 없음).
 - 이미 있는 항목의 다른 자세·표정은 그대로 두고, 이번에 찾은 파일만 덮어쓴다.
 """
 import glob, hashlib, io, json, os, re, sys
@@ -89,7 +91,7 @@ table = json.load(open(TABLE, encoding='utf-8'))
 ALIGN_ONLY = '--align-only' in sys.argv
 ch = {} if '--fresh' in sys.argv and not ALIGN_ONLY else (table.setdefault('chars', {}).get(CID) or {})
 table.setdefault('chars', {})
-ch.setdefault('poses', {}); ch['fit'] = {'s': FIT}
+ch.setdefault('poses', {}); ch.setdefault('disp', {'s': 1.0, 'y': 0})   # 표시 배율·y는 줄 세우기로 정해 손으로 적는다(자동 맞춤 없음)
 total = 0
 def find(pose, expr):
     for f in files:
@@ -113,8 +115,9 @@ for pose in ['default', 'think', 'point', 'crossed']:
     if not f: continue
     egg = bool(blank)   # 빈 얼굴(달걀귀신) 방식: 바탕은 이목구비 없는 얼굴, 기본 표정까지 모두 조각
     im = Image.open(f).convert('RGBA'); lim = look_img(pose)
+    body = find(pose, 'body')   # 맨몸 기준판(레이어 방식): 있으면 화면 바탕은 이것, 의상은 따로 얹는다
     if ALIGN_ONLY: name = ch['poses'][pose]['src']
-    else: name, n = save(im); total += n
+    else: name, n = save(Image.open(body).convert('RGBA') if body else im); total += n
     P = ch['poses'].get(pose, {}); P.update({'src': name, 'w': im.width, 'h': im.height, 'def': '' if egg else '기본'})
     if pose == 'default': P['eye'], P['ed'] = [round(REF_E[0]), round(REF_E[1])], round(REF_D, 1)
     else:
@@ -147,7 +150,17 @@ for pose in ['default', 'think', 'point', 'crossed']:
         pn, n = save(patch); total += n
         P['faces'][KO[mm.group(2)]] = {'src': pn, 'x': box[0], 'y': box[1], 'w': box[2] - box[0], 'h': box[3] - box[1]}
         PV.append((pose, mm.group(2), im, patch, box, P))
-    print(pose, '빈 얼굴' if egg else '', '표정', len(P['faces']), '눈', P.get('eye'), P.get('ed'), P.get('fit', ''))
+    # 의상 레이어: 번호-직업-자세-outfit-이름.png (tools/outfit_layer.py 결과, 캔버스 그대로) → 잘라서 자리와 함께 적는다
+    for g in ([] if ALIGN_ONLY else files):
+        mo = re.match(r'^\d+-[a-z]+-%s-outfit-([a-z0-9_]+)\.png$' % pose, os.path.basename(g))
+        if not mo: continue
+        oi = Image.open(g).convert('RGBA')
+        if oi.size != im.size: print('의상 크기가 자세 그림과 다름(보정 안 함):', os.path.basename(g)); continue
+        bb = oi.split()[3].point(lambda v: 255 if v > 4 else 0).getbbox()
+        if not bb: continue
+        on, n = save(oi.crop(bb)); total += n
+        P.setdefault('outfits', {})[mo.group(1)] = {'src': on, 'x': bb[0], 'y': bb[1], 'w': bb[2] - bb[0], 'h': bb[3] - bb[1]}
+    print(pose, '빈 얼굴' if egg else '', '맨몸' if body else '', '의상', list((P.get('outfits') or {}).keys()), '표정', len(P['faces']), '눈', P.get('eye'), P.get('ed'), P.get('fit', ''))
 table['chars'][CID] = ch
 json.dump(table, open(TABLE, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(CID, '합계', total // 1024, 'KB')
