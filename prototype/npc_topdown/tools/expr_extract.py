@@ -52,10 +52,16 @@ def extract(base_p, expr_p, mask_p, erode=22, feather=6, eye=False, clean=False,
         bad = nd.binary_closing(bad, iterations=3) & m
         k = nd.gaussian_filter(nd.binary_dilation(bad, iterations=3).astype(float), 2)
         a = a * (1 - np.clip(k * 1.4, 0, 1))
+        # 피부 위 녹색 선(무늬처럼 남은 마스크 흔적): 인페인트는 녹~청록인데 기본 그림은 피부색인 곳
+        hb0 = mc.rgb_to_hsv(base[..., :3] / 255)
+        skin = ((hb0[..., 0] < 0.12) | (hb0[..., 0] > 0.9)) & (hb0[..., 1] < 0.32) & (hb0[..., 2] > 0.72)
+        gline = m & skin & (hr[..., 0] > 0.17) & (hr[..., 0] < 0.47) & (hr[..., 1] > 0.05) & (hr[..., 2] > 0.3)
+        kg = np.clip(nd.gaussian_filter(nd.binary_dilation(gline, iterations=1).astype(float), 0.8) * 1.5, 0, 1)[..., None] * skin[..., None]
+        rgb = rgb * (1 - kg) + base[..., :3] * kg   # 투명하게 하지 않고 기본 그림의 피부색으로 덧칠(입·눈 같은 이웃 선은 그대로)
         # 흰 배경 번짐 빼기: 마스크 가장자리 근처(경계에서 60px 안)에서 인페인트는 순백인데 기본 그림은 머리카락·윤곽(채도 있거나 어두움)인 곳
         hb = mc.rgb_to_hsv(base[..., :3] / 255); dist = nd.distance_transform_edt(m)
         white = (hr[..., 2] > 0.94) & (hr[..., 1] < 0.06) & m & (dist < erode + 60) & ((hb[..., 1] > 0.22) | (hb[..., 2] < 0.6)) & (base[..., 3] > 128)
-        white = nd.binary_opening(white, iterations=1)
+        white = nd.binary_opening(nd.binary_closing(white, iterations=2), iterations=4) & white  # 넓은 덩어리만(입·눈 같은 가는 선 자리는 제외)
         kw = nd.gaussian_filter(nd.binary_dilation(white, iterations=2).astype(float), 1.5)
         a = a * (1 - np.clip(kw * 1.4, 0, 1))
     out = np.dstack([rgb, a]).clip(0, 255).astype('uint8')

@@ -1127,6 +1127,7 @@
   "brooch_gone",
   "recital_done",
   "mei_real",
+  "mei_early",
   "true_route",
   "trial_only",
   "trial_brooch_done"
@@ -1134,6 +1135,7 @@
  "debugFlags": [
   "brooch_gone",
   "mei_real",
+  "mei_early",
   "true_route"
  ],
  "facts": [
@@ -1205,6 +1207,20 @@
     "I"
    ]
   },
+  "MEI_REAL": {
+   "npcs": [
+    "mei"
+   ],
+   "flag": "mei_real",
+   "setFlags": [
+    "mei_early"
+   ],
+   "kinds": [
+    "T",
+    "I"
+   ],
+   "log": "메이벨이 본명과 내력을 털어놓았다."
+  },
   "T1_R1": {
    "kinds": [
     "R"
@@ -1231,6 +1247,10 @@
   {
    "flag": "true_route",
    "token": "#진루트"
+  },
+  {
+   "flag": "mei_real",
+   "token": "#메이정체"
   }
  ],
  "items": [
@@ -1390,7 +1410,15 @@
       {
        "who": "host",
        "text": "모이셨군요. 오늘 밤 리사이틀이 끝난 뒤, 라운지 진열장에서 [[메이벨 님의 브로치]]가 사라졌습니다.",
-       "fx": "flash"
+       "fx": "flash",
+       "alt": [
+        {
+         "if": {
+          "flag": "mei_early"
+         },
+         "text": "모이셨군요. 오늘 밤 리사이틀이 끝난 뒤, 라운지 진열장에서 [[메이 님의 브로치]]가 사라졌습니다."
+        }
+       ]
       },
       {
        "who": "mei",
@@ -1399,6 +1427,14 @@
        "pose": "point",
        "fx": "shake",
        "alt": [
+        {
+         "if": {
+          "flag": "mei_early"
+         },
+         "text": "정체는 들켰어도 브로치는 내 거야! 카드 꽂은 [[마술사]], 너지?",
+         "face": "격노",
+         "pose": "point"
+        },
         {
          "if": {
           "rel": {
@@ -2285,13 +2321,32 @@
        "who": "mei",
        "text": "유, 유유, 유리라니 무슨 소리니! 이건 로슈벨 가문의……!",
        "face": "패닉",
-       "fx": "shake"
+       "fx": "shake",
+       "alt": [
+        {
+         "if": {
+          "flag": "mei_early"
+         },
+         "text": "……응, 유리야. 시장에서 샀어. 영애 흉내에 맞춰서.",
+         "face": "부끄러움"
+        }
+       ]
       },
       {
        "who": "seoha",
        "text": "진짜 영애라면 가짜 보석 한 마디에 이렇게까지 당황하진 않겠지.",
        "face": "하라구로",
-       "pose": "crossed"
+       "pose": "crossed",
+       "alt": [
+        {
+         "if": {
+          "flag": "mei_early"
+         },
+         "text": "위장과 이번 일은 별개야. 유리든 보석이든, 옮긴 사람은 따로 있었으니까.",
+         "face": "기본",
+         "pose": "crossed"
+        }
+       ]
       }
      ]
     },
@@ -2305,13 +2360,29 @@
        "who": "mei",
        "text": "……아, 진짜. 알았어, 말할게.",
        "face": "부끄러움",
-       "fx": "zoom"
+       "fx": "zoom",
+       "alt": [
+        {
+         "if": {
+          "flag": "mei_early"
+         },
+         "text": "……아까 말한 대로야. 그래도 한 번 더 사과할게.",
+         "face": "곤란"
+        }
+       ]
       },
       {
        "who": "mei",
        "text": "띠리 메이. 미얀마 사람이고, 공사 현장에서 일해. 영애는…… 한 번 해 보고 싶었을 뿐이야.",
        "face": "슬픔",
        "alt": [
+        {
+         "if": {
+          "flag": "mei_early"
+         },
+         "text": "내 허세 때문에 오딜이 의심받았잖아. 띠리 메이로서, 미안해.",
+         "face": "슬픔"
+        },
         {
          "if": {
           "rel": {

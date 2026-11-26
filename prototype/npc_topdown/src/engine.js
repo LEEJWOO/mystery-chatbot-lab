@@ -393,6 +393,7 @@ const TroemereiNPC = (() => {
       if(rule.hold){const tr=w.trials[s.trial.i],ph=tr.phases[s.trial.phase],k=(tr.issues||[]).findIndex(x=>x.id===(ph&&ph.issue));if(k>=0)s.trial.hold=(s.trial.hold||0)|(1<<k);}
       trialNext(w,s);return {state:s,accepted:true,reason:'',hold:!!rule.hold};}
     if(rule.flag)s.flags[rule.flag]=true;
+    for(const f of rule.setFlags||[])s.flags[f]=true; // 함께 켜는 깃발(예: 재판 전에 이미 밝혀졌다는 표시)
     addLog(w,s,rule.log||('사건 '+code+' 기록'),'world');
     return {state:s,accepted:true,reason:''};
   }
