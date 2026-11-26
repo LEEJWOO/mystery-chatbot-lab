@@ -1372,34 +1372,17 @@
      "text": "쟁점 셋"
     },
     {
-     "type": "develop",
-     "title": "기억 현상",
-     "guide": "흐린 장면의 빈 곳에 맞는 증거를 대어 기억을 선명하게 한다",
-     "bg": "자료실",
-     "who": "companion",
-     "spots": [
-      {
-       "x": 22,
-       "y": 30,
-       "label": "선반 위 종이",
-       "answer": "memo_copy"
-      }
-     ],
-     "caption": "아침 9시 5분쯤, 유리가 자료실 선반에 종이 한 장을 두고 갔다.",
-     "issue": "i3"
-    },
-    {
      "type": "talk",
      "lines": [
       {
-       "who": "companion",
-       "text": "……으, 그 장면을 누가 본 거야.",
-       "face": "불만",
-       "fx": "shake"
+       "who": "librarian",
+       "text": "그러고 보니…… 아침 9시쯤, 유리 씨가 자료실 선반에 종이 한 장을 두고 가는 걸 봤어요."
       },
       {
-       "who": "host",
-       "text": "기억이란 묘한 것이지요. 흐릿했던 것도 맞는 조각을 대면 선명해지니까요."
+       "who": "companion",
+       "text": "……으, 그걸 본 거야.",
+       "face": "불만",
+       "fx": "shake"
       },
       {
        "who": "",
@@ -1452,93 +1435,85 @@
      "text": "마지막 쟁점"
     },
     {
-     "type": "strings",
-     "title": "실 엮기",
-     "guide": "그날 아침 누가 무엇을 어디에 했는지 실로 잇는다",
-     "nodes": [
-      {
-       "id": "yuri",
-       "label": "유리",
-       "x": 14,
-       "y": 18
-      },
-      {
-       "id": "doyun",
-       "label": "도윤",
-       "x": 50,
-       "y": 12
-      },
-      {
-       "id": "serin",
-       "label": "세린",
-       "x": 86,
-       "y": 18
-      },
-      {
-       "id": "memo",
-       "label": "메모 사본",
-       "x": 20,
-       "y": 55
-      },
-      {
-       "id": "order",
-       "label": "작업 순서표",
-       "x": 80,
-       "y": 55
-      },
-      {
-       "id": "shelf",
-       "label": "자료실 선반",
-       "x": 24,
-       "y": 88
-      },
-      {
-       "id": "desk",
-       "label": "작업실 탁자",
-       "x": 76,
-       "y": 88
-      }
-     ],
-     "edges": [
-      [
-       "yuri",
-       "memo"
-      ],
-      [
-       "memo",
-       "shelf"
-      ],
-      [
-       "doyun",
-       "order"
-      ],
-      [
-       "order",
-       "desk"
-      ],
-      [
-       "yuri",
-       "doyun"
-      ]
-     ],
+     "type": "dream",
+     "title": "꿈 조각 잇기",
+     "guide": "사선 왼쪽은 '전', 오른쪽은 '후'. 「?」 칸만 바꿔 그날 아침의 흐름을 잇는다",
      "issue": "i4",
+     "cast": [
+      "companion",
+      "contact",
+      "librarian",
+      "courier"
+     ],
+     "objs": [
+      "memo_copy",
+      "memo_note"
+     ],
      "rel": {
       "companion": {
        "trust": 5
       }
-     }
-    },
-    {
-     "type": "dream",
-     "title": "꿈 조각 잇기",
-     "guide": "흩어진 장면을 일어난 순서대로 이어 붙인다",
-     "pieces": [
-      "유리가 정원에서 작업실로 향한다",
-      "유리가 도윤에게 메모를 건넨다",
-      "도윤이 순서표에 메모를 붙인다",
-      "유리가 자료실 선반에 사본을 둔다"
-     ],
-     "issue": "i4"
+     },
+     "rounds": [
+      {
+       "cap": "아침 9시 무렵 · 자료실",
+       "a": {
+        "bg": "자료실",
+        "who": "companion",
+        "pose": "서 있음",
+        "obj": "memo_copy",
+        "at": "손"
+       },
+       "b": {
+        "bg": "자료실",
+        "who": "",
+        "pose": "서 있음",
+        "obj": "memo_copy",
+        "at": "선반"
+       },
+       "ask": [
+        [
+         "a",
+         "who"
+        ],
+        [
+         "b",
+         "at"
+        ]
+       ]
+      },
+      {
+       "cap": "조금 뒤 · 작업실",
+       "a": {
+        "bg": "작업실",
+        "who": "companion",
+        "pose": "건넴",
+        "obj": "memo_note",
+        "at": "손"
+       },
+       "b": {
+        "bg": "작업실",
+        "who": "contact",
+        "pose": "서 있음",
+        "obj": "memo_note",
+        "at": "순서표"
+       },
+       "ask": [
+        [
+         "a",
+         "pose"
+        ],
+        [
+         "b",
+         "who"
+        ],
+        [
+         "b",
+         "at"
+        ]
+       ]
+      }
+     ]
     },
     {
      "type": "talk",
@@ -1731,7 +1706,7 @@
      "id": "i1",
      "q": "메모를 쓴 사람은?",
      "a": "유리",
-     "confirmAt": 21
+     "confirmAt": 19
     },
     {
      "id": "i2",

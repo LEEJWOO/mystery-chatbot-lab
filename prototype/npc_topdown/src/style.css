@@ -91,7 +91,6 @@
 .tr-dots{display:flex;justify-content:center;gap:6px}.tr-dots i{width:7px;height:7px;border-radius:50%;background:#4a4458}.tr-dots i.on{background:#f2c46d}
 .tr-card .tr-tbtn{flex:1;height:36px;border-radius:9px;background:#1f1a2e;border-color:#e9c98c55;font-size:13px}
 .tr-card .tr-tbtn.gold{background:#6b4f26;border-color:#e2bb73;color:#f6ead2}
-.tr-drawer{display:grid;gap:5px;max-height:190px;overflow-y:auto;animation:trin .2s ease-out}
 .tr-card .tr-evi{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 9px;text-align:left;background:#f3ead6;color:#3a2a14;border-color:#c9a86c;font-size:13px;line-height:17px}
 .tr-evi span{font-size:11px;color:#7a5a30}
 .tr-chips{display:flex;flex-wrap:wrap;gap:4px}.tr-card .tr-chips button{height:28px;font-size:12px;border-radius:999px}.tr-card .tr-chips .on{background:#6b4f26;border-color:#e2bb73}
@@ -130,7 +129,6 @@
 .tr-card .tr-spot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;padding:0;background:#f2c46d55;border:2px dashed #ffe3a0;color:#fff;font-weight:700;animation:trpulse 1.4s infinite}
 .tr-card .tr-spot.on{background:#f2c46d;color:#3a2a14}
 .tr-mini{position:relative;margin:0 auto;border-radius:6px;overflow:hidden;border:1px solid #e9c98c55;touch-action:manipulation}
-.tr-cork{position:relative;border-radius:10px;background:#b98a5a radial-gradient(#c99a68 1px,transparent 1.5px) 0 0/9px 9px;box-shadow:inset 0 0 18px #0007}
 .tr-card .tr-pin{position:absolute;transform:translate(-50%,-50%);height:28px;padding:0 9px;font-size:12px;background:#f6f0e4;color:#3a2a14;border-color:#8a6a40;box-shadow:0 2px 4px #0007}
 .tr-card .tr-pin.on{background:#c0303a;color:#fff;border-color:#fff}
 .tr-crys{position:relative;height:240px}
@@ -169,7 +167,6 @@
 .tr-picked{display:grid;gap:3px;min-height:40px;padding:5px 8px;border:1px dashed #c0303a88;border-radius:8px;font-size:12px;color:#ffd0c8}
 .tr-fact.fresh{animation:trglow 1s ease-out}
 .tr-photo.clear{animation:trglow 1.2s ease-out}
-.tr-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:trdraw .9s ease-out forwards}
 .tr-fan{position:absolute;inset:-6px;background:#0d0b16aa;border-radius:12px;z-index:3}
 .tr-card .tr-fancard{position:absolute;transform:translate(-50%,-50%);width:98px;min-height:46px;padding:4px 6px;font-size:12px;line-height:15px;background:#f3ead6;color:#3a2a14;border:1px solid #c9a86c;border-radius:7px;box-shadow:0 4px 10px #000a;animation:trfan .3s ease-out backwards}
 .tr-card .tr-fancard.on{background:#6b4f26;color:#fff}
@@ -388,28 +385,42 @@
 .tr-dv-head{display:grid;gap:1px;text-align:center}.tr-dv-head b{font-size:13px;color:#f2d79e;letter-spacing:1px}.tr-dv-head span{font-size:11px;color:#b9ad96}
 .tr-dv{position:relative;height:230px;padding:10px;border-radius:12px;background:linear-gradient(#1a1418,#100c10);box-shadow:inset 0 0 0 1px #ffffff14;transition:background .8s}
 .tr-dv.wet{background:radial-gradient(ellipse at 50% 0,#5a0d0d,#1a0505 70%);box-shadow:inset 0 0 30px #000,inset 0 0 0 1px #ff3a3a22}
-.tr-dv-paper{position:relative;height:100%;overflow:hidden;background:#f4efe4;border-radius:2px;box-shadow:0 3px 10px #000a}
 .tr-dv.wet .tr-dv-paper{background:#e9dccf;transform:rotate(-1.2deg)}
 .tr-dv.clear .tr-dv-paper{animation:trglow 1.2s ease-out}
-.tr-dv-liquid{position:absolute;inset:-20%;background:repeating-radial-gradient(circle at 30% 40%,#ffffff10 0 6px,transparent 6px 18px);animation:trdvwave 3.5s linear infinite;mix-blend-mode:overlay}
-@keyframes trdvwave{from{transform:translate(0,0)}to{transform:translate(18px,12px)}}
-.tr-dv-grain{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,#0000000d 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
-.tr-dv-spot{position:absolute;border:0;padding:0;background:transparent;-webkit-backdrop-filter:blur(7px) contrast(.7) brightness(1.08);backdrop-filter:blur(7px) contrast(.7) brightness(1.08);border-radius:4px;outline:1px dashed #ffffffaa;outline-offset:-1px;animation:trdvpulse 1.6s ease-in-out infinite}
-.tr-dv-spot>i{position:absolute;inset:0;background:conic-gradient(#0000000c 25%,#ffffff12 0 50%,#0000000c 0 75%,#ffffff12 0) 0 0/7px 7px}
-.tr-dv-spot.on{outline:2px solid #e9c98c;animation:none}
-.tr-dv-spot.fix{animation:trdvfix .75s ease-out forwards}
-.tr-dv-spot.fix::after{content:'';position:absolute;left:0;right:0;height:2px;top:0;background:#bff;box-shadow:0 0 8px #6ff;animation:trdvscan .6s linear forwards}
 @keyframes trdvpulse{50%{outline-color:#e9c98c}}
-@keyframes trdvfix{0%{-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}40%{-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}70%{-webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px)}100%{-webkit-backdrop-filter:none;backdrop-filter:none;outline-color:transparent}}
-@keyframes trdvscan{to{top:100%}}
-.tr-dv-loupe{position:absolute;transform:translate(-30%,-110%);display:grid;justify-items:center;gap:3px;pointer-events:none;animation:trnsin .2s}
-.tr-dv-lens{width:86px;height:86px;border-radius:50%;border:4px solid #c9b48a;box-shadow:0 4px 14px #000c,inset 0 0 12px #0008;background-color:#ccc;background-size:420%;filter:grayscale(.8) blur(2px)}
-.tr-dv-loupe b{font-size:11px;padding:1px 8px;border-radius:8px;background:#0a0813e0;color:#f2d79e}
-.tr-dv-hold{position:relative;height:44px;border-radius:10px;border:1px solid #ff6a5a66;background:#2a0b0b;color:#ffd8cf;font-size:13px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-.tr-dv-hold>i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7a1a1a,#c0504a);transition:width .05s linear}
-.tr-dv-hold>span{position:relative}
 
 .tr-objc-cut{position:absolute;left:-40px;top:96px;width:409px;height:238px;animation:trobjcut 1.15s cubic-bezier(.15,.9,.25,1) both}
 .tr-objc-cut .tr-objc-band{top:40px}
 @keyframes trobjcut{0%{transform:translateX(-105%);opacity:1}16%,84%{transform:translateX(0);opacity:1}100%{transform:translateX(105%);opacity:0}}
 .tr-ns-mag{scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent);padding-right:24px}.tr-ns-mag::-webkit-scrollbar{display:none}
+/* 꿈 조각 잇기 */
+.tr-dr{position:relative;height:250px;border-radius:12px;overflow:hidden;background:#0c0a14;box-shadow:inset 0 0 0 1px #c9b4ff33,0 0 22px #6a4ad833}
+.tr-dr.bad{animation:trshake .4s}
+.tr-dr-pane{position:absolute;inset:0}
+.tr-dr-pane.a{clip-path:polygon(0 0,58% 0,42% 100%,0 100%)}.tr-dr-pane.b{clip-path:polygon(58% 0,100% 0,100% 100%,42% 100%)}
+.tr-dr-bg{position:absolute;inset:-6px;filter:blur(1.2px) saturate(.55) brightness(.62) sepia(.25)}
+.tr-dr-pane.a .tr-dr-bg{filter:blur(1.5px) saturate(.35) brightness(.52) sepia(.45) hue-rotate(-10deg)}
+.tr-dr-pane::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 60%,transparent 40%,#0a0614cc);pointer-events:none}
+.tr-dr-tag{position:absolute;top:8px;font-size:12px;font-weight:800;letter-spacing:3px;color:#e6dcff;padding:2px 9px;border-radius:9px;background:#2a1e48cc;border:1px solid #c9b4ff55}
+.tr-dr-pane.a .tr-dr-tag{left:8px}.tr-dr-pane.b .tr-dr-tag{right:8px}
+.tr-dr-who{position:absolute;bottom:-118px;width:150px;margin-left:-75px;transition:transform .25s}
+.tr-dr-who img{width:150px;display:block;filter:drop-shadow(0 0 6px #b9a2ff66)}
+.tr-dr-who.run{transform:skewX(-9deg) translateX(6px)}.tr-dr-pane.b .tr-dr-who.run{transform:skewX(9deg) translateX(-6px)}
+.tr-dr-who.give{transform:rotate(-3deg)}
+.tr-dr-speed{position:absolute;left:-30px;top:110px;width:40px;height:60px;background:repeating-linear-gradient(0deg,transparent 0 8px,#ffffff88 8px 10px);opacity:.7}
+.tr-dr-ghost{position:absolute;bottom:0;width:90px;height:190px;margin-left:-45px;border-radius:45px 45px 8px 8px;background:#ffffff10;border:2px dashed #c9b4ff99;display:grid;place-items:center;font-size:40px;font-weight:900;color:#c9b4ff;animation:trnsglow 1.2s ease-in-out infinite alternate}
+.tr-dr-q{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#2a1e48;border:2px solid #c9b4ff;color:#fff;font-size:16px}
+.tr-dr-item{position:absolute;transform:translate(-50%,-50%);padding:3px;border-radius:7px;background:#ffffffd8;box-shadow:0 0 12px #fff8;transition:left .25s,top .25s}
+.tr-dr-item.give{animation:trdrgive 1.4s ease-in-out infinite alternate}
+@keyframes trdrgive{to{transform:translate(-30%,-50%)}}
+.tr-dr-prop{position:absolute;transform:translateX(-50%);display:block;pointer-events:none}
+.tr-dr-prop.shelf{top:30%;width:64px;height:6px;background:#8a6a40;box-shadow:0 2px 0 #4a3420}
+.tr-dr-prop.desk{top:70%;width:82px;height:30px;background:linear-gradient(#7a5a36 0 7px,#5a4024 7px);border-radius:3px}
+.tr-dr-prop.board{top:14%;width:44px;height:56px;background:#e8dcc0;border:3px solid #6a4a2a;border-radius:2px}
+.tr-dr-cut{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.tr-dr-cut line{stroke:#e6dcff;stroke-width:.8;filter:drop-shadow(0 0 2px #b9a2ff);vector-effect:non-scaling-stroke}
+.tr-dr-arrow{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-style:normal;font-size:14px;color:#fff;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#6a4ad8;box-shadow:0 0 10px #9a7ad8}
+.tr-dr-ctl{display:grid;gap:5px}
+.tr-dr-row{display:grid;grid-template-columns:88px 30px 1fr 30px;align-items:center;gap:5px;font-size:12px;color:#c9bfe0}
+.tr-dr-row button{height:28px;border-radius:7px;background:#1b1530;border:1px solid #c9b4ff44;color:#e6dcff;font-size:16px}
+.tr-dr-row b{text-align:center;height:28px;line-height:28px;border-radius:7px;background:#120f1e;border:1px solid #ffffff1a;color:#fff;font-size:13px}
+.tr-dr-row.empty b{color:#c9b4ff;border-style:dashed}
