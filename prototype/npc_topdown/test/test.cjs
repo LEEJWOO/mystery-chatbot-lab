@@ -384,17 +384,20 @@ test('시선 대칭: 같은 방의 모든 두 칸에서 A가 B를 보면 B도 A�
 test('관계: 시작값·단계·첫 대화 보너스·AI r(±1단계 제한·대상만)·사건/단계 보상·코드 왕복', () => {
   let s = E.createWorld(W);
   assert.equal(E.relLevel(W, s, 'contact', 'trust'), 2, '도윤 신뢰 35 → 경계(2)');
-  assert.equal(E.relLevel(W, s, 'contact', 'affection'), 0, '남성 플레이어(기본)에게 남성 인물의 애정은 없음');
+  assert.equal(E.relLevel(W, s, 'contact', 'affection'), 3, '애정은 성별과 관계없이 열림(남성 플레이어 → 남성 인물)');
   const fem = E.clone(s); fem.player.look = { g: 1, hf: 0, hb: 0, hc: 0, eye: 0, ec: 0, sk: 0, of: 0, oc: 0, ac: 0, name: '여' };
-  assert.equal(E.relLevel(W, fem, 'contact', 'affection'), 3, '여성 플레이어면 남성 인물에게 애정이 생김');
-  assert.equal(E.relLevel(W, fem, 'companion', 'affection'), 0, '여성 플레이어에게 여성 인물의 애정은 없음');
+  assert.equal(E.relLevel(W, fem, 'contact', 'affection'), 3, '여성 플레이어 → 남성 인물');
+  assert.ok(E.relLevel(W, fem, 'companion', 'affection') > 0, '여성 플레이어 → 여성 인물도 열림');
+  const W2 = JSON.parse(JSON.stringify(W)); W2.rel.scales[1].opposite = true;
+  assert.equal(E.relLevel(W2, s, 'contact', 'affection'), 0, 'opposite:true로 켜면 이성에게만(옵션은 남겨 둠)');
   const near = JSON.parse(JSON.stringify(s)); const d = near.npcs.find(n => n.id === 'contact'); near.player.x = d.x; near.player.y = d.y + 1;
   let t = E.dispatch(W, near, { type: 'TALK_REQUEST', npcId: 'contact', kind: 'T', chars: 5 });
   if (t.pend === 'contact') assert.equal(t.player.rel.contact.trust, 41, '첫 대화 +6');
   const r1 = E.applyRel(W, s, 'companion', 't+3a-1');
   assert.equal(r1.state.player.rel.companion.trust, 50, '척도마다 한 번에 ±1단계(5점)까지');
   assert.equal(r1.state.player.rel.companion.affection, 45);
-  assert.deepEqual(E.applyRel(W, s, 'contact', 'a+1').changed, {}, '없는 척도는 무시');
+  assert.deepEqual(E.applyRel(W, s, 'contact', 'a+1').changed, { affection: 5 }, '동성 인물에게도 애정 반영');
+  assert.deepEqual(E.applyRel(W2, s, 'contact', 'a+1').changed, {}, '꺼진 척도는 무시');
   const r2 = E.applyRel(W, s, 'courier', '신뢰+1'); assert.equal(r2.state.player.rel.courier.trust, 55, '한글 척도 이름도 허용');
   let x = E.clone(s); E.relAdd(W, x, 'librarian', { trust: 200 }); assert.equal(x.player.rel.librarian.trust, 100, '0~100으로 묶임');
   assert.equal(E.relLevel(W, x, 'librarian', 'trust'), 5);
