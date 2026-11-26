@@ -1,7 +1,7 @@
 // node test/test.cjs — 엔진·압축 코덱·대사 해석 회귀 테스트
 const assert = require('node:assert/strict');
 const E = require('../src/engine.js'), C = require('../src/codec.js'), T = require('../src/dialogue.js');
-const W = require('../src/world.json');
+const W = require('./fixture_world_v1.json'); // 엔진 회귀 시험은 고정된 옛 시험 세계로(본 세계 데이터가 바뀌어도 유지)
 let pass = 0; const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
 const pk = s => C.pack(W, s);

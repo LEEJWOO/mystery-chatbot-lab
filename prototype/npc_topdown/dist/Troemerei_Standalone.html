@@ -897,12 +897,13 @@ const trNPC = /* @__PURE__ */ (() => {
     if (s.logs.length > 100) s.logs.shift();
   }
   function createWorld(w, seed = 246813579) {
+    const t0 = w.startTime ? secs(w.startTime) : 9 * 3600;
     const s = {
       schema: "TROEMEREI_NPC_V1",
       version: 1,
       worldId: w.map.id,
       day: 1,
-      clock: 9 * 3600,
+      clock: t0,
       rng: seed >>> 0 || 1,
       player: { x: w.player.x, y: w.player.y, route: [], nextMoveAt: 0, mem: [], seen: {}, items: {}, talked: {}, scenes: {} },
       npcs: w.npcs.map((n, i) => ({
@@ -912,7 +913,7 @@ const trNPC = /* @__PURE__ */ (() => {
         mode: "idle",
         intent: null,
         route: [],
-        nextMoveAt: 9 * 3600 + 10 + i * 4,
+        nextMoveAt: t0 + 10 + i * 4,
         busyUntil: 0,
         blockedSince: null,
         completed: [],
@@ -922,7 +923,7 @@ const trNPC = /* @__PURE__ */ (() => {
         queued: [],
         meetings: [],
         followOffset: 0,
-        mem: []
+        mem: (n.knows || []).map((f) => [f, 0, t0])
       })),
       flags: Object.fromEntries((w.flagNames || []).map((f) => [f, false])),
       logs: [],
@@ -1499,7 +1500,9 @@ const trNPC = /* @__PURE__ */ (() => {
     const T = s.trial;
     if (!T) return;
     const ph = w.trials[T.i].phases[T.phase];
-    if (!ph || ph.type !== "investigate") return;
+    if (!ph) return;
+    for (const f of ph.setFlags || []) s.flags[f] = true;
+    if (ph.type !== "investigate") return;
     const cs = (w.cases || []).find((c) => c.trial === w.trials[T.i].code), found = cs && (s.cases || {})[cs.id] ? s.cases[cs.id][1] : null;
     T.sub = ph.until ? Math.floor(s.clock / DAY) * DAY + secs(ph.until) : ph.afterFound != null && found != null ? found + ph.afterFound * 60 : s.clock + (ph.minutes || 30) * 60;
     T.sub = Math.max(T.sub, s.clock + 300);

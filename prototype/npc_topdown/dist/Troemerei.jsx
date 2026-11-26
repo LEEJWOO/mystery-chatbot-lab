@@ -101,11 +101,12 @@ const trNPC = (() => {
     if(s.logs.length>100)s.logs.shift();
   }
   function createWorld(w,seed=246813579){
-    const s={schema:'TROEMEREI_NPC_V1',version:1,worldId:w.map.id,day:1,clock:9*3600,
+    const t0=w.startTime?secs(w.startTime):9*3600; // 시작 시각(세계 데이터 startTime, 없으면 09:00)
+    const s={schema:'TROEMEREI_NPC_V1',version:1,worldId:w.map.id,day:1,clock:t0,
       rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{},items:{},talked:{},scenes:{}},
       npcs:w.npcs.map((n,i)=>({id:n.id,x:n.x,y:n.y,mode:'idle',intent:null,route:[],
-        nextMoveAt:9*3600+10+i*4,busyUntil:0,blockedSince:null,completed:[],
-        excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:[]})),
+        nextMoveAt:t0+10+i*4,busyUntil:0,blockedSince:null,completed:[],
+        excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:(n.knows||[]).map(f=>[f,0,t0])})),
       flags:Object.fromEntries((w.flagNames||[]).map(f=>[f,false])),
       logs:[],revision:0,pend:null,pk:'',pc:0};
     relInit(w,s.player);
@@ -457,7 +458,9 @@ const trNPC = (() => {
   }
   // 조사 단계에 들어가면: 마감 시각을 sub에 적고, 자료를 지급하고, 모인 사람들을 풀어 준다(각자 일정으로).
   function enterPhase(w,s){
-    const T=s.trial;if(!T)return;const ph=w.trials[T.i].phases[T.phase];if(!ph||ph.type!=='investigate')return;
+    const T=s.trial;if(!T)return;const ph=w.trials[T.i].phases[T.phase];if(!ph)return;
+    for(const f of ph.setFlags||[])s.flags[f]=true; // 이 단계에 들어서면 서는 깃발(예: 가명이 본명으로 바뀜)
+    if(ph.type!=='investigate')return;
     const cs=(w.cases||[]).find(c=>c.trial===w.trials[T.i].code),found=cs&&(s.cases||{})[cs.id]?s.cases[cs.id][1]:null;
     T.sub=ph.until?Math.floor(s.clock/DAY)*DAY+secs(ph.until):(ph.afterFound!=null&&found!=null)?found+ph.afterFound*60:s.clock+(ph.minutes||30)*60;
     T.sub=Math.max(T.sub,s.clock+300); // 최소 5분
