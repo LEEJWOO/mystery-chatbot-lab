@@ -132,6 +132,10 @@ class Classifier:
         below = np.broadcast_to(np.arange(H)[:, None] > (chin or H // 3), O.shape[:2])
         tail = rgb[~Z & below & ~skin_mask(O) & (O[..., 3] > 200) & (rgb.mean(2) > 40)]
         self.tail = palette(tail, 12, 2) if len(tail) > 50 else self.hair
+        # 영역 밖에 같은 옷(예: 소매만 칠했을 때의 재킷)이 있으면 그 색은 머리카락 후보에서 뺀다
+        keep = np.array([nearest(c[None, None, :], self.cloth)[0, 0] > 35 for c in self.tail])
+        if keep.any():
+            self.tail = self.tail[keep]
 
     def hair_in_zone(self, C, Z):
         """옷 영역 안의 머리카락 = 영역 밖 머리카락과 이어지고 색이 가까운 것(드레스 자리에 새로 드러난 뒷머리)."""
@@ -215,9 +219,12 @@ def cmd_nextmask(a):
     below = np.broadcast_to(np.arange(O.shape[0])[:, None] > (chin or 0) + 4, O.shape[:2])
     Z = zone_of(O, chin, a.zone)
     sk, cl = progress(O, C, Z, Classifier(O, Z, chin))
+    # 실제 인페인트 시험(소매 5회차) 결과: 마스크 경계가 옷 위에 놓이면 그 자리에 옷 색 띠가 남고,
+    # 회차마다 띠가 쌓여 그물무늬가 된다 → 경계는 반드시 옷 바깥(피부·배경)에 놓이도록 넉넉히 넓힌다.
     m = nd.binary_dilation(cl, iterations=a.grow) if a.grow > 0 else cl.copy()   # iterations=0은 SciPy에서 '수렴까지'라 건너뜀
     m = nd.binary_closing(m, iterations=8) if a.grow > 0 else m
-    m &= Z & below & ~sk          # 넓힌 뒤에 첫 마스크 밖·이미 드러난 피부는 빼기
+    lim = nd.binary_dilation(Z, iterations=a.grow) if a.grow > 0 else Z
+    m &= lim & below               # 첫 마스크를 grow만큼 넘는 곳과 턱 위는 칠하지 않음(드러난 피부 위 경계는 허용)
     Image.fromarray((m * 255).astype(np.uint8)).save(a.out)
     print(f'남은 것 {cl.sum()}px → 마스크 {m.sum()}px 저장: {a.out}')
 
@@ -299,7 +306,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sp = ap.add_subparsers(dest='cmd', required=True)
     s = sp.add_parser('score'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs='+', required=True); s.add_argument('--out'); s.add_argument('--zone')
-    s = sp.add_parser('nextmask'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--grow', type=int, default=12); s.add_argument('--zone')
+    s = sp.add_parser('nextmask'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--grow', type=int, default=24); s.add_argument('--zone')
     s = sp.add_parser('finish'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--chin', type=int); s.add_argument('--zone')
     s = sp.add_parser('merge'); s.add_argument('--base', required=True); s.add_argument('--take', action='append', required=True); s.add_argument('--out', required=True); s.add_argument('--feather', type=float, default=12)
     a = ap.parse_args()
