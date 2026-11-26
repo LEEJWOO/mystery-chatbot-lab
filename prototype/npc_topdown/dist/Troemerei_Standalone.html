@@ -2792,7 +2792,7 @@ function trActor(id, expr, pose, onBad, bad) {
   const top0 = auto ? TR_EYE_Y + (fit.dy || 0) - R.eye[1] * u0 : 528 + (fit.dy || 0) - R.h * u0, left0 = auto ? TR_W / 2 - R.eye[0] * u0 : (TR_W - R.w * u0) / 2;
   const ok = P !== R && P.eye && P.ed && R.eye && R.ed, u = ok ? u0 * R.ed / P.ed : u0;
   const left = ok ? left0 + R.eye[0] * u0 - P.eye[0] * u : left0, top = ok ? top0 + R.eye[1] * u0 - P.eye[1] * u : top0, W = P.w * u, H = P.h * u;
-  const f = pick.face !== (P.def || "\uAE30\uBCF8") && (P.faces || {})[pick.face];
+  const f = (P.faces || {})[pick.face];
   const pct = (a, b) => a / b * 100 + "%", layer = (L, k) => L && !bad[trUrl(L.src)] ? /* @__PURE__ */ React.createElement("img", { key: k, src: trUrl(L.src), alt: "", onError: () => onBad(trUrl(L.src)), style: { position: "absolute", left: pct(L.x, P.w), top: pct(L.y, P.h), width: pct(L.w, P.w), height: pct(L.h, P.h) } }) : null;
   const E = P.eye, D = P.ed || P.w * 0.12, shade = pick.face === "\uD558\uB77C\uAD6C\uB85C" && E ? /* @__PURE__ */ React.createElement("div", { className: "tr-shade", style: {
     WebkitMaskImage: `url(${trUrl(P.src)})`,

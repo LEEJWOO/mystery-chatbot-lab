@@ -16,16 +16,18 @@ import matplotlib.colors as mc
 
 def load(p, mode): return np.array(Image.open(p).convert(mode)).astype(float)
 
-def extract(base_p, expr_p, mask_p, erode=22, feather=6, eye=False, clean=False, band=True, jaw=True):
+def extract(base_p, expr_p, mask_p, erode=22, feather=6, eye=False, clean=False, band=True, jaw=True, ref_p=None):
+    """ref_p: 홍채 색의 기준 그림(없으면 base). 빈 얼굴 방식에서는 기본 표정 그림을 기준으로 다른 표정의 눈 색을 맞춘다."""
     base = load(base_p, 'RGBA'); raw = load(expr_p, 'RGB')
     m = np.array(Image.open(mask_p).convert('L').resize(base.shape[1::-1], Image.NEAREST)) > 127
     w = np.clip((nd.distance_transform_edt(m) - erode) / max(feather, 1), 0, 1)
     rgb = raw.copy()
     if eye:
-        hb, hr = mc.rgb_to_hsv(base[..., :3] / 255), mc.rgb_to_hsv(raw / 255)
+        refi = load(ref_p, 'RGBA') if ref_p else base
+        hb, hr = mc.rgb_to_hsv(refi[..., :3] / 255), mc.rgb_to_hsv(raw / 255)
         iris = lambda h: (h[..., 0] > 0.40) & (h[..., 0] < 0.85) & (h[..., 1] > 0.08) & (h[..., 2] > 0.25)
         zone = w > 0.5
-        ib, ir = iris(hb) & zone & (base[..., 3] > 200), iris(hr) & zone
+        ib, ir = iris(hb) & zone & (refi[..., 3] > 200), iris(hr) & zone
         if ib.sum() > 50 and ir.sum() > 50:
             # 분위수 맞추기: 조각 홍채의 색조·채도·밝기 분포를 기본 그림 홍채 분포로 옮긴다(그라데이션까지 따라감)
             h = hr.copy(); q = np.linspace(0, 1, 33)

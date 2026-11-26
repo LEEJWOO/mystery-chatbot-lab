@@ -1,6 +1,12 @@
 """인물 레이어 묶기: 자세 그림 + 표정 인페인트(+마스크) → 화면용 그림(webp)과 assets.web.json 'chars' 항목.
 
-  python3 -I tools/char_layers.py <인물id> <원본 폴더> <출력 폴더> [--fit 1.0]
+  python3 -I tools/char_layers.py <인물id> <원본 폴더> <출력 폴더> [--fresh] [--preview 미리보기.png] [--table 표.json] [--align-only]
+
+두 방식을 모두 받는다.
+  · 옛 방식: 자세마다 번호-직업-자세-neutral.png(바탕) + 표정.png + 표정-mask.png
+  · 빈 얼굴(달걀귀신) 방식: 번호-직업-자세-blank.png(이목구비 없는 바탕) + 번호-직업-자세-mask.png(자세 공통 마스크)
+    + neutral 포함 모든 표정.png. 표정별 마스크가 있으면 그것을 먼저 쓴다.
+--preview: 자세·표정마다 얼굴을 잘라 한 장으로 늘어놓은 확인용 그림. --table: 결과를 다른 표에 적기(시험용).
 
 원본 폴더의 파일 이름 규칙: 번호-직업-자세-표정.png (+ 표정본은 -mask.png 짝)
   자세: default / think / point / crossed, 평상시 = neutral (자세마다 1장, 투명 PNG)
@@ -16,9 +22,12 @@ import matplotlib.colors as mc
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from expr_extract import extract
 
+if len([a for a in sys.argv[1:] if not a.startswith('--')]) < 3: print(__doc__); sys.exit(1)
 CID, SRC, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
+os.makedirs(OUT, exist_ok=True)
 FIT = float(sys.argv[sys.argv.index('--fit') + 1]) if '--fit' in sys.argv else 1.0
-TABLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'assets.web.json')
+TABLE = sys.argv[sys.argv.index('--table') + 1] if '--table' in sys.argv else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'assets.web.json')
+if not os.path.exists(TABLE): json.dump({'chars': {}}, open(TABLE, 'w'))   # 확인용 빈 표
 KO = {'neutral': '기본', 'smile': '미소', 'laugh': '웃음', 'suspicious': '의심', 'surprised': '놀람', 'troubled': '곤란', 'embarrassed': '부끄러움',
       'annoyed': '불만', 'sad': '슬픔', 'furious': '격노', 'panic': '패닉', 'darksmile': '하라구로'}
 
@@ -47,7 +56,7 @@ def eyes(im):
 import cv2
 def face_box(pose):
     bs = []
-    for g in glob.glob(os.path.join(SRC, '*-%s-*-mask.png' % pose)):
+    for g in glob.glob(os.path.join(SRC, '*-%s-*-mask.png' % pose)) + glob.glob(os.path.join(SRC, '*-%s-mask.png' % pose)):
         a = np.array(Image.open(g).convert('L')) > 127; ys, xs = np.nonzero(a); bs.append((xs.min(), ys.min(), xs.max(), ys.max()))
     return np.median(np.array(bs), 0) if bs else None
 def gray(im):
@@ -82,25 +91,34 @@ ch = {} if '--fresh' in sys.argv and not ALIGN_ONLY else (table.setdefault('char
 table.setdefault('chars', {})
 ch.setdefault('poses', {}); ch['fit'] = {'s': FIT}
 total = 0
-REF_BOX = face_box('default'); REF_F = [f for f in files if re.search(r'-default-neutral\.png$', f)][0]; REF_IM = Image.open(REF_F).convert('RGBA')
+def find(pose, expr):
+    for f in files:
+        m = pat.match(os.path.basename(f))
+        if m and m.group(1) == pose and m.group(2) == expr: return f
+    return None
+def look_img(pose):
+    """정렬용 그림: 빈 얼굴 방식이면 빈 얼굴의 윤곽(투명도) + 기본 표정 그림의 색, 아니면 기본 그림"""
+    bl, ne = find(pose, 'blank'), find(pose, 'neutral')
+    if bl and ne:
+        a = Image.open(bl).convert('RGBA'); n = Image.open(ne).convert('RGB').resize(a.size); n.putalpha(a.split()[3]); return n
+    return Image.open(ne or bl).convert('RGBA')
+REF_BOX = face_box('default'); REF_IM = look_img('default')
 REF_H = eyes(REF_IM)
 if REF_H and not (REF_BOX[0] < REF_H[0][0] < REF_BOX[2] and REF_BOX[1] < REF_H[0][1] < REF_BOX[3]): REF_H = None
-REF_E0 = None
 REF_E = ((REF_BOX[0] + REF_BOX[2]) / 2, REF_BOX[1] + (REF_BOX[3] - REF_BOX[1]) * .40); REF_D = (REF_BOX[2] - REF_BOX[0]) * .42
 REF_C = chin_y(REF_IM, REF_E[0], REF_E[1], REF_D)
-files.sort(key=lambda f: '-default-' not in f)
-for f in files:
-    m = pat.match(os.path.basename(f))
-    if not m or m.group(2) != 'neutral': continue
-    pose = m.group(1); im = Image.open(f).convert('RGBA')
+PV = []   # --preview 용 합성 그림
+for pose in ['default', 'think', 'point', 'crossed']:
+    blank = find(pose, 'blank'); neutral = find(pose, 'neutral'); f = blank or neutral
+    if not f: continue
+    egg = bool(blank)   # 빈 얼굴(달걀귀신) 방식: 바탕은 이목구비 없는 얼굴, 기본 표정까지 모두 조각
+    im = Image.open(f).convert('RGBA'); lim = look_img(pose)
     if ALIGN_ONLY: name = ch['poses'][pose]['src']
     else: name, n = save(im); total += n
-    P = ch['poses'].get(pose, {}); P.update({'src': name, 'w': im.width, 'h': im.height, 'def': '기본'})
-    # 눈 기준점: 기본 자세는 표정 마스크 상자에서(가로 가운데·위에서 40%, 눈 사이 = 상자 너비 × 0.42),
-    # 다른 자세는 기본 자세 얼굴을 찾아 같은 점으로 옮긴다(눈 색과 무관).
+    P = ch['poses'].get(pose, {}); P.update({'src': name, 'w': im.width, 'h': im.height, 'def': '' if egg else '기본'})
     if pose == 'default': P['eye'], P['ed'] = [round(REF_E[0]), round(REF_E[1])], round(REF_D, 1)
     else:
-        he = eyes(im); E_ = match(REF_IM, REF_BOX, im)
+        he = eyes(lim); E_ = match(REF_IM, REF_BOX, lim)
         if E_[0] < 0.6 and REF_H and he and 0.8 < he[1] / REF_H[1] < 1.25:   # 얼굴 맞추기 점수가 낮을 때(머리 모양이 자세마다 크게 다름)만 홍채 한 쌍으로
             t = he[1] / REF_H[1]; P['eye'] = [round(he[0][0] + (REF_E[0] - REF_H[0][0]) * t), round(he[0][1] + (REF_E[1] - REF_H[0][1]) * t)]; P['ed'] = round(REF_D * t, 1); P['fit'] = 'iris'
         else:
@@ -108,22 +126,39 @@ for f in files:
             P['eye'] = [round(mx + (REF_E[0] - o[0]) * t), round(my + (REF_E[1] - o[1]) * t)]; P['ed'] = round(REF_D * t, 1); P['fit'] = 'face %.2f' % v
         # 눈과 턱의 절충: 자세 그림마다 얼굴 길이가 조금씩 달라(따로 생성) 눈만 맞추면 턱이, 턱만 맞추면 눈이 어긋난다.
         # → 배율은 '눈 사이'와 '눈~턱' 비율의 기하평균, 기준점은 눈과 턱의 가운데로 잡아 어긋남을 반씩 나눈다.
-        cp = chin_y(im, P['eye'][0], P['eye'][1], P['ed'])
+        cp = chin_y(lim, P['eye'][0], P['eye'][1], P['ed'])
         if REF_C and cp and cp > P['eye'][1]:
             r_ed = REF_D / P['ed']; r_h = (REF_C - REF_E[1]) / (cp - P['eye'][1])
             if 0.7 < r_h < 1.4:
                 sm = (r_ed * r_h) ** .5; Mp = (P['eye'][1] + cp) / 2; Md = (REF_E[1] + REF_C) / 2
                 P['eye'] = [P['eye'][0], round(Mp - (Md - REF_E[1]) / sm)]; P['ed'] = round(REF_D / sm, 1); P['fit'] += ' chin %.2f' % r_h
+    if not ALIGN_ONLY: P['faces'] = {}
     P.setdefault('faces', {}); ch['poses'][pose] = P
+    shared = [g for g in files if re.match(r'^\d+-[a-z]+-%s-mask\.png$' % pose, os.path.basename(g))]
     for g in ([] if ALIGN_ONLY else files):
         mm = pat.match(os.path.basename(g))
-        if not mm or mm.group(1) != pose or mm.group(2) == 'neutral' or mm.group(2) not in KO: continue
+        if not mm or mm.group(1) != pose or mm.group(2) not in KO: continue
+        if mm.group(2) == 'neutral' and not egg: continue      # 옛 방식: 기본 표정은 바탕 그림 자체
         mask = g[:-4] + '-mask.png'
-        if not os.path.exists(mask): print('마스크 없음:', os.path.basename(g)); continue
-        patch, box = extract(f, g, mask, eye=True)
+        if not os.path.exists(mask): mask = shared[0] if shared else None   # 자세 공통 마스크(빈 얼굴 방식)
+        if not mask: print('마스크 없음:', os.path.basename(g)); continue
+        ref = neutral if egg and mm.group(2) != 'neutral' else None    # 눈 색 기준: 빈 얼굴 방식은 기본 표정 그림
+        patch, box = extract(f, g, mask, eye=not (egg and mm.group(2) == 'neutral'), ref_p=ref)
         pn, n = save(patch); total += n
         P['faces'][KO[mm.group(2)]] = {'src': pn, 'x': box[0], 'y': box[1], 'w': box[2] - box[0], 'h': box[3] - box[1]}
-    print(pose, '표정', len(P['faces']), '눈', P.get('eye'), P.get('ed'), P.pop('fitScore', None) or P.get('fit', ''))
+        PV.append((pose, mm.group(2), im, patch, box, P))
+    print(pose, '빈 얼굴' if egg else '', '표정', len(P['faces']), '눈', P.get('eye'), P.get('ed'), P.get('fit', ''))
 table['chars'][CID] = ch
 json.dump(table, open(TABLE, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(CID, '합계', total // 1024, 'KB')
+if '--preview' in sys.argv:
+    # 확인용 한 장: 자세·표정마다 얼굴 부분을 잘라 늘어놓는다(눈 위치 기준으로 같은 크기)
+    from PIL import ImageDraw
+    out = sys.argv[sys.argv.index('--preview') + 1]; T = 200; tiles = []
+    for pose, ex_, im, patch, box, P in PV:
+        c = im.copy(); c.alpha_composite(patch, (box[0], box[1])); k = 127.0 / P['ed']; x, y = P['eye']
+        r = c.crop((int(x - 150 / k), int(y - 120 / k), int(x + 150 / k), int(y + 180 / k))).resize((T, T))
+        bg = Image.new('RGB', (T, T + 16), (40, 36, 52)); bg.paste(r, (0, 16), r.split()[3]); ImageDraw.Draw(bg).text((4, 2), pose + ' / ' + ex_, fill=(255, 230, 120)); tiles.append(bg)
+    cols = 6; sheet = Image.new('RGB', (cols * T, ((len(tiles) + cols - 1) // cols) * (T + 16)), (20, 18, 26))
+    for i, t in enumerate(tiles): sheet.paste(t, ((i % cols) * T, (i // cols) * (T + 16)))
+    sheet.save(out); print('미리보기', out)

@@ -1256,7 +1256,7 @@ function trActor(id, expr, pose, onBad, bad) {
   const top0 = auto ? TR_EYE_Y + (fit.dy || 0) - R.eye[1] * u0 : 528 + (fit.dy || 0) - R.h * u0, left0 = auto ? TR_W / 2 - R.eye[0] * u0 : (TR_W - R.w * u0) / 2;
   const ok = P !== R && P.eye && P.ed && R.eye && R.ed, u = ok ? u0 * R.ed / P.ed : u0;
   const left = ok ? left0 + R.eye[0] * u0 - P.eye[0] * u : left0, top = ok ? top0 + R.eye[1] * u0 - P.eye[1] * u : top0, W = P.w * u, H = P.h * u;
-  const f = pick.face !== (P.def || '기본') && (P.faces || {})[pick.face];
+  const f = (P.faces || {})[pick.face]; // 빈 얼굴 방식이면 기본 표정도 조각으로 덮는다
   const pct = (a, b) => (a / b * 100) + '%', layer = (L, k) => L && !bad[trUrl(L.src)] ? <img key={k} src={trUrl(L.src)} alt="" onError={() => onBad(trUrl(L.src))} style={{ position: 'absolute', left: pct(L.x, P.w), top: pct(L.y, P.h), width: pct(L.w, P.w), height: pct(L.h, P.h) }} /> : null;
   // 하라구로: 그림에는 그림자를 넣지 않고, 눈 위쪽에 어두운 그늘을 인물 윤곽 안에만 덮는다.
   const E = P.eye, D = P.ed || P.w * .12, shade = pick.face === '하라구로' && E ? <div className="tr-shade" style={{ WebkitMaskImage: `url(${trUrl(P.src)})`, maskImage: `url(${trUrl(P.src)})`,
