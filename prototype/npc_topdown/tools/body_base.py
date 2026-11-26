@@ -307,6 +307,10 @@ def cmd_headfix(a):
         sys.exit('결과 그림에서 빈 얼굴을 찾지 못함')
     sizes = nd.sum(np.ones_like(lab), lab, range(1, n + 1))
     face = nd.binary_fill_holes(lab == int(np.argmax(sizes)) + 1)
+    fb = int(np.where(face.any(1))[0].max())
+    if a.chin is None and chin - fb > 15:      # 자동 턱이 목 아래로 내려간 경우(목과 얼굴 피부가 이어진 그림): 빈 얼굴 아래 끝으로
+        print(f'자동 턱 {chin} → 빈 얼굴 아래 끝 {fb + 2}로 고침')
+        chin = fb + 2; head[:] = False; head[:chin] = True; face &= head
     inner = nd.binary_erosion(face, iterations=3)
     med = np.stack([nd.median_filter(F[..., c], 7) for c in range(3)], -1)
     F[..., :3] = np.where(inner[..., None], med, F[..., :3])
@@ -327,13 +331,22 @@ def cmd_headfix(a):
     ref = head & ~face & (O[..., 3] > 200) & (hO[..., 2] > .6) & (hO[..., 1] > .12)
     hairO = (nearest(O[..., :3], palette(O[ref][:, :3], 12, 3)) < 22) if ref.sum() > 100 else np.zeros((H, W), bool)
     useF = nd.binary_closing((face & ~hairO) | boxes, iterations=1)
-    # 얼굴 가까이 머리카락 위에 남은 작은 이목구비 조각(눈꼬리·눈썹 끝 등): 원본이 더 어둡고 작은 덩어리면 결과 쪽
+    # 얼굴 가까이 머리카락 위에 남은 이목구비 조각(눈꼬리, 앞머리 위에 비쳐 그린 눈썹 등): 원본이 더 어두운 작은·가는 덩어리면 결과 쪽
     dO = (F[..., :3].mean(2) - O[..., :3].mean(2)) > 25
     near = nd.binary_dilation(face, iterations=30) & head & ~useF
     lab, n = nd.label(nd.binary_dilation(dO & near, iterations=1))
     for i, sl in enumerate(nd.find_objects(lab)):
-        if sl is not None and (lab[sl] == i + 1).sum() < 120:
+        if sl is None: continue
+        area = (lab[sl] == i + 1).sum(); box = (sl[0].stop - sl[0].start) * (sl[1].stop - sl[1].start)
+        if area < 120 or (area < 900 and area / box < .3):   # 작은 조각, 또는 가늘고 긴 선(머리카락 위에 그린 눈썹)
             useF[sl] |= (lab[sl] == i + 1)
+    # 앞머리 위에 비쳐 그린 눈썹: 눈 상자 바로 위 띠에서 원본만 어두운 선은 결과 쪽
+    lab2, _ = nd.label(nd.binary_dilation((hO[..., 2] < .5) & face, iterations=2))
+    for i, sl in enumerate(nd.find_objects(lab2)):
+        if sl is None or sl[1].stop - sl[1].start < 25: continue
+        y0, x0, x1 = sl[0].start, sl[1].start, sl[1].stop
+        bnd = np.zeros((H, W), bool); bnd[max(0, y0 - 50):y0 + 6, max(0, x0 - 18):x1 + 18] = True
+        useF |= nd.binary_dilation(bnd & dO & head, iterations=1) & bnd
     w = nd.gaussian_filter(useF.astype(np.float32), 1.0); w[~head] = 1
     for i in range(8):
         y = chin - 4 + i
