@@ -26,9 +26,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 .fig{position:absolute;bottom:0;cursor:grab;touch-action:none}
 .fig img{display:block;pointer-events:none;user-select:none}
 .fig.sel img{filter:drop-shadow(0 0 0 var(--acc)) drop-shadow(0 0 3px var(--acc))}
-.fig b{position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;font-size:12px;white-space:nowrap;color:var(--mut)}
+.under{position:absolute;left:0;right:0;bottom:0;background:light-dark(#fff,#111214);z-index:2}.under b{position:absolute;top:8px;transform:translateX(-50%);font-size:12px;white-space:nowrap;color:var(--mut)}
 main{padding:14px max(4vw,14px) 40px;display:grid;gap:10px}
-.row{display:grid;grid-template-columns:120px minmax(0,1fr) minmax(0,1fr) 90px;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.row{display:grid;grid-template-columns:120px 110px minmax(0,1fr) minmax(0,1fr) 80px;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .row.sel{border-color:var(--acc)}
 .row input[type=range]{width:100%}
 .row .v{font-variant-numeric:tabular-nums;font-size:13px}
@@ -43,6 +43,9 @@ textarea{width:100%;min-height:110px;font:13px/1.4 ui-monospace,monospace;border
   <h1>인물 줄 세우기</h1>
   <label class="btn">그림 불러오기<input id="file" type="file" accept="image/png,image/webp" multiple hidden></label>
   <button id="fitAll">보기 크기 맞춤</button>
+  <button id="reset">원본 그대로</button>
+  <span class="mut">키 반영: 1cm =</span><input id="pxcm" type="number" value="8" step="1" style="width:64px;font-size:16px" aria-label="1cm당 정수리 px"><span class="mut">px · 배율</span><input id="scm" type="number" value="0.3" step="0.1" style="width:64px;font-size:16px" aria-label="1cm당 배율 %"><span class="mut">%</span>
+  <button id="byHeight">설정 키 반영</button>
   <span class="mut">같은 빨간 바닥선 위에 세운다 · 인물을 위아래로 끌면 y 이동 · 순서: 이름 칸을 1-, 2- 처럼 고치면 그 순서로</span>
 </header>
 <div id="stageWrap"><div id="stage"><div class="empty" id="empty">832×1216 투명 PNG를 여러 장 고르세요. 파일 이름(확장자 뺀 것)이 인물 이름이 됩니다.<br>이 페이지는 그림을 어디에도 올리지 않습니다(이 브라우저 안에서만).</div></div></div>
@@ -61,17 +64,19 @@ const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 function layout(){
   const H=Math.max(300,...S.items.map(it=>it.h*it.s*S.view))+60; stage.style.setProperty('--h',H+'px');
   let x=20; const floorY=H-36;
-  stage.querySelectorAll('.fig,.tick,#floor').forEach(e=>e.remove());
+  stage.querySelectorAll('.fig,.tick,#floor,.under').forEach(e=>e.remove()); const labs=[];
   const f=document.createElement('div'); f.id='floor'; f.style.top=floorY+'px'; stage.appendChild(f);
   for(let k=1;k<=6;k++){const t=document.createElement('div');t.className='tick';t.style.top=(floorY-k*100)+'px';t.textContent=Math.round(k*100/S.view)+'px';if(floorY-k*100>0)stage.appendChild(t);}
   S.items.forEach((it,i)=>{
     const w=it.w*it.s*S.view,h=it.h*it.s*S.view, el=document.createElement('div');
     const sc=it.s*S.view, left=x-(it.l||0)*sc;   // 간격은 늘 자동: 칠해진 가로 범위끼리 16px
     el.className='fig'+(i===S.sel?' sel':''); el.style.left=left+'px'; el.style.bottom=(36-it.y*it.s*S.view)+'px';
-    el.innerHTML='<img alt="" width="'+w+'" height="'+h+'"><b></b>'; el.querySelector('img').src=it.url; el.querySelector('b').textContent=it.name;
+    el.innerHTML='<img alt="" width="'+w+'" height="'+h+'">'; el.querySelector('img').src=it.url; labs.push([x+((it.r||it.w)-(it.l||0))*sc/2,it.name]);
     x+=((it.r||it.w)-(it.l||0))*sc+16;
     drag(el,i); stage.appendChild(el);
   });
+  // 바닥 아래는 가린다(내려간 인물의 잘린 아랫부분이 보이지 않게) + 이름표
+  const u=document.createElement('div');u.className='under';u.style.top=(floorY+2)+'px';labs.forEach(([cx,n])=>{const b=document.createElement('b');b.style.left=cx+'px';b.textContent=n;u.appendChild(b);});stage.appendChild(u);
   stage.style.minWidth=(x+40)+'px'; $('empty').style.display=S.items.length?'none':'block'; rows(); out();
 }
 function drag(el,i){
@@ -80,28 +85,37 @@ function drag(el,i){
   el.addEventListener('pointerup',()=>{el.onpointermove=null;layout();});
 }
 function rows(){
-  $('rows').innerHTML=S.items.map((it,i)=>'<div class="row'+(i===S.sel?' sel':'')+'" data-i="'+i+'"><input type="text" value="'+esc(it.name)+'" aria-label="이름"><label>배율 <span class="v s">'+it.s.toFixed(3)+'</span><input type="range" min="0.5" max="1.5" step="0.005" value="'+it.s+'" class="rs"></label><label>y <span class="v y">'+it.y+'</span><input type="range" min="-400" max="400" step="1" value="'+it.y+'" class="ry"></label><button class="del">빼기</button></div>').join('');
+  $('rows').innerHTML=S.items.map((it,i)=>'<div class="row'+(i===S.sel?' sel':'')+'" data-i="'+i+'"><input type="text" value="'+esc(it.name)+'" aria-label="이름"><label>키 <input type="number" class="cm" value="'+(it.cm||'')+'" placeholder="cm" style="width:70px;font-size:16px"></label><label>배율 <span class="v s">'+it.s.toFixed(3)+'</span><input type="range" min="0.5" max="1.5" step="0.005" value="'+it.s+'" class="rs"></label><label>y <span class="v y">'+it.y+'</span><input type="range" min="-400" max="400" step="1" value="'+it.y+'" class="ry"></label><button class="del">빼기</button></div>').join('');
   $('rows').querySelectorAll('.row').forEach(r=>{const i=+r.dataset.i,it=S.items[i];
     r.querySelector('.rs').oninput=e=>{it.s=+e.target.value;layout();};
     r.querySelector('.ry').oninput=e=>{it.y=+e.target.value;layout();};
     r.querySelector('input[type=text]').onchange=e=>{it.name=e.target.value.trim()||it.name;S.items.sort((a,b)=>a.name.localeCompare(b.name));layout();};
+    r.querySelector('.cm').onchange=e=>{it.cm=+e.target.value||0;out();};
     r.querySelector('.del').onclick=()=>{S.items.splice(i,1);S.sel=-1;layout();};
     r.onclick=()=>{if(S.sel!==i){S.sel=i;layout();}};});
 }
 function syncRow(i){const r=$('rows').querySelector('[data-i="'+i+'"]');if(r){r.querySelector('.y').textContent=S.items[i].y;r.querySelector('.ry').value=S.items[i].y;}}
-function out(){const o={};S.items.forEach(it=>o[it.name]={scale:+it.s.toFixed(3),y:it.y});$('out').value=JSON.stringify(o,null,1);}
+function out(){const o={};S.items.forEach(it=>o[it.name]={scale:+it.s.toFixed(3),y:it.y,...(it.cm?{cm:it.cm}:{})});$('out').value=JSON.stringify(o,null,1);}
 $('file').onchange=e=>{
   const fs=[...e.target.files]; let n=fs.length;
   fs.forEach(f=>{const url=URL.createObjectURL(f),img=new Image();img.onload=()=>{
     // 옆 간격용: 그림 안에서 실제로 칠해진 가로 범위(그림 자체는 자르지 않음)
     const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const g=c.getContext('2d');g.drawImage(img,0,0);
     const d=g.getImageData(0,0,c.width,c.height).data;let l=c.width,r=0;for(let y=0;y<c.height;y+=4)for(let x=0;x<c.width;x++){if(d[(y*c.width+x)*4+3]>40){if(x<l)l=x;if(x>r)r=x;}}
-    S.items.push({name:f.name.replace(/\.[^.]+$/,''),url,w:img.width,h:img.height,s:1,y:0,x:null,crop:1,l,r});
+    // 정수리: 가운데 40% 폭에서 칠해진 폭이 25%를 넘는 첫 줄(머리 위 작은 장식은 무시)
+    const c0=Math.floor(l+(r-l)*.3),c1=Math.floor(l+(r-l)*.7);let top=0;for(let y=0;y<c.height;y++){let k=0;for(let x=c0;x<c1;x++)if(d[(y*c.width+x)*4+3]>40)k++;if(k>=(c1-c0)*.25){top=y;break;}}
+    S.items.push({name:f.name.replace(/\.[^.]+$/,''),url,w:img.width,h:img.height,s:1,y:0,x:null,crop:1,l,r,top});
     if(--n===0){S.items.sort((a,b)=>a.name.localeCompare(b.name));layout();$('fitAll').click();}};img.src=url;});
 };
 $('fitAll').onclick=()=>{const H=Math.max(...S.items.map(it=>it.h*it.s),1),Wd=S.items.reduce((a,it)=>a+((it.r||it.w)-(it.l||0))*it.s+16/S.view,0)+60;S.view=Math.min(.8,Math.max(.1,Math.min((innerHeight*.5)/H,(innerWidth-40)/Wd)));layout();};
+$('reset').onclick=()=>{S.items.forEach(it=>{it.s=1;it.y=0;});layout();};
+// 설정 키 반영: 키가 클수록 배율 조금 크게, 정수리를 1cm당 px만큼 높게. 가장 큰 인물이 바닥에 붙도록(y=0) 나머지를 내린다. 정확한 비례가 아니라 '느낌' 확인용.
+$('byHeight').onclick=()=>{const L=S.items.filter(it=>it.cm>0);if(!L.length){$('msg').textContent='키(cm)를 먼저 적으세요';return;}
+  const px=+$('pxcm').value||0,sc=(+$('scm').value||0)/100,ref=L.reduce((a,it)=>a+it.cm,0)/L.length,cmax=Math.max(...L.map(it=>it.cm));
+  L.forEach(it=>it.s=+(1+(it.cm-ref)*sc).toFixed(3));const Tmax=Math.max(...L.map(it=>(it.h-it.top)*it.s));
+  L.forEach(it=>it.yy=((it.h-it.top)*it.s-(Tmax-(cmax-it.cm)*px))/it.s);const m=Math.min(...L.map(it=>it.yy));L.forEach(it=>{it.y=Math.round(it.yy-m);delete it.yy;});layout();$('msg').textContent='키 반영';};
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('out').value);$('msg').textContent='복사했습니다';}catch(e){$('out').select();$('msg').textContent='선택해 두었습니다. 직접 복사하세요';}};
-$('load').onclick=()=>{try{const o=JSON.parse($('out').value);S.items.forEach(it=>{if(o[it.name]){it.s=+o[it.name].scale||1;it.y=+o[it.name].y||0;}});layout();$('msg').textContent='불러왔습니다';}catch(e){$('msg').textContent='표 형식이 올바르지 않습니다';}};
+$('load').onclick=()=>{try{const o=JSON.parse($('out').value);S.items.forEach(it=>{if(o[it.name]){it.s=+o[it.name].scale||1;it.y=+o[it.name].y||0;if(o[it.name].cm)it.cm=+o[it.name].cm;}});layout();$('msg').textContent='불러왔습니다';}catch(e){$('msg').textContent='표 형식이 올바르지 않습니다';}};
 layout();
 }
 </script>
