@@ -559,6 +559,16 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   }
   function padDown(dx, dy) { if (busy) return; step(dx, dy); clearInterval(padRef.current); padRef.current = setInterval(() => step(dx, dy), 240); }
   function padUp() { clearInterval(padRef.current); padRef.current = null; }
+  // 키보드 방향키 = 십자 패드(누르고 있으면 계속 걷는다). 글 입력 중에는 무시.
+  const keyRef = useRef('');
+  useEffect(() => {
+    const K = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+    const typing = e => /INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '') || (e.target && e.target.isContentEditable);
+    const down = e => { const d = K[e.key]; if (!d || typing(e)) return; e.preventDefault(); if (keyRef.current === e.key) return; keyRef.current = e.key; padDown(d[0], d[1]); };
+    const up = e => { if (!K[e.key] || keyRef.current !== e.key) return; keyRef.current = ''; padUp(); };
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up); const bl = () => { if (keyRef.current) { keyRef.current = ''; padUp(); } }; window.addEventListener('blur', bl);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', bl); };
+  });
 
   function tapMap(e) {
     if (busy) return;
@@ -572,7 +582,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     setMenu(null);
     if (!TroemereiNPC.walkable(TN_WORLD, x, y)) { setPreview(null); return; }
     const ta = TroemereiNPC.areaOf(TN_WORLD, x, y);
-    if (ta !== room && !(ta < 0 && inRoom(x, y))) { setPreview(null); return; }
+    // 다른 방(문 너머)도 눌러서 갈 수 있다. 그 방 사람은 들어가기 전까지 보이지 않는다.
     if (preview && preview.x === x && preview.y === y) { setPreview(null); act({ type: 'MOVE_TO', x, y }); return; }
     const path = TroemereiNPC.route(TN_WORLD, state, p, { x, y }, { ignorePlayer: true });
     if (!path.length) { setPreview(null); return; }
@@ -639,6 +649,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   }
   function heardToast() { const h = heardRef.current; if (h && h.accepted.length) setToast('단서 추가: ' + trNpc(boot.base.pend).name + '의 증언 ' + h.accepted.length + '건'); }
   function endTalk() {
+    if (talk && talk.block) { setToast(talk.block); setTalk(null); return; } // 비켜 달라는 대본 대화는 AI 응답과 무관
     if (!consumed) { const nx = applyReply('T'); setState(nx); setConsumed(true); heardToast(); }
     setTalk(null); setText(''); setDrop(false); setPres('');
   }
@@ -1115,10 +1126,10 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     <div className="tr-card" style={{ transform: `scale(${scale})` }}>
       <div ref={svgRef} className="tr-map" onClick={tapMap}>
         <div className="tr-world" style={{ width: TN_WORLD.map.width * TR_CELL, height: TN_WORLD.map.height * TR_CELL, transform: `translate(${-camX}px,${-camY}px)`, transition: roomChanged ? 'none' : undefined,
-          clipPath: debug ? 'none' : `inset(${ry0}px ${TN_WORLD.map.width * TR_CELL - rx1}px ${TN_WORLD.map.height * TR_CELL - ry1}px ${rx0}px)` }}>
+          clipPath: 'none' }}>
           {TR_A.map && !badImg[trUrl(TR_A.map.src)] ? <img className="tr-px" src={trUrl(TR_A.map.src)} alt="" onError={() => setBadImg(v => ({ ...v, [trUrl(TR_A.map.src)]: true }))} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} />
             : <svg style={{ position: 'absolute', inset: 0 }} width="100%" height="100%">{trStaticLayer()}</svg>}
-          {TN_WORLD.map.areas.map((a, i) => i === room || !debug ? null : <div key={'f' + i} className="tr-fog" style={{ left: a.x0 * TR_CELL, top: a.y0 * TR_CELL - 18, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL + 18, opacity: debug ? .3 : .74 }} />)}
+          {TN_WORLD.map.areas.map((a, i) => i === room ? null : <div key={'f' + i} className="tr-fog" style={{ left: a.x0 * TR_CELL, top: a.y0 * TR_CELL - 18, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL + 18, opacity: debug ? .3 : .74 }} />)}
           <svg style={{ position: 'absolute', inset: 0, overflow: 'visible' }} width="100%" height="100%" pointerEvents="none">
             {(preview ? preview.path : p.route).map((q, i) => <circle key={i} cx={(q.x + .5) * TR_CELL} cy={(q.y + .5) * TR_CELL} r={i === (preview ? preview.path : p.route).length - 1 ? 7 : 3.5} fill={preview ? '#f6e3b4' : '#f2c46d'} opacity={preview ? .9 : .75} stroke="#3a2a14" strokeWidth="1" />)}
             {ml ? [[ml.x, ml.y], ...(ml.hit || [])].map(([hx, hy], i) => <rect key={i} x={hx * TR_CELL + 2} y={hy * TR_CELL + 2} width={TR_CELL - 4} height={TR_CELL - 4} rx="6" fill="none" stroke="#f6d48a" strokeWidth="2" strokeDasharray={i ? '4 3' : ''} />) : null}
@@ -1128,7 +1139,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div key={'fade' + room} className="tr-fade" />
       </div>
       <div className="tr-hud"><span className="tr-pill tr-area"><i />{RM.name}</span><span className="tr-pill tr-time">{state.day}일 {TroemereiNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
-        <button className="tr-hbtn" onClick={() => setSheet('rest')}>휴식</button><button className="tr-hbtn" onClick={() => setSheet('note')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>
+        <button className="tr-hbtn" disabled={busy} title="10초 진행" onClick={() => { setPreview(null); setState(v => TroemereiNPC.dispatch(TN_WORLD, v, { type: 'WAIT', seconds: 10 })); }}>+10초</button><button className="tr-hbtn" onClick={() => setSheet('rest')}>휴식</button><button className="tr-hbtn" onClick={() => setSheet('note')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>
       {investigating ? (() => { const ph = TN_WORLD.trials[state.trial.i].phases[state.trial.phase]; return <div className="tr-inv"><b>조사 중</b><span>마감 {trHM(state.trial.sub)}</span>
         {ph.declare ? <button disabled={busy} onClick={() => trialNext()}>조사 끝 · 재판으로</button> : <span className="tr-mut">마감이 되면 재판이 열린다</span>}</div>; })()
         : (TN_WORLD.cases || []).filter(c => ((state.cases || {})[c.id] || [])[0] === 1).map(c => { const l = TN_WORLD.map.landmarks.find(x => x.id === c.spot); const here = state.npcs.filter(n => TroemereiNPC.areaOf(TN_WORLD, n.x, n.y) === TroemereiNPC.areaOf(TN_WORLD, l.x, l.y)).length, inRoom = TroemereiNPC.areaOf(TN_WORLD, state.player.x, state.player.y) === TroemereiNPC.areaOf(TN_WORLD, l.x, l.y);
@@ -1264,7 +1275,7 @@ function trRest({ state, busy, onSkip, h, setH, mi, setMi }) {
     <button className="tr-big" disabled={busy} onClick={() => onSkip(morning)}>자고 아침으로<small>{label(morning)} · {dur(morning)}</small></button>
     <div className="tr-mut" style={{ marginTop: 4 }}>시각 지정</div>
     <div className="tr-grid h">{Array.from({ length: 24 }, (_, i) => <button key={i} className={h === i ? 'on' : ''} onClick={() => setH(i)}>{String(i).padStart(2, '0')}</button>)}</div>
-    <div className="tr-grid m">{[0, 10, 20, 30, 40, 50].map(m => <button key={m} className={mi === m ? 'on' : ''} onClick={() => setMi(m)}>:{String(m).padStart(2, '0')}</button>)}</div>
+    <div className="tr-grid m">{[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(m => <button key={m} className={mi === m ? 'on' : ''} onClick={() => setMi(m)}>:{String(m).padStart(2, '0')}</button>)}</div>
     {pick ? <div className="tr-prev"><b>{label(pick)}</b> · {dur(pick)}{notes.length ? notes.map((x, i) => <div key={i} className="tr-mut">{trHM(x.t)} 공지 · {x.n.text}{x.n.place ? ' (' + x.n.place + ')' : ''} — 지나감(멈추지 않음)</div>) : <div className="tr-mut">그 사이 공지 없음</div>}</div> : null}
     <button className="tr-big" disabled={busy || !pick} onClick={() => onSkip(pick, true)} style={pick && Math.floor(pick / D) > Math.floor(now / D) ? { borderColor: '#d07070' } : null}>{!pick ? '시각을 고르세요' : Math.floor(pick / D) > Math.floor(now / D) ? '이미 지난 시각 → 내일 ' + trHM(pick) + '까지 건너뛰기' : trHM(pick) + '까지 건너뛰기'}</button>
   </div>;

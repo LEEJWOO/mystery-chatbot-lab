@@ -3033,6 +3033,38 @@ function Troemerei({ s = "", t = "", d = "", e = "", k = "", f = "", r = "" }) {
     clearInterval(padRef.current);
     padRef.current = null;
   }
+  const keyRef = useRef("");
+  useEffect(() => {
+    const K = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+    const typing = (e2) => /INPUT|TEXTAREA|SELECT/.test(e2.target && e2.target.tagName || "") || e2.target && e2.target.isContentEditable;
+    const down = (e2) => {
+      const d2 = K[e2.key];
+      if (!d2 || typing(e2)) return;
+      e2.preventDefault();
+      if (keyRef.current === e2.key) return;
+      keyRef.current = e2.key;
+      padDown(d2[0], d2[1]);
+    };
+    const up = (e2) => {
+      if (!K[e2.key] || keyRef.current !== e2.key) return;
+      keyRef.current = "";
+      padUp();
+    };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    const bl = () => {
+      if (keyRef.current) {
+        keyRef.current = "";
+        padUp();
+      }
+    };
+    window.addEventListener("blur", bl);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", bl);
+    };
+  });
   function tapMap(e2) {
     if (busy) return;
     const r2 = svgRef.current.getBoundingClientRect();
@@ -3055,10 +3087,6 @@ function Troemerei({ s = "", t = "", d = "", e = "", k = "", f = "", r = "" }) {
       return;
     }
     const ta = trNPC.areaOf(TN_WORLD, x, y);
-    if (ta !== room && !(ta < 0 && inRoom(x, y))) {
-      setPreview(null);
-      return;
-    }
     if (preview && preview.x === x && preview.y === y) {
       setPreview(null);
       act({ type: "MOVE_TO", x, y });
@@ -3181,6 +3209,11 @@ function Troemerei({ s = "", t = "", d = "", e = "", k = "", f = "", r = "" }) {
     if (h && h.accepted.length) setToast("\uB2E8\uC11C \uCD94\uAC00: " + trNpc(boot.base.pend).name + "\uC758 \uC99D\uC5B8 " + h.accepted.length + "\uAC74");
   }
   function endTalk() {
+    if (talk && talk.block) {
+      setToast(talk.block);
+      setTalk(null);
+      return;
+    }
     if (!consumed) {
       const nx = applyReply("T");
       setState(nx);
@@ -3698,8 +3731,11 @@ function Troemerei({ s = "", t = "", d = "", e = "", k = "", f = "", r = "" }) {
     height: TN_WORLD.map.height * TR_CELL,
     transform: `translate(${-camX}px,${-camY}px)`,
     transition: roomChanged ? "none" : void 0,
-    clipPath: debug ? "none" : `inset(${ry0}px ${TN_WORLD.map.width * TR_CELL - rx1}px ${TN_WORLD.map.height * TR_CELL - ry1}px ${rx0}px)`
-  } }, TR_A.map && !badImg[trUrl(TR_A.map.src)] ? /* @__PURE__ */ React.createElement("img", { className: "tr-px", src: trUrl(TR_A.map.src), alt: "", onError: () => setBadImg((v) => ({ ...v, [trUrl(TR_A.map.src)]: true })), style: { position: "absolute", left: 0, top: 0, width: "100%", height: "100%" } }) : /* @__PURE__ */ React.createElement("svg", { style: { position: "absolute", inset: 0 }, width: "100%", height: "100%" }, trStaticLayer()), TN_WORLD.map.areas.map((a, i) => i === room || !debug ? null : /* @__PURE__ */ React.createElement("div", { key: "f" + i, className: "tr-fog", style: { left: a.x0 * TR_CELL, top: a.y0 * TR_CELL - 18, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL + 18, opacity: debug ? 0.3 : 0.74 } })), /* @__PURE__ */ React.createElement("svg", { style: { position: "absolute", inset: 0, overflow: "visible" }, width: "100%", height: "100%", pointerEvents: "none" }, (preview ? preview.path : p.route).map((q, i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: (q.x + 0.5) * TR_CELL, cy: (q.y + 0.5) * TR_CELL, r: i === (preview ? preview.path : p.route).length - 1 ? 7 : 3.5, fill: preview ? "#f6e3b4" : "#f2c46d", opacity: preview ? 0.9 : 0.75, stroke: "#3a2a14", strokeWidth: "1" })), ml ? [[ml.x, ml.y], ...ml.hit || []].map(([hx, hy], i) => /* @__PURE__ */ React.createElement("rect", { key: i, x: hx * TR_CELL + 2, y: hy * TR_CELL + 2, width: TR_CELL - 4, height: TR_CELL - 4, rx: "6", fill: "none", stroke: "#f6d48a", strokeWidth: "2", strokeDasharray: i ? "4 3" : "" })) : null), [...vis.map((n) => ({ id: n.id, x: n.x, y: n.y, n })), { id: "player", x: p.x, y: p.y, n: null }].sort((a, b) => a.y - b.y).map((c) => trCharSprite(c, animRef, movedRef, menu && menu.id === c.id, badImg, state.player.look))), /* @__PURE__ */ React.createElement("div", { key: "fade" + room, className: "tr-fade" })), /* @__PURE__ */ React.createElement("div", { className: "tr-hud" }, /* @__PURE__ */ React.createElement("span", { className: "tr-pill tr-area" }, /* @__PURE__ */ React.createElement("i", null), RM.name), /* @__PURE__ */ React.createElement("span", { className: "tr-pill tr-time" }, state.day, "\uC77C ", trNPC.clock(state.clock)), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("button", { className: "tr-hbtn", onClick: () => setSheet("rest") }, "\uD734\uC2DD"), /* @__PURE__ */ React.createElement("button", { className: "tr-hbtn", onClick: () => setSheet("note") }, "\uB178\uD2B8"), /* @__PURE__ */ React.createElement("button", { className: "tr-hbtn", "aria-label": "\uBA54\uB274", onClick: () => setSheet("set") }, "\u2261")), investigating ? (() => {
+    clipPath: "none"
+  } }, TR_A.map && !badImg[trUrl(TR_A.map.src)] ? /* @__PURE__ */ React.createElement("img", { className: "tr-px", src: trUrl(TR_A.map.src), alt: "", onError: () => setBadImg((v) => ({ ...v, [trUrl(TR_A.map.src)]: true })), style: { position: "absolute", left: 0, top: 0, width: "100%", height: "100%" } }) : /* @__PURE__ */ React.createElement("svg", { style: { position: "absolute", inset: 0 }, width: "100%", height: "100%" }, trStaticLayer()), TN_WORLD.map.areas.map((a, i) => i === room ? null : /* @__PURE__ */ React.createElement("div", { key: "f" + i, className: "tr-fog", style: { left: a.x0 * TR_CELL, top: a.y0 * TR_CELL - 18, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL + 18, opacity: debug ? 0.3 : 0.74 } })), /* @__PURE__ */ React.createElement("svg", { style: { position: "absolute", inset: 0, overflow: "visible" }, width: "100%", height: "100%", pointerEvents: "none" }, (preview ? preview.path : p.route).map((q, i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: (q.x + 0.5) * TR_CELL, cy: (q.y + 0.5) * TR_CELL, r: i === (preview ? preview.path : p.route).length - 1 ? 7 : 3.5, fill: preview ? "#f6e3b4" : "#f2c46d", opacity: preview ? 0.9 : 0.75, stroke: "#3a2a14", strokeWidth: "1" })), ml ? [[ml.x, ml.y], ...ml.hit || []].map(([hx, hy], i) => /* @__PURE__ */ React.createElement("rect", { key: i, x: hx * TR_CELL + 2, y: hy * TR_CELL + 2, width: TR_CELL - 4, height: TR_CELL - 4, rx: "6", fill: "none", stroke: "#f6d48a", strokeWidth: "2", strokeDasharray: i ? "4 3" : "" })) : null), [...vis.map((n) => ({ id: n.id, x: n.x, y: n.y, n })), { id: "player", x: p.x, y: p.y, n: null }].sort((a, b) => a.y - b.y).map((c) => trCharSprite(c, animRef, movedRef, menu && menu.id === c.id, badImg, state.player.look))), /* @__PURE__ */ React.createElement("div", { key: "fade" + room, className: "tr-fade" })), /* @__PURE__ */ React.createElement("div", { className: "tr-hud" }, /* @__PURE__ */ React.createElement("span", { className: "tr-pill tr-area" }, /* @__PURE__ */ React.createElement("i", null), RM.name), /* @__PURE__ */ React.createElement("span", { className: "tr-pill tr-time" }, state.day, "\uC77C ", trNPC.clock(state.clock)), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("button", { className: "tr-hbtn", disabled: busy, title: "10\uCD08 \uC9C4\uD589", onClick: () => {
+    setPreview(null);
+    setState((v) => trNPC.dispatch(TN_WORLD, v, { type: "WAIT", seconds: 10 }));
+  } }, "+10\uCD08"), /* @__PURE__ */ React.createElement("button", { className: "tr-hbtn", onClick: () => setSheet("rest") }, "\uD734\uC2DD"), /* @__PURE__ */ React.createElement("button", { className: "tr-hbtn", onClick: () => setSheet("note") }, "\uB178\uD2B8"), /* @__PURE__ */ React.createElement("button", { className: "tr-hbtn", "aria-label": "\uBA54\uB274", onClick: () => setSheet("set") }, "\u2261")), investigating ? (() => {
     const ph = TN_WORLD.trials[state.trial.i].phases[state.trial.phase];
     return /* @__PURE__ */ React.createElement("div", { className: "tr-inv" }, /* @__PURE__ */ React.createElement("b", null, "\uC870\uC0AC \uC911"), /* @__PURE__ */ React.createElement("span", null, "\uB9C8\uAC10 ", trHM(state.trial.sub)), ph.declare ? /* @__PURE__ */ React.createElement("button", { disabled: busy, onClick: () => trialNext() }, "\uC870\uC0AC \uB05D \xB7 \uC7AC\uD310\uC73C\uB85C") : /* @__PURE__ */ React.createElement("span", { className: "tr-mut" }, "\uB9C8\uAC10\uC774 \uB418\uBA74 \uC7AC\uD310\uC774 \uC5F4\uB9B0\uB2E4"));
   })() : (TN_WORLD.cases || []).filter((c) => ((state.cases || {})[c.id] || [])[0] === 1).map((c) => {
@@ -3883,7 +3919,7 @@ function trRest({ state, busy, onSkip, h, setH, mi, setMi }) {
     return (m >= 60 ? Math.floor(m / 60) + "\uC2DC\uAC04 " : "") + m % 60 + "\uBD84 \uB4A4";
   };
   const notes = pick ? trNotices(now, pick) : [];
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 6, paddingTop: 4 } }, /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC9C0\uAE08 ", label(now), sl ? " \xB7 " + sl.name : "", " \xB7 \uC26C\uB294 \uB3D9\uC548\uC5D0\uB3C4 \uB2E4\uB978 \uC0AC\uB78C\uB4E4\uC740 \uC6C0\uC9C1\uC778\uB2E4. \uB204\uAC00 \uB098\uD0C0\uB098\uAC70\uB098 \uACF5\uC9C0\uAC00 \uC788\uC73C\uBA74 \uBA48\uCD98\uB2E4."), nextSlot ? /* @__PURE__ */ React.createElement("button", { className: "tr-big", disabled: busy, onClick: () => onSkip(nextSlot.t) }, "\uB2E4\uC74C \uC2DC\uAC04\uB300\uAE4C\uC9C0 \uC26C\uAE30", /* @__PURE__ */ React.createElement("small", null, nextSlot.name, " ", label(nextSlot.t), " \xB7 ", dur(nextSlot.t))) : null, /* @__PURE__ */ React.createElement("button", { className: "tr-big", disabled: busy, onClick: () => onSkip(morning) }, "\uC790\uACE0 \uC544\uCE68\uC73C\uB85C", /* @__PURE__ */ React.createElement("small", null, label(morning), " \xB7 ", dur(morning))), /* @__PURE__ */ React.createElement("div", { className: "tr-mut", style: { marginTop: 4 } }, "\uC2DC\uAC01 \uC9C0\uC815"), /* @__PURE__ */ React.createElement("div", { className: "tr-grid h" }, Array.from({ length: 24 }, (_, i) => /* @__PURE__ */ React.createElement("button", { key: i, className: h === i ? "on" : "", onClick: () => setH(i) }, String(i).padStart(2, "0")))), /* @__PURE__ */ React.createElement("div", { className: "tr-grid m" }, [0, 10, 20, 30, 40, 50].map((m) => /* @__PURE__ */ React.createElement("button", { key: m, className: mi === m ? "on" : "", onClick: () => setMi(m) }, ":", String(m).padStart(2, "0")))), pick ? /* @__PURE__ */ React.createElement("div", { className: "tr-prev" }, /* @__PURE__ */ React.createElement("b", null, label(pick)), " \xB7 ", dur(pick), notes.length ? notes.map((x, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "tr-mut" }, trHM(x.t), " \uACF5\uC9C0 \xB7 ", x.n.text, x.n.place ? " (" + x.n.place + ")" : "", " \u2014 \uC9C0\uB098\uAC10(\uBA48\uCD94\uC9C0 \uC54A\uC74C)")) : /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uADF8 \uC0AC\uC774 \uACF5\uC9C0 \uC5C6\uC74C")) : null, /* @__PURE__ */ React.createElement("button", { className: "tr-big", disabled: busy || !pick, onClick: () => onSkip(pick, true), style: pick && Math.floor(pick / D) > Math.floor(now / D) ? { borderColor: "#d07070" } : null }, !pick ? "\uC2DC\uAC01\uC744 \uACE0\uB974\uC138\uC694" : Math.floor(pick / D) > Math.floor(now / D) ? "\uC774\uBBF8 \uC9C0\uB09C \uC2DC\uAC01 \u2192 \uB0B4\uC77C " + trHM(pick) + "\uAE4C\uC9C0 \uAC74\uB108\uB6F0\uAE30" : trHM(pick) + "\uAE4C\uC9C0 \uAC74\uB108\uB6F0\uAE30"));
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 6, paddingTop: 4 } }, /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uC9C0\uAE08 ", label(now), sl ? " \xB7 " + sl.name : "", " \xB7 \uC26C\uB294 \uB3D9\uC548\uC5D0\uB3C4 \uB2E4\uB978 \uC0AC\uB78C\uB4E4\uC740 \uC6C0\uC9C1\uC778\uB2E4. \uB204\uAC00 \uB098\uD0C0\uB098\uAC70\uB098 \uACF5\uC9C0\uAC00 \uC788\uC73C\uBA74 \uBA48\uCD98\uB2E4."), nextSlot ? /* @__PURE__ */ React.createElement("button", { className: "tr-big", disabled: busy, onClick: () => onSkip(nextSlot.t) }, "\uB2E4\uC74C \uC2DC\uAC04\uB300\uAE4C\uC9C0 \uC26C\uAE30", /* @__PURE__ */ React.createElement("small", null, nextSlot.name, " ", label(nextSlot.t), " \xB7 ", dur(nextSlot.t))) : null, /* @__PURE__ */ React.createElement("button", { className: "tr-big", disabled: busy, onClick: () => onSkip(morning) }, "\uC790\uACE0 \uC544\uCE68\uC73C\uB85C", /* @__PURE__ */ React.createElement("small", null, label(morning), " \xB7 ", dur(morning))), /* @__PURE__ */ React.createElement("div", { className: "tr-mut", style: { marginTop: 4 } }, "\uC2DC\uAC01 \uC9C0\uC815"), /* @__PURE__ */ React.createElement("div", { className: "tr-grid h" }, Array.from({ length: 24 }, (_, i) => /* @__PURE__ */ React.createElement("button", { key: i, className: h === i ? "on" : "", onClick: () => setH(i) }, String(i).padStart(2, "0")))), /* @__PURE__ */ React.createElement("div", { className: "tr-grid m" }, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => /* @__PURE__ */ React.createElement("button", { key: m, className: mi === m ? "on" : "", onClick: () => setMi(m) }, ":", String(m).padStart(2, "0")))), pick ? /* @__PURE__ */ React.createElement("div", { className: "tr-prev" }, /* @__PURE__ */ React.createElement("b", null, label(pick)), " \xB7 ", dur(pick), notes.length ? notes.map((x, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "tr-mut" }, trHM(x.t), " \uACF5\uC9C0 \xB7 ", x.n.text, x.n.place ? " (" + x.n.place + ")" : "", " \u2014 \uC9C0\uB098\uAC10(\uBA48\uCD94\uC9C0 \uC54A\uC74C)")) : /* @__PURE__ */ React.createElement("div", { className: "tr-mut" }, "\uADF8 \uC0AC\uC774 \uACF5\uC9C0 \uC5C6\uC74C")) : null, /* @__PURE__ */ React.createElement("button", { className: "tr-big", disabled: busy || !pick, onClick: () => onSkip(pick, true), style: pick && Math.floor(pick / D) > Math.floor(now / D) ? { borderColor: "#d07070" } : null }, !pick ? "\uC2DC\uAC01\uC744 \uACE0\uB974\uC138\uC694" : Math.floor(pick / D) > Math.floor(now / D) ? "\uC774\uBBF8 \uC9C0\uB09C \uC2DC\uAC01 \u2192 \uB0B4\uC77C " + trHM(pick) + "\uAE4C\uC9C0 \uAC74\uB108\uB6F0\uAE30" : trHM(pick) + "\uAE4C\uC9C0 \uAC74\uB108\uB6F0\uAE30"));
 }
 function trNoteOpen(st, id, u) {
   u = u || {};
