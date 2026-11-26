@@ -370,6 +370,12 @@ function trThumb(id) {
   const k = P.ed ? 24 / P.ed : 150 / P.w; // 눈 사이 24px 로 맞춘다
   return { src: P.src, crop: { width: P.w * k, maxWidth: 'none', marginLeft: P.eye ? 75 - P.eye[0] * k : 75 - P.w * k / 2, marginBottom: P.eye ? 300 - (P.h - P.eye[1]) * k - 14 : 0 } };
 }
+// 레이어 방식 의상: 몸(P.src) 위에 얹는다. 인물별로 고른 옷(TR_WEAR) → 그림표의 wear → casual 순.
+const TR_WEAR = {};
+function trWear(id, c, P) {
+  const O = P.outfits; if (!O) return null;
+  return O[TR_WEAR[id]] || O[(c && c.wear) || 'casual'] || O[Object.keys(O)[0]] || null;
+}
 function trActor(id, expr, pose, onBad, bad) {
   const c = (TR_A.chars || {})[id], pick = trPick(c, expr, pose), P = pick.P;
   if (!P || !P.src || bad[trUrl(P.src)]) return trActorStub(id, pick.face, pose || TR_AUTO_POSE[pick.face] || 'default');
@@ -384,7 +390,7 @@ function trActor(id, expr, pose, onBad, bad) {
     background: `radial-gradient(ellipse ${D * 1.7 / P.w * 100}% ${D * 1.05 / P.h * 100}% at ${E[0] / P.w * 100}% ${(E[1] - D * .42) / P.h * 100}%, rgba(28,8,44,.62), rgba(28,8,44,.42) 55%, rgba(28,8,44,0) 100%)` }} /> : null;
   return <div style={{ position: 'absolute', left, top, width: W, height: H }}>
     <img src={trUrl(P.src)} alt="" onError={() => onBad(trUrl(P.src))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-    {layer(f, 'f')}{layer(P.over, 'o')}{shade}
+    {layer(trWear(id, c, P), 'w')}{layer(f, 'f')}{layer(P.over, 'o')}{shade}
   </div>;
 }
 // 임시 실루엣: 머리색·옷색과 자세(팔 모양), 표정(눈·입)을 대충 그려 그림 없이도 연출을 확인한다.

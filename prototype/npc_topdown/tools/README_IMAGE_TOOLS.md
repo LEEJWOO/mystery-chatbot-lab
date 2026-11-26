@@ -99,6 +99,17 @@ python3 -I body_base.py headfix  --orig 원본(얼굴 있음).png --cand 맨몸�
 
 ---
 
+## 5. outfit_layer.py — 의상 레이어 뽑기
+옷 입은 그림 − 맨몸 기준판 = 투명 의상 조각. 화면 조립은 몸 → 의상 → 표정.
+
+```
+python3 -I outfit_layer.py --body 맨몸.png --dressed 옷입은그림.png --out 번호-직업-자세-outfit-casual.png --preview 확인.png
+```
+- 같은 인물·자세·캔버스여야 한다(보정 없음). 턱 위(얼굴)는 넣지 않는다(모자가 의상이면 `--chin 0`).
+- 옷 안의 구멍(흰 옷 등)은 메운다. 옷 가장자리로 흘러내린 머리카락은 몸 그림 쪽이 보인다.
+- 확인 그림: 옷 입은 그림 | 의상 조각 | 몸+의상 | 재조립 오차(빨강). 오차가 머리카락 가장자리에 조금 나는 건 정상.
+- `char_layers.py`에 `…-body.png`(맨몸)와 `…-outfit-이름.png`를 같이 넣으면 화면용 표에 의상이 적힌다.
+
 ## 권장 순서 (인물 한 명, 한 자세)
 1. 원본 자세 그림 `…-neutral.png` 준비
 2. NovelAI로 얼굴 비우기 → `blank_kit.py`로 점검·투명 바탕·공통 마스크
