@@ -432,3 +432,13 @@
 .tr-ns-missbox{position:absolute;left:0;right:0;bottom:0;min-height:96px;cursor:pointer;animation:trnsin .18s}
 .tr-ttext.mono{color:#8fd8ff}
 .tr-vn-next{position:absolute;right:12px;bottom:8px;font-style:normal;font-size:11px;color:#cfc4ad;animation:trnsglow .8s ease-in-out infinite alternate}
+
+.tr-shade{position:absolute;inset:0;pointer-events:none;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;mix-blend-mode:multiply}
+.tr-dbgbox{display:grid;gap:4px;border:1px dashed #6a5a8a;border-radius:8px;padding:6px}
+.tr-dbgrw{display:flex;flex-wrap:wrap;gap:4px}.tr-dbgrw button{height:26px;padding:0 7px;font-size:12px}.tr-dbgrw button.on{background:#6b4fa0;color:#fff}.tr-dbgrw button.dim{opacity:.45}
+.tr-gal{position:absolute;inset:0;z-index:60;background:#14101c;display:flex;flex-direction:column;gap:4px;padding:6px;overflow-y:auto}
+.tr-gal-stage{position:relative;width:360px;height:440px;margin:0 auto;overflow:hidden;background:linear-gradient(#2a2338,#171222);flex:none}
+.tr-gal-stage .tr-actor-in{position:absolute;left:0;top:0;width:360px;height:528px}
+.tr-gal-cap{position:absolute;left:6px;top:6px;font-size:12px;color:#fff;background:#0008;padding:2px 6px;border-radius:4px}
+.tr-dr-atl{position:absolute;transform:translateX(-50%);font-size:10px;color:#fff;background:#0009;padding:0 4px;border-radius:3px;white-space:nowrap}
+.tr-dr-dot{display:block;width:34px;height:34px;border-radius:50%;margin:0 auto;border:2px solid #fff8}

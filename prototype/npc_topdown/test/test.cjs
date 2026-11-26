@@ -421,6 +421,40 @@ test('재판: 시작·단계 진행·체력·되감기(꿈)·실패(현실)·AI 
   let e = s; for (let i = RB; i < W.trials[0].phases.length; i++) e = E.trialStep(W, e, 'NEXT'); assert.equal(e.trial, null); assert.equal(e.flags.trial_memo_done, true);
 });
 
+// ---- 현재 시험 세계(src/world.json: 사라진 브로치) 무결성 ----
+const NW = require('../src/world.json');
+test('시험 세계: 시작·사건 발견·집합 후 재판, 코드 왕복', () => {
+  let s = E.createWorld(NW); E.validate(NW, s);
+  assert.equal(s.clock % 86400, 19 * 3600 + 30 * 60, '19:30 시작');
+  for (let i = 0; i < 90 && !s.trial; i++) s = E.advance(NW, s, 60);
+  assert.ok(s.flags.brooch_gone, '브로치 사라짐 깃발'); assert.ok(s.trial, '집합 후 재판 시작');
+  assert.equal(NW.trials[s.trial.i].code, 'C1');
+  const code = C.pack(NW, s); assert.equal(C.pack(NW, C.unpack(NW, code)), code); assert.ok(code.length < 420, '상태 코드 길이 ' + code.length);
+});
+test('시험 세계: 대본 참조(증거·인물·구절·쟁점·반론 단계) 일치', () => {
+  const ids = new Set(NW.npcs.map(n => n.id)), items = new Set(NW.items.map(i => i.id)), facts = new Set(NW.facts.map(f => f.id));
+  const FACES = ['기본', '미소', '웃음', '의심', '놀람', '곤란', '부끄러움', '불만', '슬픔', '격노', '패닉', '하라구로'], usedF = new Set(), usedP = new Set();
+  const seeLine = l => { if (l.face) { assert.ok(FACES.includes(l.face), '표정 ' + l.face); usedF.add(l.face); } if (l.pose) usedP.add(l.pose); (l.alt || []).forEach(seeLine); if (l.who && l.who !== 'host') assert.ok(ids.has(l.who), '인물 ' + l.who); };
+  for (const n of NW.npcs) for (const f of n.knows || []) assert.ok(facts.has(f), 'knows ' + f);
+  for (const T of NW.trials) {
+    (T.evidence || []).forEach(e => assert.ok(items.has(e), '증거 ' + e));
+    const iss = new Set((T.issues || []).map(i => i.id));
+    T.phases.forEach((ph, k) => {
+      if (ph.issue) assert.ok(iss.has(ph.issue), T.code + ' 쟁점 ' + ph.issue);
+      (ph.lines || []).forEach(seeLine); Object.values(ph.miss || {}).forEach(seeLine);
+      if (ph.type === 'nonstop') { const segs = ph.lines.map(l => (l.text.match(/\{[^}]+\}/g) || []).length);
+        for (const a of ph.answers) { assert.ok(a.at[1] < segs[a.at[0]], k + ' 구절 위치'); if (a.word) assert.ok(a.word[1] < segs[a.word[0]], k + ' 회수 위치'); (a.ev || []).forEach(e => assert.ok(T.evidence.includes(e), k + ' 증거 ' + e)); } }
+      if (ph.type === 'crystal') ph.slots.forEach(sl => assert.ok(sl.options.includes(sl.answer), sl.label));
+      if (ph.type === 'vote') assert.ok(ph.options.includes(ph.answer));
+      if (ph.type === 'dream') ph.rounds.forEach(r => r.ask.forEach(([sd, f]) => { const v = r[sd][f], opt = { who: [...ph.cast, ''], obj: [...ph.objs, ''], at: ph.ats, pose: ['서 있음', '달림', '건넴'], bg: NW.map.areas.map(a => a.name) }[f]; assert.ok(opt.includes(v), '꿈 ' + f + ' ' + v); }));
+      if (ph.type === 'route') { assert.ok(E.walkable(NW, ...ph.start) && ph.via.every(v => E.walkable(NW, ...v)), '동선 칸'); }
+    });
+    (T.issues || []).filter(i => i.confirmAt !== undefined).forEach(i => assert.equal(T.phases[i.confirmAt].type, 'crystal', 'confirmAt'));
+  }
+  for (const [k, ev] of Object.entries(NW.events)) if (ev.trial) { const T = NW.trials.find(t => t.code === ev.trial); assert.equal(T.phases[ev.phase].type, 'rebut', k + ' 반론 단계'); }
+  assert.deepEqual(FACES.filter(f => !usedF.has(f)), [], '대본에 안 쓰인 표정'); assert.deepEqual(['think', 'point', 'crossed'].filter(p => !usedP.has(p)), [], '대본에 안 쓰인 자세');
+});
+
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
 console.log(`${pass}/${tests.length} 통과`);
 process.exit(pass === tests.length ? 0 : 1);
