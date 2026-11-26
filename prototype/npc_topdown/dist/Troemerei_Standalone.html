@@ -2808,7 +2808,7 @@ function trThumb(id) {
 const TR_WEAR = {};
 function trWear(id, c, P) {
   const O = P.outfits;
-  if (!O) return null;
+  if (!O || TR_WEAR[id] === "-") return null;
   return O[TR_WEAR[id]] || O[c && c.wear || "casual"] || O[Object.keys(O)[0]] || null;
 }
 function trActor(id, expr, pose, onBad, bad) {
@@ -3905,7 +3905,15 @@ function trDebugBox(state, onDbg, onGal) {
 function trGallery(g, setG, badImg, setBadImg) {
   const W = TN_WORLD, c = (TR_A.chars || {})[g.id], P = trPoses(c), poses = ["default", "think", "point", "crossed"];
   const has = (pose, f) => trHasFace(P[pose], f);
-  return /* @__PURE__ */ React.createElement("div", { className: "tr-gal" }, /* @__PURE__ */ React.createElement("div", { className: "tr-gal-stage" }, /* @__PURE__ */ React.createElement("div", { className: "tr-actor-in", style: { transform: "none" } }, trActor(g.id, g.face, g.pose, (u) => setBadImg((v) => ({ ...v, [u]: true })), badImg)), /* @__PURE__ */ React.createElement("div", { className: "tr-gal-cap" }, trNpc(g.id).name, " \xB7 ", TR_POSE_NAME[g.pose], " \xB7 ", g.face, has(g.pose, g.face) ? "" : " (\uC5C6\uC74C\u2192\uB300\uCCB4)")), /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, W.npcs.map((n) => /* @__PURE__ */ React.createElement("button", { key: n.id, className: n.id === g.id ? "on" : "", onClick: () => setG({ ...g, id: n.id }) }, trNpc(n.id).name))), /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, poses.map((p) => /* @__PURE__ */ React.createElement("button", { key: p, className: p === g.pose ? "on" : "", onClick: () => setG({ ...g, pose: p }) }, TR_POSE_NAME[p], P[p] ? "" : "\xB7"))), /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, TR_FACES.map((f) => /* @__PURE__ */ React.createElement("button", { key: f, className: (f === g.face ? "on" : "") + (has(g.pose, f) ? "" : " dim"), onClick: () => setG({ ...g, face: f }) }, f))), /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setG(null) }, "\uB2EB\uAE30")));
+  return /* @__PURE__ */ React.createElement("div", { className: "tr-gal" }, /* @__PURE__ */ React.createElement("div", { className: "tr-gal-stage" }, /* @__PURE__ */ React.createElement("div", { className: "tr-actor-in", style: { transform: "none" } }, trActor(g.id, g.face, g.pose, (u) => setBadImg((v) => ({ ...v, [u]: true })), badImg)), /* @__PURE__ */ React.createElement("div", { className: "tr-gal-cap" }, trNpc(g.id).name, " \xB7 ", TR_POSE_NAME[g.pose], " \xB7 ", g.face, has(g.pose, g.face) ? "" : " (\uC5C6\uC74C\u2192\uB300\uCCB4)")), /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, W.npcs.map((n) => /* @__PURE__ */ React.createElement("button", { key: n.id, className: n.id === g.id ? "on" : "", onClick: () => setG({ ...g, id: n.id }) }, trNpc(n.id).name))), /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, poses.map((p) => /* @__PURE__ */ React.createElement("button", { key: p, className: p === g.pose ? "on" : "", onClick: () => setG({ ...g, pose: p }) }, TR_POSE_NAME[p], P[p] ? "" : "\xB7"))), /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, TR_FACES.map((f) => /* @__PURE__ */ React.createElement("button", { key: f, className: (f === g.face ? "on" : "") + (has(g.pose, f) ? "" : " dim"), onClick: () => setG({ ...g, face: f }) }, f))), (() => {
+    const names = [...new Set(poses.flatMap((p) => Object.keys((P[p] || {}).outfits || {})))];
+    if (!names.length) return null;
+    const cur = TR_WEAR[g.id] || c && c.wear || "casual", KO = { "-": "\uB9E8\uBAB8", casual: "\uD3C9\uC0C1\uBCF5", swim: "\uC218\uC601\uBCF5", under: "\uC18D\uC637" };
+    return /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, ["-", ...names].map((o) => /* @__PURE__ */ React.createElement("button", { key: o, className: o === cur ? "on" : "", onClick: () => {
+      TR_WEAR[g.id] = o;
+      setG({ ...g, w: o });
+    } }, KO[o] || o)));
+  })(), /* @__PURE__ */ React.createElement("div", { className: "tr-dbgrw" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setG(null) }, "\uB2EB\uAE30")));
 }
 function trSheet({ onDbg, onGal, ev, heard, free, tab, setTab, state, debug, setDebug, busy, onSkip, onUnstuck, onTrial, onTrialAt, onRel, onLook, pick, setPick, rest, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
   const tabs = [["note", "\uC218\uCCA9"], ["scene", "\uBAA9\uACA9"], ["item", "\uC99D\uAC70"], ["clue", "\uB2E8\uC11C"], ["rest", "\uD734\uC2DD"], ["set", "\uC124\uC815"]];
