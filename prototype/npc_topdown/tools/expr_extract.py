@@ -16,7 +16,7 @@ import matplotlib.colors as mc
 
 def load(p, mode): return np.array(Image.open(p).convert(mode)).astype(float)
 
-def extract(base_p, expr_p, mask_p, erode=22, feather=6, eye=False, clean=False, band=True):
+def extract(base_p, expr_p, mask_p, erode=22, feather=6, eye=False, clean=False, band=True, jaw=True):
     base = load(base_p, 'RGBA'); raw = load(expr_p, 'RGB')
     m = np.array(Image.open(mask_p).convert('L').resize(base.shape[1::-1], Image.NEAREST)) > 127
     w = np.clip((nd.distance_transform_edt(m) - erode) / max(feather, 1), 0, 1)
@@ -72,6 +72,19 @@ def extract(base_p, expr_p, mask_p, erode=22, feather=6, eye=False, clean=False,
             white = np.isin(lab, bad_ids) & rw & (base[..., 3] > 128)
         kw = nd.gaussian_filter(nd.binary_dilation(white, iterations=2).astype(float), 1.5)
         a = a * (1 - np.clip(kw * 1.4, 0, 1))
+    if jaw:
+        # 턱선 고정: 얼굴 아래쪽(마스크 상자 58%보다 아래)에서는 기본 그림의 얼굴 피부 안쪽만 쓴다
+        # → 인페인트가 턱을 더 길게·뾰족하게 그려도 기본 그림의 턱선이 그대로 남는다(겹친 턱선 방지).
+        hb2 = mc.rgb_to_hsv(base[..., :3] / 255)
+        skin = ((hb2[..., 0] < 0.11) | (hb2[..., 0] > 0.93)) & (hb2[..., 1] < 0.38) & (hb2[..., 2] > 0.72) & (base[..., 3] > 200)
+        ys, xs = np.nonzero(m); y0, y1 = ys.min(), ys.max(); cy, cx = int(y0 + (y1 - y0) * .62), int(xs.mean())
+        lab, _ = nd.label(nd.binary_opening(skin, iterations=2))
+        face = lab == lab[cy, cx] if lab[cy, cx] else None
+        if face is not None and face.sum() > 2000:
+            face = nd.binary_fill_holes(nd.binary_closing(face, iterations=6))   # 입·눈·땀방울 구멍 메움
+            keep = nd.gaussian_filter(nd.binary_erosion(face, iterations=3).astype(float), 1.5)
+            low = np.clip((np.arange(base.shape[0])[:, None] - (y0 + (y1 - y0) * .58)) / 12, 0, 1)
+            a = a * (1 - low * (1 - keep))
     out = np.dstack([rgb, a]).clip(0, 255).astype('uint8')
     ys, xs = np.nonzero(a > 0)
     box = (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
