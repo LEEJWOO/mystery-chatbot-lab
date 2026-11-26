@@ -15,6 +15,8 @@
 공통 원칙: 크기·위치는 절대 바꾸지 않는다(표시 규칙). 원본과 후보는 같은 크기여야 하며 다르면 멈춘다.
 '원본' = 옷 입은 기본 자세(얼굴 비운 그림, 투명 배경 권장). 이 그림의 머리·머리카락이 최종본에 그대로 남는다.
 --zone = 첫 회차에 옷을 덮은 인페인트 마스크(흰색=옷). 있으면 훨씬 정확하다(머리카락·옷 색이 비슷한 인물은 사실상 필수).
+       손·목처럼 원래 피부인 곳은 칠하지 않는다(안 바뀐 곳은 '남은 것'으로 센다).
+--orig 는 회차가 바뀌어도 언제나 '첫 회차 원본'(옷 입은 그림)을 넣는다. 바뀐 곳을 이 그림과 비교해 판정한다.
 """
 import argparse, os, sys
 import numpy as np
@@ -141,6 +143,19 @@ class Classifier:
         return sk & region, cloth, hair
 
 
+def progress(O, C, Z, K):
+    """옷 영역 Z 안을 '드러난 피부' / '남은 것'으로 나눈다.
+    원본(첫 회차 원본)과 비교해 바뀌지 않은 곳은 색과 상관없이 아직 처리 안 된 옷으로 본다
+    (아이보리 블라우스처럼 피부색과 비슷한 옷도 놓치지 않게)."""
+    d = np.abs(flat_rgb(O) - flat_rgb(C)).sum(2) > 40
+    changed = nd.binary_opening(d, iterations=1)
+    sk_c, cloth_like, _ = K.classes(C, Z)
+    revealed = Z & changed & sk_c
+    remaining = (Z & ~changed & (O[..., 3] > 128)) | (Z & changed & cloth_like)
+    remaining &= ~revealed
+    return revealed, remaining
+
+
 def cmd_score(a):
     O = load(a.orig)
     chin = chin_y(O)
@@ -149,8 +164,8 @@ def cmd_score(a):
     rows = []
     for p in a.cand:
         C = load(p); same(O, C, a.orig, p)
-        sk, cl, _ = K.classes(C, Z)
-        base = max(1, Z.sum())
+        sk, cl = progress(O, C, Z, K)
+        base = max(1, (Z & (O[..., 3] > 128)).sum())
         rows.append((p, sk.sum() / base, cl.sum() / base, cl))
     rows.sort(key=lambda r: (-r[1], r[2]))
     print(f'턱 y={chin}')
@@ -175,11 +190,12 @@ def cmd_nextmask(a):
     chin = chin_y(O)
     below = np.broadcast_to(np.arange(O.shape[0])[:, None] > (chin or 0) + 4, O.shape[:2])
     Z = zone_of(O, chin, a.zone)
-    _, cl, _ = Classifier(O, Z, chin).classes(C, Z)
-    m = nd.binary_dilation(cl, iterations=a.grow)
-    m = nd.binary_closing(m, iterations=8) & np.broadcast_to(below, m.shape)
+    sk, cl = progress(O, C, Z, Classifier(O, Z, chin))
+    m = nd.binary_dilation(cl, iterations=a.grow) if a.grow > 0 else cl.copy()   # iterations=0은 SciPy에서 '수렴까지'라 건너뜀
+    m = nd.binary_closing(m, iterations=8) if a.grow > 0 else m
+    m &= Z & below & ~sk          # 넓힌 뒤에 첫 마스크 밖·이미 드러난 피부는 빼기
     Image.fromarray((m * 255).astype(np.uint8)).save(a.out)
-    print(f'남은 옷 {cl.sum()}px → 마스크 {m.sum()}px 저장: {a.out}')
+    print(f'남은 것 {cl.sum()}px → 마스크 {m.sum()}px 저장: {a.out}')
 
 
 def cmd_finish(a):
@@ -212,7 +228,7 @@ def cmd_finish(a):
     Image.fromarray(R.astype(np.uint8)).save(os.path.join(a.out, f'{name}-base.png'))
     # 점검: 평평한 밝은 얼룩 / 남은 옷 / 원본 윤곽
     Z = zone_of(O, chin, a.zone) | reg
-    sk, cl, _ = Classifier(O, Z, chin).classes(R, Z)
+    sk, cl = progress(O, R, Z, Classifier(O, Z, chin))
     # 얼룩·이음매 강조 보기: 큰 흐림을 뺀 밝기 차이를 4배로 키움(사람 눈으로 찾기 쉽게)
     lum = R[..., :3].mean(2)
     hp = lum - nd.gaussian_filter(lum, 14)
@@ -233,7 +249,7 @@ def cmd_finish(a):
     for i, im in enumerate(ims): sheet.paste(im, (W * i, 0))
     sheet.thumbnail((2400, 2400)); sheet.save(os.path.join(a.out, f'{name}-check.png'))
     head_diff = (np.abs(R[:chin - 1, :, :3] - O[:chin - 1, :, :3]).sum(2) > 3).sum() if chin else -1
-    print(f'턱 y={chin}  턱 위 원본과 다른 픽셀 {head_diff}  남은 옷 {cl.sum()}px')
+    print(f'턱 y={chin}  턱 위 원본과 다른 픽셀 {head_diff}  남은 것 {cl.sum()}px')
     print('점검표: 원본 | 결과 | 원본 윤곽(빨강) | 남은 옷(파랑) | 얼룩 강조(번진 면·이음매·색 얼룩이 도드라짐), 초록 선 = 턱')
 
 
