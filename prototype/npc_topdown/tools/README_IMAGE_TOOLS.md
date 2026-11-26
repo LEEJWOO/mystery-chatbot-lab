@@ -1,9 +1,9 @@
-# 트로메라 인물 그림 도구 3종 설명서
+# 트로메라 인물 그림 도구 설명서 (blank_kit · hair_lock · char_layers · body_base)
 
 ## 준비 (한 번만)
 - Python 3.10 이상
 - `pip install numpy pillow scipy matplotlib opencv-python`
-- 네 파일(`hair_lock.py`, `char_layers.py`, `blank_kit.py`, `expr_extract.py`)을 **같은 폴더**에 둔다.
+- 다섯 파일(`hair_lock.py`, `char_layers.py`, `blank_kit.py`, `expr_extract.py`, `body_base.py`)을 **같은 폴더**에 둔다.
   `char_layers.py`는 `expr_extract.py`를 불러 쓴다.
 - 모든 도구는 그림 크기·위치를 바꾸지 않는다(표시 규칙: 같은 인물 그림 사이 확대·축소·이동 금지).
 - 내용과 상관없는 일반 이미지 처리라, 공개 저장소에 못 올리는 그림도 각자 PC에서 그대로 돌리면 된다.
@@ -60,6 +60,34 @@ python3 -I char_layers.py <인물id> <원본 폴더> <출력 폴더> --table 표
 - `--fresh`: 그 인물 항목을 새로 만듦(없으면 이번에 찾은 파일만 덮어씀).
 - 표정 조각 경계 처리는 `expr_extract.py`가 한다(테두리 띠·회색 면 제거, 흰 번짐 정리, 턱 고정).
 - 참고: 표에 적히는 눈 위치(`eye`, `ed`)는 예전 자동 맞춤용 값이다. 지금 표시 규칙(인물별 배율·y값 1개)에서는 화면 보정에 쓰지 않는다.
+
+## 4. body_base.py — 맨몸 기준판 반자동
+옷 입은 기본 자세(얼굴 비운 그림)를 NovelAI 인페인트로 여러 번 덮어 가며 벗겨 내는 작업을 돕는다.
+NovelAI 생성은 사람이 하고, 고르기·다음 범위 안내·마무리를 도구가 한다.
+
+```
+python3 -I body_base.py score    --orig 원본.png --zone 옷마스크.png --cand 후보1.png 후보2.png … --out 점수.png
+python3 -I body_base.py nextmask --orig 원본.png --zone 옷마스크.png --cand 고른후보.png --out 다음마스크.png
+python3 -I body_base.py merge    --base 후보A.png --take 후보B.png:x0,y0,x1,y1 --out 합본.png
+python3 -I body_base.py finish   --orig 원본.png --zone 옷마스크.png --cand 최종.png --out 결과폴더
+```
+- `원본`: 옷 입은 기본 자세(얼굴 비운 그림, 투명 배경). 이 그림의 머리·머리카락이 최종본에 그대로 남는다.
+- `--zone`: **첫 회차에 옷을 덮은 인페인트 마스크**(흰색=옷). 없어도 돌지만, 머리카락과 옷 색이 비슷한 인물(예: 보라 머리+검보라 드레스)은 사실상 필수.
+- `score`: 후보마다 옷 영역 중 피부 비율·남은 옷 비율을 계산해 순위. 1등이 다음 회차의 원본. 점수표 그림에서 파랑 = 남은 옷.
+- `nextmask`: 남은 옷만 흰색으로 칠한 마스크. 다음 회차에 이 범위만 덮으면 이미 잘 나온 피부를 다시 그리지 않는다
+  (NovelAI 화면에 마스크를 불러올 수 없으면 칠할 범위를 보는 안내 그림으로 쓴다).
+- `merge`: "몸통은 3번, 다리는 5번"처럼 사각형 부위를 골라 경계를 부드럽게 섞는다(`--feather 12`).
+- `finish`: 턱 위와 바뀌지 않아야 할 곳을 원본으로 되돌림(머리 픽셀 일치 보장) + 흰 배경 투명화 + 점검표
+  (원본 | 결과 | 원본 윤곽 | 남은 옷 | 얼룩 강조). 얼룩 강조 칸에서는 번진 면·이음매·색 얼룩이 도드라져 보인다.
+- 남은 옷 비율은 근사값이다. 어두운 머리카락 일부가 옷으로 잡힐 수 있으니 숫자보다 점수표 그림을 본다.
+- 턱 위치는 자동으로 찾고, 틀리면 `finish --chin Y`로 지정.
+
+### 반복 순서 (동업자·사용자 분담 예)
+1. 동업자: 원본 + 옷을 넉넉히 덮은 마스크(이 마스크를 `옷마스크.png`로 저장)로 '옷 없음' 가중치를 높여 후보 4~8장
+2. `score` → 1등을 다음 회차 원본으로, `nextmask`로 다음 범위 확인 → 다시 인페인트
+3. 남은 옷이 거의 0이 될 때까지 2를 반복(사용자는 회차가 끝날 때 점수표만 가끔 확인)
+4. 부위별로 더 나은 후보가 있으면 `merge`
+5. `finish` → 점검표의 얼룩 강조를 보고 사용자가 음영만 손봄
 
 ---
 
