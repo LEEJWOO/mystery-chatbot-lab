@@ -197,7 +197,7 @@ const TroemereiNPC = (() => {
     if(!g)return false;
     if(g.target)return manhattan(n,g.target)===1;
     if(manhattan(n,g.goal)===0)return true;
-    const occupied=s.npcs.some(other=>other.id!==n.id&&other.x===g.goal.x&&other.y===g.goal.y)||(s.player.x===g.goal.x&&s.player.y===g.goal.y); // 플레이어가 서 있어도 옆으로
+    const occupied=s.npcs.some(other=>other.id!==n.id&&other.x===g.goal.x&&other.y===g.goal.y);
     return occupied&&manhattan(n,g.goal)===1;
   }
   function arrive(w,s,n){
@@ -256,6 +256,8 @@ const TroemereiNPC = (() => {
     if(n.mode==='idle'){decide(w,s,n);return;}
     if(n.mode!=='moving')return;
     if(!n.intent){n.mode='idle';n.nextMoveAt=s.clock+5;return;}
+    if(playerBlocks(w,s,n.intent)){if(manhattan(n,s.player)===1){askMove(w,s,n,n.intent);return;}}
+    else if(s.block&&s.block.npc===n.id)s.block=null;
     if(hasReached(w,s,n,n.intent)){arrive(w,s,n);return;}
     if(!n.route.length || !isStepNext(n,n.route[0])){
       const r=routeFor(w,s,n,n.intent);n.route=r||[];
@@ -281,6 +283,22 @@ const TroemereiNPC = (() => {
     n.x=next.x;n.y=next.y;n.route.shift();n.blockedSince=null;
     n.nextMoveAt=s.clock+(w.npcs.find(x=>x.id===n.id).stepSeconds||7);
     if(hasReached(w,s,n,n.intent))arrive(w,s,n);
+  }
+  // ---------- 비켜 달라는 말: 플레이어가 인물이 가려던 자리에 서 있으면, 다가와 말을 건다(AI 없이 대본 대사) ----------
+  // task.block = {tries(몇 번까지 부탁하나, 기본 w.blockTalk.tries 또는 1), wait(대답 기다리는 초, 기본 40), urgent, reason}
+  // 부탁 횟수를 넘기면 단념: 한 번뿐인 일(once)은 그날 다시 하지 않는다(→ 사건을 막는 길), 반복하는 일은 쉬었다가 다시 고른다.
+  function playerBlocks(w,s,task){if(!task||task.targetPlayer||task.targetNpc)return false;const g=goalOf(w,s,task);return !!g&&s.player.x===g.goal.x&&s.player.y===g.goal.y;}
+  function askMove(w,s,n,task){
+    const b=task.block||{},bt=w.blockTalk||{},max=b.tries||bt.tries||1;if(!n.asks)n.asks={};
+    const k=(n.asks[task.id]||0)+1;
+    if(k>max){
+      delete n.asks[task.id];if(task.once)n.excluded.push(task.id);else n.lastCompleted[task.id]=s.clock;
+      n.intent=null;n.mode='idle';n.route=[];n.nextMoveAt=s.clock+20;if(s.block&&s.block.npc===n.id)s.block=null;
+      addLog(w,s,nm(w,s,n.id)+'이(가) 단념하고 다른 일을 하러 갔다.','npc',n);return;
+    }
+    n.asks[task.id]=k;n.mode='paused';n.route=[];n.busyUntil=s.clock+(b.wait||bt.wait||40);n.nextMoveAt=n.busyUntil;
+    s.block={npc:n.id,task:task.id,n:k,max,urgent:!!b.urgent,at:s.clock,reason:b.reason||bt.reason||'당신이 서 있는 자리에 볼일이 있어 비켜 주었으면 하는 듯하다'};
+    addLog(w,s,nm(w,s,n.id)+'이(가) 다가와 비켜 달라고 말을 걸었다.','call',n);
   }
   // 먼저 말 걸기 일정 끝내기(대화를 받았거나, 거절했거나, 기다리다 지침)
   function finishCall(s,n){const t=n.intent;if(t){n.completed.push(t.id);n.lastCompleted[t.id]=s.clock;n.lastTask=t.id;}n.mode='idle';n.intent=null;n.route=[];n.busyUntil=0;n.nextMoveAt=s.clock+5;}
@@ -594,6 +612,7 @@ const TroemereiNPC = (() => {
   function describe(w,s,n){
     const name=id=>nm(w,s,id), place=id=>(landmark(w,id)||{}).name||'어딘가';
     if(n.mode==='accompany')return '플레이어와 동행 중';
+    if(s.block&&s.block.npc===n.id)return place(n.intent&&n.intent.landmark)+'에 볼일이 있는데 플레이어가 그 자리에 서 있어, 비켜 달라고 말을 건 참('+s.block.n+'번째 부탁'+(s.block.urgent?', 급한 일':'')+')';
     if(n.mode==='busy'&&n.intent)return n.intent.targetNpc?name(n.intent.targetNpc)+'와 이야기하는 중':place(n.intent.landmark)+'에서 일하는 중';
     if(n.intent)return n.intent.targetNpc?name(n.intent.targetNpc)+'에게 가는 중':place(n.intent.landmark)+' 쪽으로 가는 중';
     return '한가함';

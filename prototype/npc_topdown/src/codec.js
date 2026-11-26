@@ -128,6 +128,7 @@ const TroemereiCodec = (() => {
       putList(o, n.excluded, m); putList(o, n.queued.map(t => t.id), m);
       o.uint(n.lastTask && m.index.has(n.lastTask) ? m.index.get(n.lastTask) + 1 : 0);
       putMem(o, n.mem, m, clock);
+      const asks = Object.entries(n.asks || {}).filter(([id]) => m.index.has(id)); o.uint(asks.length); for (const [id, k] of asks) { o.uint(m.index.get(id)); o.uint(k); } // 비켜 달라는 부탁 횟수
     }
     const sum = fletcher(o.bytes);
     return toB64([...o.bytes, ...sum]);
@@ -170,6 +171,7 @@ const TroemereiCodec = (() => {
       n.excluded = getList(r, m); n.queued = getList(r, m).map(id => JSON.parse(JSON.stringify(m.tasks[m.index.get(id)])));
       const lt = r.uint(); n.lastTask = lt ? task(m, lt - 1).id : '';
       n.meetings = []; n.followOffset = 0; n.mem = getMem(r, m, clock);
+      n.asks = {}; const an = r.uint(); for (let i = 0; i < an; i++) { const id = task(m, r.uint()).id; n.asks[id] = r.uint(); }
       return n;
     });
     w.npcs.forEach((spec, i) => { s.npcs[i] = { id: spec.id, ...s.npcs[i] }; });

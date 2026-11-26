@@ -100,7 +100,7 @@ NPCS = [
     {'id': 'clara', 'name': '클라라 베버', 'call': ['클라라', '베버'], 'symbol': '클', 'color': '#9b7fd1', 'hair': '#8f72c9', 'cloth': '#1d1a24', 'x': 3, 'y': 4, 'stepSeconds': 7, 'sex': 'f',
      'profile': '독일 · 34 · 피아니스트 — 소리에 예민하다', 'rel': {'trust': 40, 'affection': 40},
      'agenda': [visit('recital_1', 'piano', '19:30', '19:50', 1180, 80, once=True, inter=False),
-                visit('move_brooch', 'case', '19:50', '20:25', 30, 85, once=True, inter=False, onCompleteFlag='brooch_gone', onCompleteFact='clara_moved'),
+                visit('move_brooch', 'case', '19:50', '20:25', 30, 85, once=True, inter=False, onCompleteFlag='brooch_gone', onCompleteFact='clara_moved', block={'tries': 3, 'wait': 45, 'urgent': True, 'reason': '진열장 앞에 꼭 볼일이 있어, 비켜 달라고 재촉하는 듯하다'}),
                 visit('recital_2', 'piano', '19:51', '20:20', 1200, 80, once=True, inter=False, onCompleteFlag='recital_done'),
                 visit('terrace_rest', 'bench', '20:20', '22:00', 300, 20, 1, 60)],
      'notes': [{'text': '리사이틀 내내 피아노 앞에 있었다', 'unlock': {'seen': True}}, {'text': '휴식 시간에 진열장 앞에 섰다', 'unlock': {'fact': 'clara_moved'}}]},
@@ -205,7 +205,7 @@ T1 = [
         L('seoha', '그럼 남는 질문. 휴식 시간에 라운지에 남아 있던 건 누구지?', '의심', 'think'),
         L('clara', '……저는 피아노 앞에 있었습니다. 다음 곡을 준비해야 했으니까요.', '기본', 'crossed')]},
     {'type': 'trans', 'issue': 'i3', 'text': '쟁점 셋'},
-    {'type': 'route', 'title': '휴식 시간의 동선', 'guide': '휴식 시간, 클라라가 피아노 앞에서 진열장까지 간 길을 칸으로 그린다', 'who': 'clara', 'start': [3, 4], 'end': [11, 2], 'via': [[7, 3]], 'issue': 'i3'},
+    {'type': 'route', 'title': '휴식 시간의 동선', 'guide': '휴식 시간, 클라라가 피아노 앞에서 진열장까지 간 길을 칸으로 그린다', 'who': 'clara', 'start': [3, 4], 'end': [11, 2], 'via': [[7, 3]], 'slack': 3, 'issue': 'i3'},
     {'type': 'talk', 'lines': [
         L('clara', '……네. 진열장 앞에 갔습니다. 2부를 앞두고 [[잡음]]이 들렸으니까요.', '곤란'),
         L('ruoxi', '잡음? 악보의 빨간 동그라미와 관계가 있나요?', '의심', 'think'),
@@ -264,9 +264,33 @@ LOOKS = {  # 맵 도트: 체크인 부품을 조립해 색만 칠한다(hc·oc·
 }
 for n in NPCS: n['look'] = LOOKS[n['id']]
 
+def BL(t, face='', pose='', alt=None, **k):
+    d = {'text': t}
+    if face: d['face'] = face
+    if pose: d['pose'] = pose
+    if alt: d['alt'] = alt
+    d.update(k); return d
+HI, LO = {'rel': {'trust': [4, 5]}}, {'rel': {'trust': [1, 2]}}
+BLOCK = {  # 비켜 달라는 말: [첫 부탁, 두 번째, 세 번째 이후] (AI 없이 나오는 대본, 관계에 따라 갈림)
+    'suzune': [[BL('저기, 죄송한데…… 거기 잠깐만 비켜 주실 수 있을까요?', '곤란', alt=[{'if': HI, 'text': '아, 거기 계셨네요. 잠깐 지나가도 될까요? 금방이에요.', 'face': '미소'}])],
+               [BL('저, 정말 죄송해요. 거기 꼭 가야 해서요…….', '곤란')], [BL('……알겠어요. 제가 나중에 다시 올게요.', '슬픔')]],
+    'mei': [[BL('어머, 거기 서 계시면 곤란하답니다. 잠시 비켜 주시겠어요?', '미소', alt=[{'if': HI, 'text': '당신, 거기 잠깐만 비켜 줄래요? 금방 끝나요. 오호호.', 'face': '웃음'}, {'if': LO, 'text': '……거기, 비켜 주시겠어요? 길을 막고 계시잖아요.', 'face': '불만', 'pose': 'crossed'}])],
+            [BL('저기요, 두 번 말하게 하지 마시라고요!', '불만', 'crossed')], [BL('야, 비키라니까! ……크흠, 비켜 주세요.', '격노', 'point', fx='shake')]],
+    'ruoxi': [[BL('실례합니다. 그 자리에 볼일이 있어요.', '기본', alt=[{'if': HI, 'text': '잠깐 그 자리 좀 빌릴게요. 30초면 됩니다.', 'face': '미소'}])],
+              [BL('같은 말을 두 번 하게 되네요. 비켜 주세요.', '불만')], [BL('……그 자리에 계속 계실 이유가 있나요?', '의심', 'think')]],
+    'seoha': [[BL('거기. 잠깐 비켜.', '기본', alt=[{'if': HI, 'text': '그쪽, 잠깐만. 그 자리 좀 쓰자.', 'face': '기본'}])],
+              [BL('……일부러 막는 거야?', '의심', 'crossed')], [BL('왜 거기서 안 움직이지? 이유를 듣고 싶은데.', '의심', 'think')]],
+    'clara': [[BL('실례합니다. 그 자리에 볼일이 있습니다. 비켜 주시겠습니까?', '기본', alt=[{'if': HI, 'text': '죄송하지만, 잠시만 자리를 비켜 주시겠어요? 곧 끝납니다.', 'face': '미소'}, {'if': LO, 'text': '비켜 주십시오. 지금 바로요.', 'face': '불만', 'pose': 'crossed'}])],
+              [BL('다시 말씀드립니다. 그 자리에서 비켜 주십시오. 다음 곡까지 시간이 없습니다.', '불만', 'crossed')],
+              [BL('……일부러 그러시는 겁니까? 지금 저를 방해하고 계십니다.', '격노', 'point', fx='shake')]],
+    'odile': [[BL('관객님, 무대 한가운데 서 계시네? 잠깐 비켜 줄래?', '웃음', alt=[{'if': HI, 'text': '관객님~ 거기 잠깐만. 짜잔, 하고 비켜 주면 고맙고!', 'face': '웃음'}])],
+              [BL('어라, 안 비켜 주는 거야? 이건 마술로도 안 되는데.', '곤란')], [BL('……관객님, 이건 장난 아냐. 비켜.', '불만', 'crossed')]],
+}
+for n in NPCS: n['block'] = BLOCK[n['id']]
+
 world = {
     'version': 3, 'kind': 'troemerei-npc-topdown-test', 'title': '라운지의 사라진 브로치', 'notes': '본편 1장 전 기관 시험용. 죽음 없음. 인물·사건은 본편 설정이 아니다.',
-    'chapter': 0, 'dataVersion': 8, 'startTime': '19:30', 'talkRange': 2, 'sightRange': 30, 'searchSeconds': 20,
+    'chapter': 0, 'dataVersion': 8, 'startTime': '19:30', 'talkRange': 2, 'sightRange': 30, 'blockTalk': {'tries': 1, 'wait': 40, 'reason': '당신이 서 있는 자리에 볼일이 있어, 잠시 비켜 주었으면 하는 듯하다'}, 'searchSeconds': 20,
     'map': {'id': 'hotel_test', 'width': W_, 'height': H_, 'rows': rows(), 'tileSeconds': 4, 'areas': AREAS, 'landmarks': LANDMARKS, 'props': PROPS,
             'floors': ['parquet', 'bar', 'carpet', 'room', 'terrace'], 'decor': [
                 {'t': 'rug', 'x': 5, 'y': 4, 'w': 6, 'h': 3}, {'t': 'mat', 'cells': [[15, 5], [7, 9], [22, 9], [5, 12], [20, 12]]},
