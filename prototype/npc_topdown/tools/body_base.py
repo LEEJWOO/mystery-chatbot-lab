@@ -6,10 +6,12 @@
   nextmask  남은 옷 영역만 흰색으로 칠한 마스크(다음 회차 인페인트 범위 안내용)
   finish    마무리: 턱 위·바뀌지 않아야 할 곳을 원본으로 되돌림 + 흰 배경 투명화 + 점검표(남은 옷·얼룩 강조 보기)
   merge     후보 여러 장에서 부위(사각형)를 골라 한 장으로 섞기
+  headfix   맨얼굴 마무리: 원본(얼굴 있는 착의)의 앞머리·윤곽·피부색 + 이목구비 자리만 빈 얼굴, 몸은 결과 그대로
 
   python3 -I body_base.py score    --orig 원본.png --cand 후보1.png 후보2.png ... [--out 점수.png]
   python3 -I body_base.py nextmask --orig 원본.png --cand 고른후보.png --out 다음마스크.png [--grow 12]
   python3 -I body_base.py finish   --orig 원본.png --cand 최종후보.png --out 결과폴더 [--chin Y]
+  python3 -I body_base.py headfix  --orig 원본(얼굴 있음).png --cand 맨몸맨얼굴.png --out 결과.png [--chin Y]
   python3 -I body_base.py merge    --base 후보A.png --take 후보B.png:x0,y0,x1,y1 [--take ...] --out 합본.png [--feather 12]
 
 공통 원칙: 크기·위치는 절대 바꾸지 않는다(표시 규칙). 원본과 후보는 같은 크기여야 하며 다르면 멈춘다.
@@ -289,6 +291,52 @@ def smooth(x, lo, hi):
     return t * t * (3 - 2 * t)
 
 
+def cmd_headfix(a):
+    """맨얼굴 마무리: 원본(얼굴 있는 착의)의 앞머리·윤곽·피부색을 살리고, 이목구비 자리만 빈 얼굴 결과로.
+    턱 아래(몸)는 결과 그대로. 빈 얼굴의 잡티는 고르게, 피부색은 원본 볼 색에 맞춘다."""
+    O = load(a.orig); F = load(a.cand[0]).copy(); same(O, F, a.orig, a.cand[0])
+    H, W = O.shape[:2]
+    chin = a.chin if a.chin is not None else chin_y(O)
+    hO = mc.rgb_to_hsv(np.clip(O[..., :3], 0, 255) / 255); hF = mc.rgb_to_hsv(np.clip(F[..., :3], 0, 255) / 255)
+    head = np.zeros((H, W), bool); head[:chin] = True
+    pink = lambda h: (h[..., 0] > .9) | (h[..., 0] < .07)
+    face = pink(hF) & (hF[..., 1] < .2) & (hF[..., 2] > .85) & (F[..., 3] > 200) & head
+    face = nd.binary_opening(face, iterations=2)
+    lab, n = nd.label(face)
+    if not n:
+        sys.exit('결과 그림에서 빈 얼굴을 찾지 못함')
+    sizes = nd.sum(np.ones_like(lab), lab, range(1, n + 1))
+    face = nd.binary_fill_holes(lab == int(np.argmax(sizes)) + 1)
+    inner = nd.binary_erosion(face, iterations=3)
+    med = np.stack([nd.median_filter(F[..., c], 7) for c in range(3)], -1)
+    F[..., :3] = np.where(inner[..., None], med, F[..., :3])
+    cm = nd.binary_erosion(face, iterations=8) & (hO[..., 1] < .2) & (hO[..., 2] > .9) & pink(hO)
+    if cm.sum() > 50:
+        shift = np.median(O[cm][:, :3], 0) - np.median(F[inner][:, :3], 0)
+        F[..., :3] = np.where(inner[..., None], np.clip(F[..., :3] + shift, 0, 255), F[..., :3])
+        print('피부색 보정', shift.round(1))
+    # 눈·눈썹·입 상자(원본의 어두운 덩어리 주변)는 통째로 빈 얼굴 쪽
+    dark = (hO[..., 2] < .5) & nd.binary_dilation(face, iterations=4)
+    lab, _ = nd.label(nd.binary_dilation(dark, iterations=2))
+    boxes = np.zeros((H, W), bool)
+    for i, sl in enumerate(nd.find_objects(lab)):
+        if sl is None or (lab[sl] == i + 1).sum() < 10: continue
+        boxes[max(0, sl[0].start - 8):sl[0].stop + 8, max(0, sl[1].start - 8):sl[1].stop + 8] = True
+    boxes &= nd.binary_dilation(face, iterations=14) & head
+    # 원본 머리카락(얼굴 밖 머리 쪽 팔레트에 가까운 것)은 얼굴 안이라도 원본 유지
+    ref = head & ~face & (O[..., 3] > 200) & (hO[..., 2] > .6) & (hO[..., 1] > .12)
+    hairO = (nearest(O[..., :3], palette(O[ref][:, :3], 12, 3)) < 22) if ref.sum() > 100 else np.zeros((H, W), bool)
+    useF = nd.binary_closing((face & ~hairO) | boxes, iterations=1)
+    w = nd.gaussian_filter(useF.astype(np.float32), 1.0); w[~head] = 1
+    for i in range(8):
+        y = chin - 4 + i
+        if 0 <= y < H: w[y] = np.maximum(w[y], i / 8)
+    R = O * (1 - w[..., None]) + F * w[..., None]
+    os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
+    Image.fromarray(np.clip(R, 0, 255).astype(np.uint8)).save(a.out)
+    print(f'턱 y={chin}  얼굴 {face.sum()}px  이목구비 상자 {boxes.sum()}px  저장: {a.out}')
+
+
 def cmd_merge(a):
     B = load(a.base); R = B.copy()
     for t in a.take:
@@ -308,6 +356,7 @@ if __name__ == '__main__':
     s = sp.add_parser('score'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs='+', required=True); s.add_argument('--out'); s.add_argument('--zone')
     s = sp.add_parser('nextmask'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--grow', type=int, default=24); s.add_argument('--zone')
     s = sp.add_parser('finish'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--chin', type=int); s.add_argument('--zone')
+    s = sp.add_parser('headfix'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--chin', type=int)
     s = sp.add_parser('merge'); s.add_argument('--base', required=True); s.add_argument('--take', action='append', required=True); s.add_argument('--out', required=True); s.add_argument('--feather', type=float, default=12)
     a = ap.parse_args()
-    {'score': cmd_score, 'nextmask': cmd_nextmask, 'finish': cmd_finish, 'merge': cmd_merge}[a.cmd](a)
+    {'score': cmd_score, 'nextmask': cmd_nextmask, 'finish': cmd_finish, 'merge': cmd_merge, 'headfix': cmd_headfix}[a.cmd](a)
