@@ -2,7 +2,12 @@
 const TR_W = 360, TR_H = 540, TR_CELL = 36;
 const TR_IMP = { idle: '한가해 보인다', moving: '어딘가 바빠 보인다', busy: '무언가에 집중하고 있다', paused: '이야기를 들어 주고 있다', accompany: '곁에서 함께 걷고 있다' };
 const TR_BG = ['#25344a', '#2d3a30', '#283a4a', '#2c3550'];
-const trNpc = id => TN_WORLD.npcs.find(n => n.id === id) || { name: id, color: '#999', symbol: '?' };
+// 화면 이름: 가명(alias)이 있으면 그 깃발이 서기 전까지 가명으로 보인다. TR_FLAGS는 그릴 때마다 상태의 깃발로 갱신.
+let TR_FLAGS = {};
+const trNpcRaw = id => TN_WORLD.npcs.find(n => n.id === id);
+const trNpc = id => { const n = trNpcRaw(id); if (!n) return { name: id, color: '#999', symbol: '?' }; return n.alias && !TR_FLAGS[n.alias.until] ? { ...n, name: n.alias.name, real: n.name } : n; };
+// 대사의 화자 이름 → 인물 id. 본명·가명·부르는 이름(call) 모두 받는다.
+const trNameIs = (n, name) => n.name === name || (n.alias && n.alias.name === name) || (n.call || []).includes(name);
 const trArea = (x, y) => { const i = TroemereiNPC.areaOf(TN_WORLD, x, y); return i < 0 ? '통로' : TN_WORLD.map.areas[i].name; };
 const trHM = n => TroemereiNPC.clock(n).slice(0, 5);
 const trFact = (id, role, who) => {
@@ -25,15 +30,33 @@ const trChars = lines => lines.reduce((k, l) => k + Array.from(l.text).length, 0
 const TR_A = typeof TN_ASSETS === 'object' && TN_ASSETS ? TN_ASSETS : {};
 const trUrl = f => f ? (/^https?:/.test(f) ? f : (TR_A.url || '') + f) : '';
 // AI가 쓴 표정 낱말 → 준비된 표정. 목록에 없으면 기본 표정.
-const TR_SYN = { 웃음: ['웃', '미소', '기쁨', '기뻐', '즐거', '신나', '환하', '장난', '흐뭇', '반가'], 놀람: ['놀', '당황', '경악', '의아', '어리둥절', '깜짝', '멍', '걱정', '불안'], 불만: ['불만', '짜증', '삐', '언짢', '뾰로통', '찡그', '화', '못마땅', '부루퉁', '토라'], 평상시: ['평상', '무표정', '담담', '차분', '진지', '덤덤'] };
-function trFace(c, expr) {
-  if (!c) return '';
-  const keys = Object.keys(c.faces || {}), e = String(expr || '');
-  if (!e) return c.def || '';
-  if (c.faces && c.faces[e]) return e;
-  for (const k of [...keys, c.def || '']) if ((TR_SYN[k] || [k]).some(w => w && e.includes(w))) return k;
-  return c.def || '';
+// 표정 12종(대본·AI 공통 이름). AI가 쓴 낱말은 아래 유의어로 맞춘다. 앞쪽이 우선.
+const TR_FACES = ['기본', '미소', '웃음', '의심', '놀람', '곤란', '부끄러움', '불만', '슬픔', '격노', '패닉', '하라구로'];
+const TR_SYN = {
+  하라구로: ['하라구로', '음흉', '사악', '비열', '속검', '흑심', '비웃', '냉소', '악랄'], 격노: ['격노', '분노', '격분', '노발', '버럭', '폭발', '화가 치'],
+  패닉: ['패닉', '공포', '겁', '질린', '비명', '혼란', '사색', '경악'], 부끄러움: ['부끄', '수줍', '쑥스', '민망', '홍조', '얼굴이 붉', '창피'],
+  슬픔: ['슬', '울', '눈물', '침울', '서글', '애통', '우울', '풀죽'], 곤란: ['곤란', '난처', '당황', '쩔쩔', '머쓱', '진땀', '어색'],
+  의심: ['의심', '수상', '미심', '갸웃', '노려', '흘겨', '경계', '날카'], 불만: ['불만', '짜증', '삐', '언짢', '뾰로통', '찡그', '못마땅', '부루퉁', '토라', '화'],
+  놀람: ['놀', '깜짝', '어리둥절', '의아', '멍', '헉'], 웃음: ['웃음', '활짝', '폭소', '깔깔', '신나', '즐거', '기뻐', '환하', '장난'],
+  미소: ['미소', '웃', '흐뭇', '반가', '상냥', '다정', '부드'], 기본: ['기본', '평상', '무표정', '담담', '차분', '진지', '덤덤'] };
+function trFaceWord(expr) {
+  const e = String(expr || '').trim(); if (!e) return '기본';
+  if (TR_FACES.includes(e)) return e;
+  for (const k of Object.keys(TR_SYN)) if (TR_SYN[k].some(w => e.includes(w))) return k;
+  return '기본';
 }
+// 자세 4종. 자세를 안 정했으면 표정에 따라 고른다(그 자세에 그 표정 그림이 있을 때만).
+const TR_POSE_NAME = { default: '기본', think: '생각', point: '지목', crossed: '팔짱' };
+const TR_AUTO_POSE = { 의심: 'think', 곤란: 'think', 격노: 'point', 하라구로: 'point', 불만: 'crossed' };
+const trPoses = c => c ? (c.poses || { default: c }) : {};
+const trHasFace = (P, f) => !!P && (f === (P.def || '기본') || !!(P.faces || {})[f]);
+// 고를 그림: {pose, P, face}. 요청 자세에 그 표정이 없으면 기본 자세로.
+function trPick(c, expr, pose) {
+  const ps = trPoses(c), f = trFaceWord(expr), want = pose && ps[pose] ? pose : (TR_AUTO_POSE[f] && ps[TR_AUTO_POSE[f]] && trHasFace(ps[TR_AUTO_POSE[f]], f) ? TR_AUTO_POSE[f] : 'default');
+  const k = trHasFace(ps[want], f) ? want : (ps.default ? 'default' : want);
+  const P = ps[k] || ps.default; return { pose: k, P, face: trHasFace(P, f) ? f : (P && P.def) || '기본' };
+}
+function trFace(c, expr) { return trPick(c, expr, '').face; }
 
 const TR_STEP_MS = 180, TR_FRAME_MS = 90;
 // 탐색 화면 인물: 스프라이트 묶음에서 방향(하·상·좌·우)과 걷기 단계에 맞는 칸을 고른다.
@@ -247,7 +270,7 @@ function trMeSil() {
 // ---------- 재판 대본 도우미 ----------
 // 재판 진행자: 이름은 세계 데이터(host.name)에서만. 정체를 드러내는 이름은 화면에 쓰지 않는다.
 const TR_HOST = TN_WORLD.host || { name: '진행자' };
-const trIdByName = name => name === TR_HOST.name ? 'host' : name === '나' ? 'me' : ((TN_WORLD.npcs.find(n => n.name === name) || {}).id || '');
+const trIdByName = name => name === TR_HOST.name ? 'host' : name === '나' ? 'me' : ((TN_WORLD.npcs.find(n => trNameIs(n, name)) || {}).id || '');
 // 조건: talked·seen(인물 id), fact, scene, item, flag, rel. not:{…}은 반대. 여러 키는 모두 만족해야 함
 // rel: {who?: 인물 id(없으면 그 줄의 화자), trust: [최소, 최대] 단계 또는 최소 단계 숫자, affection: …}
 function trCond(st, c, who) {
@@ -321,14 +344,36 @@ function trShards() {
     <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="35,45 70,40 55,75 35,45 0,60 M70,40 100,50" fill="none" stroke="#fff" strokeWidth=".6" /><polyline points="35,45 50,0 M70,40 100,0 M55,75 100,100 M55,75 0,100" fill="none" stroke="#fff" strokeWidth=".6" /></svg></div>;
 }
 
-// 인물 레이어: 몸(기본 표정 포함) 위에 표정 조각을 같은 비율 좌표로 겹친다. 화면 아래 가운데 정렬.
-function trSprite(c, face, onBad, bad) {
-  const H = 528, W = Math.round(H * c.w / c.h), f = face && face !== c.def && (c.faces || {})[face];
-  const pct = (a, b) => (a / b * 100) + '%';
-  return <div style={{ position: 'absolute', bottom: 0, left: (TR_W - W) / 2, width: W, height: H }}>
-    <img src={trUrl(c.src)} alt="" onError={() => onBad(trUrl(c.src))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-    {f && !bad[trUrl(f.src)] ? <img src={trUrl(f.src)} alt="" onError={() => onBad(trUrl(f.src))} style={{ position: 'absolute', left: pct(f.x, c.w), top: pct(f.y, c.h), width: pct(f.w, c.w), height: pct(f.h, c.h) }} /> : null}
+// 인물 레이어: 자세 그림(평상시 얼굴 포함) 위에 표정 조각, 그 위에 '맨 위 조각'(턱 앞 손 등)을 같은 비율 좌표로 겹친다.
+// 인물마다 fit = {s: 배율, dy: 위아래 보정(px)} 으로 키·머리 크기를 맞춘다. 그림이 없으면 임시 실루엣.
+function trActor(id, expr, pose, onBad, bad) {
+  const c = (TR_A.chars || {})[id], pick = trPick(c, expr, pose), P = pick.P;
+  if (!P || !P.src || bad[trUrl(P.src)]) return trActorStub(id, pick.face, pose || TR_AUTO_POSE[pick.face] || 'default');
+  const fit = (c && c.fit) || {}, H = Math.round(528 * (fit.s || 1)), W = Math.round(H * P.w / P.h), f = pick.face !== (P.def || '기본') && (P.faces || {})[pick.face];
+  const pct = (a, b) => (a / b * 100) + '%', layer = (L, k) => L && !bad[trUrl(L.src)] ? <img key={k} src={trUrl(L.src)} alt="" onError={() => onBad(trUrl(L.src))} style={{ position: 'absolute', left: pct(L.x, P.w), top: pct(L.y, P.h), width: pct(L.w, P.w), height: pct(L.h, P.h) }} /> : null;
+  return <div style={{ position: 'absolute', bottom: -(fit.dy || 0), left: (TR_W - W) / 2, width: W, height: H }}>
+    <img src={trUrl(P.src)} alt="" onError={() => onBad(trUrl(P.src))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+    {layer(f, 'f')}{layer(P.over, 'o')}
   </div>;
+}
+// 임시 실루엣: 머리색·옷색과 자세(팔 모양), 표정(눈·입)을 대충 그려 그림 없이도 연출을 확인한다.
+function trActorStub(id, face, pose) {
+  const n = trNpc(id), hair = n.hair || n.color || '#999', cloth = n.cloth || '#3a3346', skin = '#f3dccb';
+  const eye = { 놀람: 'o', 패닉: 'o', 부끄러움: '^', 웃음: '^', 미소: '^', 슬픔: 'v', 의심: '-', 하라구로: '-', 격노: '>', 불만: '-', 곤란: 'v', 기본: '.' }[face] || '.';
+  const mouth = { 웃음: 'M162 214 Q180 232 198 214', 미소: 'M168 216 Q180 224 192 216', 놀람: 'M176 216 a4 6 0 1 0 8 0 a4 6 0 1 0 -8 0', 패닉: 'M170 214 Q180 206 190 214 Q180 226 170 214', 슬픔: 'M168 222 Q180 214 192 222', 격노: 'M166 218 L194 218', 불만: 'M168 220 Q180 216 192 220', 곤란: 'M168 218 Q174 214 180 218 Q186 222 192 218', 하라구로: 'M162 212 Q182 230 200 208', 의심: 'M170 218 L190 216', 부끄러움: 'M172 218 Q180 222 188 218', 기본: 'M172 218 L188 218' }[face];
+  const E = (x) => eye === 'o' ? <circle cx={x} cy="186" r="7" fill="#fff" stroke="#222" strokeWidth="2" /> : eye === '^' ? <path d={`M${x - 8} 190 Q${x} 180 ${x + 8} 190`} stroke="#222" strokeWidth="3" fill="none" /> : eye === 'v' ? <path d={`M${x - 8} 182 Q${x} 192 ${x + 8} 186`} stroke="#222" strokeWidth="3" fill="none" /> : eye === '>' ? <path d={`M${x - 9} 180 L${x + 9} 188`} stroke="#222" strokeWidth="4" /> : eye === '-' ? <path d={`M${x - 8} 186 L${x + 8} 186`} stroke="#222" strokeWidth="4" /> : <ellipse cx={x} cy="186" rx="5" ry="7" fill="#222" />;
+  const arms = { default: <><path d="M110 300 Q90 400 104 470" stroke={cloth} strokeWidth="30" fill="none" strokeLinecap="round" /><path d="M250 300 Q270 400 256 470" stroke={cloth} strokeWidth="30" fill="none" strokeLinecap="round" /></>,
+    think: <><path d="M110 300 Q90 400 104 470" stroke={cloth} strokeWidth="30" fill="none" strokeLinecap="round" /><path d="M250 300 Q262 330 214 250" stroke={cloth} strokeWidth="30" fill="none" strokeLinecap="round" /><circle cx="204" cy="238" r="16" fill={skin} /></>,
+    point: <><path d="M110 300 Q90 400 104 470" stroke={cloth} strokeWidth="30" fill="none" strokeLinecap="round" /><path d="M250 300 Q300 300 330 262" stroke={cloth} strokeWidth="30" fill="none" strokeLinecap="round" /><circle cx="336" cy="254" r="14" fill={skin} /></>,
+    crossed: <path d="M112 330 Q180 380 248 330 M112 360 Q180 320 248 362" stroke={cloth} strokeWidth="30" fill="none" strokeLinecap="round" /> }[pose] || null;
+  return <svg viewBox="0 0 360 528" width={TR_W} height="528" style={{ position: 'absolute', bottom: 0, left: 0 }} aria-hidden="true">
+    <path d="M60 528 Q70 300 180 270 Q290 300 300 528 Z" fill={cloth} /><rect x="166" y="236" width="28" height="40" fill={skin} />
+    <ellipse cx="180" cy="190" rx="62" ry="72" fill={skin} /><path d="M112 200 Q104 100 180 104 Q256 100 248 200 Q238 140 180 142 Q122 140 112 200 Z" fill={hair} />
+    {E(158)}{E(202)}<path d={mouth} stroke="#7a2e2e" strokeWidth="3" fill={face === '놀람' || face === '패닉' ? '#7a2e2e' : 'none'} />
+    {face === '부끄러움' ? <><ellipse cx="146" cy="206" rx="12" ry="6" fill="#f08a8a" opacity=".6" /><ellipse cx="214" cy="206" rx="12" ry="6" fill="#f08a8a" opacity=".6" /></> : null}
+    {face === '하라구로' ? <rect x="112" y="118" width="136" height="60" fill="#000" opacity=".28" /> : null}
+    {arms}<text x="180" y="512" textAnchor="middle" fontSize="15" fill="#fff" opacity=".75">{n.name} · {face} · {TR_POSE_NAME[pose] || pose}</text>
+  </svg>;
 }
 
 // AI 출력: <Troemerei s='상태코드' d='이름:대사|*서술' />  (자유 행동 P에만 t='초', 사건 코드는 e='…', 대화 상대의 마음 변화는 r='t+1')
@@ -418,6 +463,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     if (typeof ResizeObserver === 'function' && outRef.current) { const ro = new ResizeObserver(fit); ro.observe(outRef.current); return () => ro.disconnect(); }
     if (typeof window !== 'undefined') { window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit); }
   }, []);
+  TR_FLAGS = (state && state.flags) || {};
   typeRef.current = null; nsRef.current = null; rbRef.current = null; // 재판 화면이 그려질 때만 다시 채운다
   const tlines = talk && talk.local ? talk.local : lines; // 디버그 시험 대사는 AI 응답과 따로(시간·기억에 반영 안 함)
   const line = talk && !talk.fresh && !talk.done ? tlines[talk.idx] : null;
@@ -909,7 +955,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         {/* 무대: 말하는 사람의 모습(표정 조각)과 재판 참가자 자리 */}
         <div key={T.phase + '-' + speakerId + '-' + (stageFx || (cur && cur.cut) ? tv.idx : '') + (tv.reply ? 'r' : '')} className={'tr-stage' + (mini ? ' mini' : '') + (split ? ' split' : '') + (stageFx ? ' fx-' + stageFx : '')}>
           {TR_A.bg && TR_A.bg['재판장'] ? <img src={trUrl(TR_A.bg['재판장'])} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .6 }} /> : <div className="tr-spot-light" />}
-          {!mini && ch ? <div className="tr-actor"><div className="tr-actor-in">{trSprite(ch, trFace(ch, cur ? cur.face : nsMissL ? nsMissL.face : ''), u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div></div> : null}
+          {!mini && speakerId && speakerId !== 'host' && speakerId !== 'me' && trNpcRaw(speakerId) ? <div className="tr-actor"><div className="tr-actor-in">{trActor(speakerId, cur ? cur.face : nsMissL ? nsMissL.face : '', cur ? cur.pose || '' : '', u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div></div> : null}
           {!mini && speakerId === 'host' ? <div className={'tr-actor host' + (T.phase === 0 && tv.idx === 0 ? ' enter' : '')}><div className="tr-hspot" /><div className="tr-hspot-floor" />{trHostSil()}</div> : null}
           {split ? <div className="tr-objc"><div className="tr-objc-dim" /><div className="tr-objc-cut">{state.player.look && TR_A.parts ? trCutinImg(state.player.look, { left: 0, top: 0 }) : <div className="tr-objc-band"><div className="tr-objc-face">{trMeSil()}</div></div>}</div><b className="tr-objc-word">반론!</b><span className="tr-objc-name">{state.player.look ? state.player.look.name : '나'}</span></div> : null}
           {stageFx === 'flash' ? <div className="tr-flash" /> : null}
@@ -951,10 +997,10 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   if (talk) {
     const n = talk.npc ? state.npcs.find(v => v.id === talk.npc) : null;
     const def = n ? trNpc(talk.npc) : { name: '상황', color: '#6b7a8c', symbol: '…' };
-    const sp = line && !line.narration ? (TN_WORLD.npcs.find(x => x.name === line.speaker) || null) : null;
+    const sp = line && !line.narration ? (TN_WORLD.npcs.find(x => trNameIs(x, line.speaker)) || null) : null;
     // 지금 보일 인물: 이 줄까지 마지막으로 말한 사람(서술 줄은 직전 화자 유지). 없으면 대화 상대.
     let who = n ? { npc: trNpc(talk.npc), id: talk.npc, expr: '' } : null;
-    if (line) for (let i = talk.idx; i >= 0; i--) { const L = tlines[i]; if (!L.narration) { const m = TN_WORLD.npcs.find(x => x.name === L.speaker); who = { npc: m || { name: L.speaker, color: '#6b7a8c', symbol: '?' }, id: m ? m.id : '', expr: L.expression }; break; } }
+    if (line) for (let i = talk.idx; i >= 0; i--) { const L = tlines[i]; if (!L.narration) { const m = TN_WORLD.npcs.find(x => trNameIs(x, L.speaker)); who = { npc: m ? trNpc(m.id) : { name: L.speaker, color: '#6b7a8c', symbol: '?' }, id: m ? m.id : '', expr: L.expression, pose: L.pose || '' }; break; } }
     const ch = who && who.id && (TR_A.chars || {})[who.id];
     const face = ch ? trFace(ch, who.expr) : '';
     const bg = trUrl((TR_A.bg || {})[trArea(state.player.x, state.player.y)]);
@@ -964,7 +1010,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div className="tr-talk">
           {bg && !badImg[bg] ? <img src={bg} alt="" onError={() => setBadImg(v => ({ ...v, [bg]: true }))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
           <div key={'fx' + talk.idx + (talk.local ? 'L' : '')} className={'tr-tfx' + (line && line.fx ? ' ' + line.fx : '')}>
-          {ch && !badImg[trUrl(ch.src)] ? trSprite(ch, face, u => setBadImg(v => ({ ...v, [u]: true })), badImg) : who ?
+          {who && who.id ? trActor(who.id, who.expr, who.pose, u => setBadImg(v => ({ ...v, [u]: true })), badImg) : who ?
             <svg viewBox="0 0 360 540" style={{ position: 'absolute', inset: 0 }} aria-hidden="true"><ellipse cx="180" cy="520" rx="150" ry="230" fill={who.npc.color} opacity=".55" /><circle cx="180" cy="190" r="78" fill={who.npc.color} opacity=".9" /><text x="180" y="212" textAnchor="middle" fontSize="64" fontWeight="700" fill="#14212c">{who.npc.symbol}</text></svg> : null}
           </div>
           {line && line.fx === 'flash' ? <div key={'fl' + talk.idx} className="tr-flash" /> : null}
