@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>인물 레이어 조립 미리보기 (로컬)</title>
+<style>
+  :root { --bg:#16161c; --panel:#20202a; --line:#33334a; --text:#e8e6f0; --dim:#9a98aa; --acc:#c8a2ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.5 system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; background:var(--bg); color:var(--text); }
+  header { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:16px; margin:0 12px 0 0; }
+  .note { color:var(--dim); font-size:12px; }
+  main { display:grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 56px); }
+  aside { border-right:1px solid var(--line); padding:12px; overflow:auto; background:var(--panel); }
+  section.stage { display:flex; flex-direction:column; align-items:center; padding:12px; gap:8px; overflow:auto; }
+  label.btn, button { background:#2c2c3c; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px 10px; cursor:pointer; font:inherit; }
+  button:hover, label.btn:hover { border-color:var(--acc); }
+  button.on { background:#4a3a6a; border-color:var(--acc); }
+  h2 { font-size:13px; color:var(--acc); margin:14px 0 6px; font-weight:600; }
+  .row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .list button { font-size:12px; padding:4px 8px; }
+  .layer { display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px dashed #2c2c3c; }
+  .layer .nm { flex:1; font-size:12px; word-break:break-all; }
+  .layer input[type=range] { width:70px; }
+  #view { position:relative; border:1px solid var(--line); }
+  #view img { position:absolute; left:0; top:0; width:100%; height:100%; image-rendering:auto; pointer-events:none; }
+  .bg-checker { background: repeating-conic-gradient(#888 0 25%, #bbb 0 50%) 0 0/20px 20px; }
+  .bg-gray { background:#464646; } .bg-white { background:#fff; } .bg-black { background:#000; }
+  .warn { color:#ffb36b; font-size:12px; }
+  select, input[type=number] { background:#2c2c3c; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px; font:inherit; }
+  kbd { background:#2c2c3c; border:1px solid var(--line); border-radius:4px; padding:0 4px; font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>인물 레이어 조립 미리보기</h1>
+  <label class="btn">폴더 열기<input id="dir" type="file" webkitdirectory directory multiple hidden></label>
+  <label class="btn">파일 고르기<input id="fs" type="file" accept="image/png,image/webp" multiple hidden></label>
+  <span class="note">그림은 이 컴퓨터에서만 읽고 어디에도 올리지 않습니다. 인터넷 없이도 열립니다.</span>
+</header>
+<main>
+  <aside>
+    <div id="empty" class="note">
+      파일 이름 규칙: <b>번호-직업-자세-종류.png</b><br>
+      예) 02-heiress-default-body.png (맨몸)<br>
+      02-heiress-default-outfit-casual.png (의상)<br>
+      02-heiress-default-face-smile.png (표정 조각, 투명 캔버스)<br>
+      02-heiress-default-neutral.png (옷 입은 원본)<br><br>
+      순서: 몸 → 의상 → 표정. 같은 인물의 그림은 크기·위치를 바꾸지 않고 그대로 겹칩니다(표시 규칙).
+    </div>
+    <div id="ui" hidden>
+      <h2>인물</h2><div id="chars" class="row list"></div>
+      <h2>자세</h2><div id="poses" class="row list"></div>
+      <h2>바탕(몸)</h2><div id="base" class="row list"></div>
+      <h2>의상 <span class="note"><kbd>←</kbd><kbd>→</kbd> 바꾸기</span></h2><div id="outfit" class="row list"></div>
+      <h2>표정 <span class="note"><kbd>↑</kbd><kbd>↓</kbd> 바꾸기</span></h2><div id="face" class="row list"></div>
+      <h2>기타 레이어</h2><div id="extra"></div>
+      <h2>겹침 확인</h2>
+      <div id="layers"></div>
+      <div class="row" style="margin-top:6px">
+        <button id="blink">위 레이어 깜빡이기</button>
+      </div>
+      <div id="warn" class="warn"></div>
+    </div>
+  </aside>
+  <section class="stage">
+    <div class="row">
+      배경
+      <button data-bg="checker" class="on">체크</button><button data-bg="gray">회색</button><button data-bg="white">흰색</button><button data-bg="black">검정</button>
+      &nbsp;보기 배율 <input id="zoom" type="range" min="20" max="200" value="60"> <span id="zv">60%</span>
+    </div>
+    <div id="view" class="bg-checker"></div>
+    <div class="note" id="info"></div>
+  </section>
+</main>
+<script>
+(() => {
+  const RX = /^(\d+-[a-z]+)-(default|think|point|crossed)-(.+)\.(png|webp)$/i;
+  const S = { files: {}, ch: '', pose: '', base: '', outfit: '', face: '', extra: {}, op: {}, bg: 'checker', zoom: .6, blink: false };
+  const $ = id => document.getElementById(id);
+
+  function load(list) {
+    let n = 0;
+    for (const f of list) {
+      const m = RX.exec(f.name); if (!m) continue;
+      const [, ch, pose, kind] = m;
+      ((S.files[ch] ||= {})[pose] ||= {})[kind.toLowerCase()] = URL.createObjectURL(f); n++;
+    }
+    if (!n) { alert('규칙에 맞는 파일이 없어요: 번호-직업-자세-종류.png'); return; }
+    $('empty').hidden = true; $('ui').hidden = false;
+    if (!S.ch || !S.files[S.ch]) S.ch = Object.keys(S.files).sort()[0];
+    pickPose(); render();
+  }
+  $('dir').onchange = e => load(e.target.files);
+  $('fs').onchange = e => load(e.target.files);
+
+  const kinds = () => (S.files[S.ch] || {})[S.pose] || {};
+  const BASES = ['body', 'blank', 'neutral'];
+  function classify() {
+    const K = kinds(), names = Object.keys(K).sort();
+    return {
+      base: BASES.filter(k => K[k]),
+      outfit: names.filter(k => k.startsWith('outfit-')),
+      face: names.filter(k => k.startsWith('face') || k.endsWith('-face')),
+      extra: names.filter(k => !BASES.includes(k) && !k.startsWith('outfit-') && !(k.startsWith('face') || k.endsWith('-face')) && !k.endsWith('-mask') && k !== 'mask'),
+    };
+  }
+  function pickPose() {
+    const P = S.files[S.ch] || {};
+    if (!P[S.pose]) S.pose = ['default', 'think', 'point', 'crossed'].find(p => P[p]) || Object.keys(P)[0];
+    const C = classify();
+    if (!C.base.includes(S.base)) S.base = C.base[0] || '';
+    if (S.outfit && !C.outfit.includes(S.outfit)) S.outfit = C.outfit[0] || '';
+    if (S.face && !C.face.includes(S.face)) S.face = '';
+  }
+  function btns(el, items, cur, on, label = x => x) {
+    el.innerHTML = '';
+    items.forEach(v => { const b = document.createElement('button'); b.textContent = label(v); if (v === cur) b.className = 'on'; b.onclick = () => { on(v); render(); }; el.appendChild(b); });
+  }
+  const KO = { body: '맨몸', blank: '빈 얼굴', neutral: '원본(옷)', '': '없음' };
+  function render() {
+    const C = classify();
+    btns($('chars'), Object.keys(S.files).sort(), S.ch, v => { S.ch = v; pickPose(); });
+    btns($('poses'), ['default', 'think', 'point', 'crossed'].filter(p => (S.files[S.ch] || {})[p]), S.pose, v => { S.pose = v; pickPose(); },
+      v => ({ default: '기본', think: '생각', point: '지목', crossed: '팔짱' }[v]));
+    btns($('base'), C.base, S.base, v => S.base = v, v => KO[v] || v);
+    btns($('outfit'), ['', ...C.outfit], S.outfit, v => S.outfit = v, v => v ? v.replace('outfit-', '') : '없음');
+    btns($('face'), ['', ...C.face], S.face, v => S.face = v, v => v ? v.replace(/^face-?|-face$/g, '') || '조각' : '없음');
+    const ex = $('extra'); ex.innerHTML = '';
+    C.extra.forEach(k => { const l = document.createElement('label'); l.className = 'layer';
+      l.innerHTML = `<input type="checkbox" ${S.extra[k] ? 'checked' : ''}> <span class="nm">${k}</span>`;
+      l.querySelector('input').onchange = e => { S.extra[k] = e.target.checked; draw(); }; ex.appendChild(l); });
+    draw();
+  }
+  function stack() {
+    const K = kinds(), L = [];
+    if (S.base) L.push(S.base);
+    if (S.outfit) L.push(S.outfit);
+    if (S.face) L.push(S.face);
+    Object.keys(S.extra).forEach(k => S.extra[k] && K[k] && L.push(k));
+    return L.map(k => ({ k, url: K[k] }));
+  }
+  let sizes = {};
+  function draw() {
+    const L = stack(), V = $('view');
+    V.className = 'bg-' + S.bg; V.innerHTML = '';
+    const ly = $('layers'); ly.innerHTML = '';
+    L.forEach((x, i) => {
+      const im = new Image(); im.src = x.url; im.style.opacity = (S.op[x.k] ?? 100) / 100;
+      if (S.blink && i === L.length - 1 && L.length > 1) im.className = 'blinkme';
+      im.onload = () => { sizes[x.k] = [im.naturalWidth, im.naturalHeight]; fit(L); };
+      V.appendChild(im);
+      const r = document.createElement('div'); r.className = 'layer';
+      r.innerHTML = `<span class="nm">${i + 1}. ${x.k}</span><input type="range" min="0" max="100" value="${S.op[x.k] ?? 100}">`;
+      r.querySelector('input').oninput = e => { S.op[x.k] = +e.target.value; im.style.opacity = e.target.value / 100; };
+      ly.appendChild(r);
+    });
+    fit(L);
+  }
+  function fit(L) {
+    const s0 = sizes[L[0] && L[0].k]; const V = $('view');
+    if (!s0) return;
+    V.style.width = s0[0] * S.zoom + 'px'; V.style.height = s0[1] * S.zoom + 'px';
+    const bad = L.filter(x => sizes[x.k] && (sizes[x.k][0] !== s0[0] || sizes[x.k][1] !== s0[1])).map(x => `${x.k} ${sizes[x.k][0]}×${sizes[x.k][1]}`);
+    $('warn').textContent = bad.length ? `크기가 바탕(${s0[0]}×${s0[1]})과 다름 — 보정하지 않고 그대로 겹침: ${bad.join(', ')}` : '';
+    $('info').textContent = `${S.ch} · ${S.pose} · 캔버스 ${s0[0]}×${s0[1]} · 레이어 ${L.length}개`;
+  }
+  document.querySelectorAll('[data-bg]').forEach(b => b.onclick = () => {
+    document.querySelectorAll('[data-bg]').forEach(x => x.classList.remove('on')); b.classList.add('on'); S.bg = b.dataset.bg; draw(); });
+  $('zoom').oninput = e => { S.zoom = e.target.value / 100; $('zv').textContent = e.target.value + '%'; fit(stack()); };
+  let timer = null;
+  $('blink').onclick = () => {
+    S.blink = !S.blink; $('blink').classList.toggle('on', S.blink); clearInterval(timer);
+    if (S.blink) timer = setInterval(() => { const L = $('view').querySelectorAll('img'); if (L.length > 1) { const t = L[L.length - 1]; t.style.visibility = t.style.visibility === 'hidden' ? '' : 'hidden'; } }, 500);
+    else draw();
+  };
+  document.addEventListener('keydown', e => {
+    if ($('ui').hidden) return;
+    const C = classify(), cyc = (arr, cur, d) => { const a = ['', ...arr]; return a[(a.indexOf(cur) + d + a.length) % a.length]; };
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { S.outfit = cyc(C.outfit, S.outfit, e.key === 'ArrowRight' ? 1 : -1); render(); e.preventDefault(); }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { S.face = cyc(C.face, S.face, e.key === 'ArrowDown' ? 1 : -1); render(); e.preventDefault(); }
+  });
+})();
+</script>
+</body>
+</html>
