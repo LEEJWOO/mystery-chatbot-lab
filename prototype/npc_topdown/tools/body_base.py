@@ -42,7 +42,7 @@ def flat_rgb(X):
 
 def skin_mask(X):
     h = mc.rgb_to_hsv(np.clip(X[..., :3], 0, 255) / 255)
-    return (((h[..., 0] < .12) | (h[..., 0] > .9)) & (h[..., 1] > .04) & (h[..., 1] < .55) & (h[..., 2] > .62)
+    return (((h[..., 0] < .12) | (h[..., 0] > .9)) & (h[..., 1] > .07) & (h[..., 1] < .55) & (h[..., 2] > .62)
             & (X[..., 3] > 200))
 
 
@@ -129,6 +129,17 @@ class Classifier:
         outside_hair = rgb[~Z & ~skin_mask(O) & (O[..., 3] > 200) & (rgb.mean(2) > 40) & ~top]
         self.hair = palette(np.concatenate([hair_px, outside_hair]) if len(outside_hair) else hair_px, 12)
         self.cloth = palette(rgb[Z & ~skin_mask(O) & (O[..., 3] > 200)], 10, 1)
+        below = np.broadcast_to(np.arange(H)[:, None] > (chin or H // 3), O.shape[:2])
+        tail = rgb[~Z & below & ~skin_mask(O) & (O[..., 3] > 200) & (rgb.mean(2) > 40)]
+        self.tail = palette(tail, 12, 2) if len(tail) > 50 else self.hair
+
+    def hair_in_zone(self, C, Z):
+        """옷 영역 안의 머리카락 = 영역 밖 머리카락과 이어지고 색이 가까운 것(드레스 자리에 새로 드러난 뒷머리)."""
+        rgb = C[..., :3]
+        cand = (nearest(rgb, self.tail) < 30) & ~skin_mask(C) & (C[..., 3] > 128)
+        lab, _ = nd.label(cand)
+        keep = np.unique(lab[~Z & cand & (lab > 0)])
+        return np.isin(lab, keep) & Z
 
     def classes(self, C, region):
         rgb = C[..., :3]
@@ -147,12 +158,25 @@ def progress(O, C, Z, K):
     """옷 영역 Z 안을 '드러난 피부' / '남은 것'으로 나눈다.
     원본(첫 회차 원본)과 비교해 바뀌지 않은 곳은 색과 상관없이 아직 처리 안 된 옷으로 본다
     (아이보리 블라우스처럼 피부색과 비슷한 옷도 놓치지 않게)."""
-    d = np.abs(flat_rgb(O) - flat_rgb(C)).sum(2) > 40
-    changed = nd.binary_opening(d, iterations=1)
-    sk_c, cloth_like, _ = K.classes(C, Z)
+    fo, fc = flat_rgb(O), flat_rgb(C)
+    cd = np.abs(fo - fc).sum(2)
+    def lstd(F):
+        l = F.mean(2); m = nd.uniform_filter(l, 7); return np.sqrt(np.maximum(nd.uniform_filter(l * l, 7) - m * m, 0))
+    # 색이 비슷해도(아이보리 옷 → 흰 피부) 무늬·주름이 사라졌으면 바뀐 것으로 본다
+    d = (cd > 40) | ((cd > 12) & (np.abs(lstd(fo) - lstd(fc)) > 4))
+    changed = nd.binary_closing(nd.binary_opening(d, iterations=1), iterations=2)
+    sk_c = skin_mask(C)
+    rgb = C[..., :3]
     revealed = Z & changed & sk_c
-    remaining = (Z & ~changed & (O[..., 3] > 128)) | (Z & changed & cloth_like)
-    remaining &= ~revealed
+    # 남은 것 = 옷 영역 안에서 드러난 피부·머리카락·흰 배경·가는 선이 아닌 모든 것
+    #  (안 바뀐 옷, 다시 그려진 옷, 회색 잔여물·무늬 같은 생성 결함 포함)
+    hair = K.hair_in_zone(C, Z)
+    white = rgb.min(2) > 238
+    lum = rgb.mean(2)
+    line = (lum < 60) & ~nd.binary_opening(lum < 60, iterations=2)
+    unchanged = Z & ~changed & (O[..., 3] > 128)
+    other = Z & changed & ~sk_c & ~hair & ~white & ~line & (C[..., 3] > 128)
+    remaining = (unchanged | nd.binary_opening(other, iterations=1)) & ~revealed
     return revealed, remaining
 
 
@@ -167,7 +191,7 @@ def cmd_score(a):
         sk, cl = progress(O, C, Z, K)
         base = max(1, (Z & (O[..., 3] > 128)).sum())
         rows.append((p, sk.sum() / base, cl.sum() / base, cl))
-    rows.sort(key=lambda r: (-r[1], r[2]))
+    rows.sort(key=lambda r: r[2] - r[1])   # 남은 것 - 피부 가 작을수록 앞
     print(f'턱 y={chin}')
     for i, (p, s, c, _) in enumerate(rows):
         print(f'{i + 1}. {os.path.basename(p)}  피부 {s * 100:5.1f}%  남은 옷 {c * 100:5.1f}%')
