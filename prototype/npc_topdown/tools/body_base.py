@@ -42,7 +42,7 @@ def flat_rgb(X):
 
 def skin_mask(X):
     h = mc.rgb_to_hsv(np.clip(X[..., :3], 0, 255) / 255)
-    return (((h[..., 0] < .12) | (h[..., 0] > .9)) & (h[..., 1] > .04) & (h[..., 1] < .55) & (h[..., 2] > .62)
+    return (((h[..., 0] < .12) | (h[..., 0] > .9)) & (h[..., 1] > .07) & (h[..., 1] < .55) & (h[..., 2] > .62)
             & (X[..., 3] > 200))
 
 
@@ -129,6 +129,21 @@ class Classifier:
         outside_hair = rgb[~Z & ~skin_mask(O) & (O[..., 3] > 200) & (rgb.mean(2) > 40) & ~top]
         self.hair = palette(np.concatenate([hair_px, outside_hair]) if len(outside_hair) else hair_px, 12)
         self.cloth = palette(rgb[Z & ~skin_mask(O) & (O[..., 3] > 200)], 10, 1)
+        below = np.broadcast_to(np.arange(H)[:, None] > (chin or H // 3), O.shape[:2])
+        tail = rgb[~Z & below & ~skin_mask(O) & (O[..., 3] > 200) & (rgb.mean(2) > 40)]
+        self.tail = palette(tail, 12, 2) if len(tail) > 50 else self.hair
+        # 영역 밖에 같은 옷(예: 소매만 칠했을 때의 재킷)이 있으면 그 색은 머리카락 후보에서 뺀다
+        keep = np.array([nearest(c[None, None, :], self.cloth)[0, 0] > 35 for c in self.tail])
+        if keep.any():
+            self.tail = self.tail[keep]
+
+    def hair_in_zone(self, C, Z):
+        """옷 영역 안의 머리카락 = 영역 밖 머리카락과 이어지고 색이 가까운 것(드레스 자리에 새로 드러난 뒷머리)."""
+        rgb = C[..., :3]
+        cand = (nearest(rgb, self.tail) < 30) & ~skin_mask(C) & (C[..., 3] > 128)
+        lab, _ = nd.label(cand)
+        keep = np.unique(lab[~Z & cand & (lab > 0)])
+        return np.isin(lab, keep) & Z
 
     def classes(self, C, region):
         rgb = C[..., :3]
@@ -147,12 +162,25 @@ def progress(O, C, Z, K):
     """옷 영역 Z 안을 '드러난 피부' / '남은 것'으로 나눈다.
     원본(첫 회차 원본)과 비교해 바뀌지 않은 곳은 색과 상관없이 아직 처리 안 된 옷으로 본다
     (아이보리 블라우스처럼 피부색과 비슷한 옷도 놓치지 않게)."""
-    d = np.abs(flat_rgb(O) - flat_rgb(C)).sum(2) > 40
-    changed = nd.binary_opening(d, iterations=1)
-    sk_c, cloth_like, _ = K.classes(C, Z)
+    fo, fc = flat_rgb(O), flat_rgb(C)
+    cd = np.abs(fo - fc).sum(2)
+    def lstd(F):
+        l = F.mean(2); m = nd.uniform_filter(l, 7); return np.sqrt(np.maximum(nd.uniform_filter(l * l, 7) - m * m, 0))
+    # 색이 비슷해도(아이보리 옷 → 흰 피부) 무늬·주름이 사라졌으면 바뀐 것으로 본다
+    d = (cd > 40) | ((cd > 12) & (np.abs(lstd(fo) - lstd(fc)) > 4))
+    changed = nd.binary_closing(nd.binary_opening(d, iterations=1), iterations=2)
+    sk_c = skin_mask(C)
+    rgb = C[..., :3]
     revealed = Z & changed & sk_c
-    remaining = (Z & ~changed & (O[..., 3] > 128)) | (Z & changed & cloth_like)
-    remaining &= ~revealed
+    # 남은 것 = 옷 영역 안에서 드러난 피부·머리카락·흰 배경·가는 선이 아닌 모든 것
+    #  (안 바뀐 옷, 다시 그려진 옷, 회색 잔여물·무늬 같은 생성 결함 포함)
+    hair = K.hair_in_zone(C, Z)
+    white = rgb.min(2) > 238
+    lum = rgb.mean(2)
+    line = (lum < 60) & ~nd.binary_opening(lum < 60, iterations=2)
+    unchanged = Z & ~changed & (O[..., 3] > 128)
+    other = Z & changed & ~sk_c & ~hair & ~white & ~line & (C[..., 3] > 128)
+    remaining = (unchanged | nd.binary_opening(other, iterations=1)) & ~revealed
     return revealed, remaining
 
 
@@ -167,7 +195,7 @@ def cmd_score(a):
         sk, cl = progress(O, C, Z, K)
         base = max(1, (Z & (O[..., 3] > 128)).sum())
         rows.append((p, sk.sum() / base, cl.sum() / base, cl))
-    rows.sort(key=lambda r: (-r[1], r[2]))
+    rows.sort(key=lambda r: r[2] - r[1])   # 남은 것 - 피부 가 작을수록 앞
     print(f'턱 y={chin}')
     for i, (p, s, c, _) in enumerate(rows):
         print(f'{i + 1}. {os.path.basename(p)}  피부 {s * 100:5.1f}%  남은 옷 {c * 100:5.1f}%')
@@ -191,9 +219,12 @@ def cmd_nextmask(a):
     below = np.broadcast_to(np.arange(O.shape[0])[:, None] > (chin or 0) + 4, O.shape[:2])
     Z = zone_of(O, chin, a.zone)
     sk, cl = progress(O, C, Z, Classifier(O, Z, chin))
+    # 실제 인페인트 시험(소매 5회차) 결과: 마스크 경계가 옷 위에 놓이면 그 자리에 옷 색 띠가 남고,
+    # 회차마다 띠가 쌓여 그물무늬가 된다 → 경계는 반드시 옷 바깥(피부·배경)에 놓이도록 넉넉히 넓힌다.
     m = nd.binary_dilation(cl, iterations=a.grow) if a.grow > 0 else cl.copy()   # iterations=0은 SciPy에서 '수렴까지'라 건너뜀
     m = nd.binary_closing(m, iterations=8) if a.grow > 0 else m
-    m &= Z & below & ~sk          # 넓힌 뒤에 첫 마스크 밖·이미 드러난 피부는 빼기
+    lim = nd.binary_dilation(Z, iterations=a.grow) if a.grow > 0 else Z
+    m &= lim & below               # 첫 마스크를 grow만큼 넘는 곳과 턱 위는 칠하지 않음(드러난 피부 위 경계는 허용)
     Image.fromarray((m * 255).astype(np.uint8)).save(a.out)
     print(f'남은 것 {cl.sum()}px → 마스크 {m.sum()}px 저장: {a.out}')
 
@@ -275,7 +306,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sp = ap.add_subparsers(dest='cmd', required=True)
     s = sp.add_parser('score'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs='+', required=True); s.add_argument('--out'); s.add_argument('--zone')
-    s = sp.add_parser('nextmask'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--grow', type=int, default=12); s.add_argument('--zone')
+    s = sp.add_parser('nextmask'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--grow', type=int, default=24); s.add_argument('--zone')
     s = sp.add_parser('finish'); s.add_argument('--orig', required=True); s.add_argument('--cand', nargs=1, required=True); s.add_argument('--out', required=True); s.add_argument('--chin', type=int); s.add_argument('--zone')
     s = sp.add_parser('merge'); s.add_argument('--base', required=True); s.add_argument('--take', action='append', required=True); s.add_argument('--out', required=True); s.add_argument('--feather', type=float, default=12)
     a = ap.parse_args()
