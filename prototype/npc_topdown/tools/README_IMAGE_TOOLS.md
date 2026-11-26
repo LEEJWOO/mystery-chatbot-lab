@@ -70,6 +70,7 @@ python3 -I body_base.py score    --orig 원본.png --zone 옷마스크.png --can
 python3 -I body_base.py nextmask --orig 원본.png --zone 옷마스크.png --cand 고른후보.png --out 다음마스크.png
 python3 -I body_base.py merge    --base 후보A.png --take 후보B.png:x0,y0,x1,y1 --out 합본.png
 python3 -I body_base.py finish   --orig 원본.png --zone 옷마스크.png --cand 최종.png --out 결과폴더
+python3 -I body_base.py headfix  --orig 원본(얼굴 있음).png --cand 맨몸맨얼굴.png --out 결과.png
 ```
 - `원본`: 옷 입은 기본 자세(얼굴 비운 그림, 투명 배경). 이 그림의 머리·머리카락이 최종본에 그대로 남는다.
   **회차가 바뀌어도 `--orig`에는 언제나 첫 회차 원본을 넣는다.** 이 그림과 비교해 '안 바뀐 곳 = 아직 남은 옷'으로 센다(피부색 비슷한 아이보리·흰 옷도 놓치지 않게).
@@ -81,7 +82,8 @@ python3 -I body_base.py finish   --orig 원본.png --zone 옷마스크.png --can
 - `finish`: 턱 위와 바뀌지 않아야 할 곳을 원본으로 되돌림(머리 픽셀 일치 보장) + 흰 배경 투명화 + 점검표
   (원본 | 결과 | 원본 윤곽 | 남은 옷 | 얼룩 강조). 얼룩 강조 칸에서는 번진 면·이음매·색 얼룩이 도드라져 보인다.
 - 남은 옷 비율은 근사값이다. 드러난 피부가 원래 옷 색과 거의 같으면(아이보리 옷 등) '안 바뀐 곳'으로 잡혀 남은 것에 조금 섞일 수 있다. 어두운 머리카락 일부가 옷으로 잡힐 수 있으니 숫자보다 점수표 그림을 본다.
-- 턱 위치는 자동으로 찾고, 틀리면 `finish --chin Y`로 지정.
+- `headfix`: 얼굴까지 비운 맨몸(달걀귀신)의 마무리. 원본의 앞머리·모자·윤곽·피부색은 그대로 살리고, 눈·눈썹·입 자리만 빈 얼굴로. 빈 얼굴 잡티는 고르게, 피부색은 원본 볼 색에 맞춘다. 턱 아래(몸)는 결과 그대로.
+- 턱 위치는 자동으로 찾고, 틀리면 `--chin Y`로 지정.
 
 ### 인페인트 요령 (실제 시험에서 확인)
 - 마스크 경계를 옷 위에 두지 않는다. 남은 옷보다 20~30px 넉넉히, 이미 그려진 피부까지 걸쳐 칠한다.
