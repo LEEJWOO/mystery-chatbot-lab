@@ -352,7 +352,7 @@ function trShards() {
 
 // 인물 레이어: 자세 그림(평상시 얼굴 포함) 위에 표정 조각, 그 위에 '맨 위 조각'(턱 앞 손 등)을 같은 비율 좌표로 겹친다.
 // 인물마다 fit = {s: 배율, dy: 위아래 보정(px)} 으로 키·머리 크기를 맞춘다. 그림이 없으면 임시 실루엣.
-const TR_ED = 66, TR_EYE_Y = 134;
+const TR_U = .55, TR_TOP = -10; // 인물 그림 기본 배율(캔버스 1px → 화면 px)과 캔버스 위쪽 자리
 // 동선 재현용 최단 걸음 수: 점들을 차례로 지나 마지막 점(또는 그 옆 칸)까지
 function trShortest(pts, end) {
   const W = TN_WORLD, bfs = (a, goal) => { const seen = new Set([a + '']), q = [[a, 0]];
@@ -373,13 +373,10 @@ function trThumb(id) {
 function trActor(id, expr, pose, onBad, bad) {
   const c = (TR_A.chars || {})[id], pick = trPick(c, expr, pose), P = pick.P;
   if (!P || !P.src || bad[trUrl(P.src)]) return trActorStub(id, pick.face, pose || TR_AUTO_POSE[pick.face] || 'default');
-  // 자세마다 그림의 구도가 달라도 기본 자세의 두 눈 위치·눈 사이 거리에 맞춰 머리 크기와 자리를 고정한다.
-  // 인물마다 머리 크기를 맞춘다: 기본 자세의 눈 사이를 TR_ED px, 눈높이를 TR_EYE_Y px 로(fit.s·fit.dy 로 미세 조정).
-  const fit = (c && c.fit) || {}, R = (c.poses || {}).default || P, auto = R.eye && R.ed;
-  const u0 = auto ? TR_ED / R.ed * (fit.s || 1) : 528 * (fit.s || 1) / R.h;
-  const top0 = auto ? TR_EYE_Y + (fit.dy || 0) - R.eye[1] * u0 : 528 + (fit.dy || 0) - R.h * u0, left0 = auto ? TR_W / 2 - R.eye[0] * u0 : (TR_W - R.w * u0) / 2;
-  const ok = P !== R && P.eye && P.ed && R.eye && R.ed, u = ok ? u0 * R.ed / P.ed : u0;
-  const left = ok ? left0 + R.eye[0] * u0 - P.eye[0] * u : left0, top = ok ? top0 + R.eye[1] * u0 - P.eye[1] * u : top0, W = P.w * u, H = P.h * u;
+  // 표시 규칙(docs/DISPLAY_RULES.md): 같은 인물의 그림(자세·표정·의상)은 모두 같은 배율·같은 자리.
+  // 인물마다 배율 s 와 y(캔버스 픽셀 단위) 하나씩만 쓴다(줄 세우기 도구 결과). 그림별 자동 맞춤은 하지 않는다.
+  const R = (c.poses || {}).default || P, d = (c && c.disp) || {}, u = TR_U * (d.s || 1);
+  const W = P.w * u, H = P.h * u, left = (TR_W - R.w * u) / 2, top = TR_TOP + (d.y || 0) * u;
   const f = (P.faces || {})[pick.face]; // 빈 얼굴 방식이면 기본 표정도 조각으로 덮는다
   const pct = (a, b) => (a / b * 100) + '%', layer = (L, k) => L && !bad[trUrl(L.src)] ? <img key={k} src={trUrl(L.src)} alt="" onError={() => onBad(trUrl(L.src))} style={{ position: 'absolute', left: pct(L.x, P.w), top: pct(L.y, P.h), width: pct(L.w, P.w), height: pct(L.h, P.h) }} /> : null;
   // 하라구로: 그림에는 그림자를 넣지 않고, 눈 위쪽에 어두운 그늘을 인물 윤곽 안에만 덮는다.

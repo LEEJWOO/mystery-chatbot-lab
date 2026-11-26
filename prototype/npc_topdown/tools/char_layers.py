@@ -11,7 +11,7 @@
 원본 폴더의 파일 이름 규칙: 번호-직업-자세-표정.png (+ 표정본은 -mask.png 짝)
   자세: default / think / point / crossed, 평상시 = neutral (자세마다 1장, 투명 PNG)
 - 표정 조각은 tools/expr_extract.py 로 뽑는다(경계 처리 + 눈 색 맞춤).
-- 자세마다 두 눈 위치를 찾아 eye=[x,y], ed=눈 사이 거리 로 적는다 → 화면이 자세를 바꿔도 머리 크기·위치를 맞춘다.
+- 자세마다 두 눈 위치(eye, ed)를 적는다 — 작은 얼굴 썸네일 자르기·하라구로 그늘 위치용. 스탠딩 표시는 인물별 disp{s,y}만 쓴다(자동 맞춤 없음).
 - 이미 있는 항목의 다른 자세·표정은 그대로 두고, 이번에 찾은 파일만 덮어쓴다.
 """
 import glob, hashlib, io, json, os, re, sys
@@ -89,7 +89,7 @@ table = json.load(open(TABLE, encoding='utf-8'))
 ALIGN_ONLY = '--align-only' in sys.argv
 ch = {} if '--fresh' in sys.argv and not ALIGN_ONLY else (table.setdefault('chars', {}).get(CID) or {})
 table.setdefault('chars', {})
-ch.setdefault('poses', {}); ch['fit'] = {'s': FIT}
+ch.setdefault('poses', {}); ch.setdefault('disp', {'s': 1.0, 'y': 0})   # 표시 배율·y는 줄 세우기로 정해 손으로 적는다(자동 맞춤 없음)
 total = 0
 def find(pose, expr):
     for f in files:
