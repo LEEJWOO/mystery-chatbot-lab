@@ -1,0 +1,348 @@
+"""시험 세계 만들기: 「라운지의 사라진 브로치」 (본편 1장 전 기관 시험용, 죽음 없음)
+
+  python3 -I tools/make_test_world.py     → src/world.json
+
+- 칸 판정(벽·가구)은 아래 방·가구 목록에서 계산한다. 맵 그림은 tools/bake_map.py 로 따로 굽는다.
+- 표정 12종·자세 4종이 대본 어딘가에서 한 번 이상 쓰이도록 짰다(갤러리 말고 실제 흐름에서도 확인).
+"""
+import json, os
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(HERE, '..', 'src', 'world.json')
+W_, H_ = 30, 18
+
+AREAS = [
+    {'name': '라운지', 'x0': 1, 'y0': 1, 'x1': 14, 'y1': 8},
+    {'name': '바', 'x0': 16, 'y0': 1, 'x1': 28, 'y1': 8},
+    {'name': '복도', 'x0': 1, 'y0': 10, 'x1': 28, 'y1': 11},
+    {'name': '객실', 'x0': 1, 'y0': 13, 'x1': 9, 'y1': 16},
+    {'name': '테라스', 'x0': 11, 'y0': 13, 'x1': 28, 'y1': 16},
+]
+DOORS = [(15, 5), (7, 9), (22, 9), (5, 12), (20, 12)]
+PROPS = [
+    # 라운지
+    {'t': 'piano', 'x': 2, 'y': 2, 'w': 3, 'h': 2, 'low': True}, {'t': 'case', 'x': 11, 'y': 1, 'w': 2, 'h': 1, 'low': True},
+    {'t': 'sofa', 'x': 6, 'y': 6, 'w': 3, 'h': 1, 'low': True}, {'t': 'table', 'x': 7, 'y': 4, 'w': 2, 'h': 1, 'low': True},
+    {'t': 'pot', 'x': 1, 'y': 8, 'w': 1, 'h': 1, 'low': True}, {'t': 'pot', 'x': 14, 'y': 8, 'w': 1, 'h': 1, 'low': True}, {'t': 'flamp', 'x': 14, 'y': 2, 'w': 1, 'h': 1, 'low': True},
+    # 바
+    {'t': 'shelf', 'x': 18, 'y': 1, 'w': 8, 'h': 1}, {'t': 'counter', 'x': 18, 'y': 3, 'w': 8, 'h': 1, 'low': True},
+    {'t': 'table', 'x': 23, 'y': 6, 'w': 2, 'h': 1, 'low': True}, {'t': 'table', 'x': 18, 'y': 6, 'w': 1, 'h': 1, 'low': True}, {'t': 'pot', 'x': 28, 'y': 8, 'w': 1, 'h': 1, 'low': True},
+    # 복도
+    {'t': 'planter', 'x': 27, 'y': 10, 'w': 1, 'h': 1, 'low': True}, {'t': 'planter', 'x': 1, 'y': 10, 'w': 1, 'h': 1, 'low': True},
+    # 객실
+    {'t': 'bed', 'x': 1, 'y': 13, 'w': 2, 'h': 3, 'low': True}, {'t': 'wardrobe', 'x': 8, 'y': 13, 'w': 2, 'h': 1}, {'t': 'desk', 'x': 5, 'y': 15, 'w': 2, 'h': 1, 'low': True},
+    # 테라스
+    {'t': 'tree', 'x': 12, 'y': 13, 'w': 1, 'h': 1}, {'t': 'tree', 'x': 27, 'y': 13, 'w': 1, 'h': 1}, {'t': 'tree', 'x': 12, 'y': 16, 'w': 1, 'h': 1},
+    {'t': 'bench', 'x': 16, 'y': 15, 'w': 2, 'h': 1, 'low': True}, {'t': 'fountain', 'x': 23, 'y': 14, 'w': 2, 'h': 2, 'low': True},
+    {'t': 'lamp', 'x': 20, 'y': 16, 'w': 1, 'h': 1, 'low': True}, {'t': 'planter', 'x': 14, 'y': 16, 'w': 1, 'h': 1, 'low': True},
+]
+LANDMARKS = [
+    {'id': 'piano', 'name': '그랜드 피아노', 'x': 3, 'y': 4, 'icon': '♪', 'hit': [[2, 2], [3, 2], [4, 2], [2, 3], [3, 3], [4, 3]]},
+    {'id': 'case', 'name': '진열장', 'x': 11, 'y': 2, 'icon': '◆', 'hit': [[11, 1], [12, 1]]},
+    {'id': 'sofa', 'name': '라운지 소파', 'x': 7, 'y': 7, 'icon': '▭', 'hit': [[6, 6], [7, 6], [8, 6]]},
+    {'id': 'lounge_table', 'name': '라운지 탁자', 'x': 7, 'y': 5, 'icon': '◇', 'hit': [[7, 4], [8, 4]]},
+    {'id': 'counter', 'name': '바 카운터', 'x': 21, 'y': 4, 'icon': '▤', 'hit': [[20, 3], [21, 3], [22, 3]]},
+    {'id': 'bar_table', 'name': '바 테이블', 'x': 23, 'y': 7, 'icon': '○', 'hit': [[23, 6], [24, 6]]},
+    {'id': 'corridor', 'name': '복도 화분', 'x': 26, 'y': 10, 'icon': '✿', 'hit': [[27, 10]]},
+    {'id': 'wardrobe', 'name': '옷장', 'x': 8, 'y': 14, 'icon': '▥', 'hit': [[8, 13], [9, 13]]},
+    {'id': 'room_desk', 'name': '객실 책상', 'x': 5, 'y': 14, 'icon': '◇', 'hit': [[5, 15], [6, 15]]},
+    {'id': 'bench', 'name': '테라스 벤치', 'x': 16, 'y': 14, 'icon': '▤', 'hit': [[16, 15], [17, 15]]},
+    {'id': 'fountain', 'name': '테라스 분수', 'x': 22, 'y': 14, 'icon': '◉', 'hit': [[23, 14], [24, 14], [23, 15], [24, 15]]},
+]
+
+def rows():
+    g = [['#'] * W_ for _ in range(H_)]
+    for a in AREAS:
+        for y in range(a['y0'], a['y1'] + 1):
+            for x in range(a['x0'], a['x1'] + 1): g[y][x] = '.'
+    for x, y in DOORS: g[y][x] = '.'
+    g[13][10] = g[14][10] = g[15][10] = g[16][10] = '#'   # 객실·테라스 사이 벽
+    for p in PROPS:
+        for y in range(p['y'], p['y'] + p['h']):
+            for x in range(p['x'], p['x'] + p['w']): g[y][x] = '#'
+    return [''.join(r) for r in g]
+
+def visit(id, lm, fr, un, dur, pri=10, weight=1, cd=0, once=False, inter=True, **k):
+    t = {'id': id, 'kind': 'visit', 'landmark': lm, 'from': fr, 'until': un, 'durationSeconds': dur, 'priority': pri, 'weight': weight, 'interruptible': inter}
+    if cd: t['cooldownSeconds'] = cd
+    if once: t['once'] = True
+    t.update(k); return t
+
+def miss(text, face='', pose='', alt=None):
+    m = {'text': text}
+    if face: m['face'] = face
+    if pose: m['pose'] = pose
+    if alt: m['alt'] = alt
+    return m
+
+NPCS = [
+    {'id': 'suzune', 'name': '아자토 스즈네', 'call': ['스즈네', '아자토'], 'symbol': '스', 'color': '#f2a7c3', 'hair': '#f4b6cf', 'cloth': '#f6eadf', 'x': 9, 'y': 7, 'stepSeconds': 6, 'sex': 'f',
+     'profile': '일본 · 22 · 미대생 — 그림마다 시각을 적는다', 'rel': {'trust': 50, 'affection': 50},
+     'agenda': [visit('sketch_case', 'sofa', '19:30', '20:06', 2100, 60, once=True, onCompleteFact='suzune_sketch'),
+                visit('sofa_rest', 'sofa', '19:30', '22:00', 120, 10, 3, 120), visit('terrace_air', 'fountain', '20:06', '22:00', 90, 10, 2, 150)],
+     'notes': [{'text': '라운지 소파에서 진열장 쪽을 그리고 있었다', 'unlock': {'seen': True}}, {'text': '그림 구석마다 그린 시각을 적는다', 'unlock': {'talked': True}}]},
+    {'id': 'mei', 'name': '띠리 메이', 'alias': {'name': '메이벨', 'until': 'mei_real'}, 'call': ['메이벨', '메이벨 드 로슈벨', '메이', '띠리', '로슈벨'], 'symbol': '메', 'color': '#e8c35a', 'hair': '#f1d27a', 'cloth': '#3f7a52',
+     'x': 10, 'y': 3, 'stepSeconds': 5, 'sex': 'f', 'profile': '「프랑스 귀족 영애」 · 26 — 가문의 브로치를 자랑한다', 'rel': {'trust': 45, 'affection': 50},
+     'knows': ['odile_trick', 'mei_glass'],
+     'agenda': [visit('admire_case', 'case', '19:38', '19:46', 60, 70, once=True, onCompleteFact='mei_case'),
+                visit('find_gone', 'case', '20:30', '21:30', 120, 90, once=True, inter=False),
+                visit('lounge_walk', 'lounge_table', '19:30', '22:00', 80, 10, 2, 120), visit('bar_visit', 'bar_table', '19:30', '22:00', 100, 10, 2, 200)],
+     'notes': [{'text': '진열장의 브로치를 「가문의 보물」이라 부른다', 'unlock': {'talked': True}}, {'text': '7시 40분쯤 진열장을 들여다봤다', 'unlock': {'fact': 'mei_case'}},
+               {'text': '본명은 띠리 메이. 미얀마의 건설 현장에서 일한다', 'unlock': {'flag': 'mei_real'}}]},
+    {'id': 'ruoxi', 'name': '션 루오시', 'call': ['루오시', '션'], 'symbol': '션', 'color': '#a97852', 'hair': '#8a5a3a', 'cloth': '#2f8f8a', 'x': 24, 'y': 5, 'stepSeconds': 6, 'sex': 'f',
+     'profile': '중국 · 31 · 의사 — 사실만 말한다', 'rel': {'trust': 50, 'affection': 45},
+     'agenda': [visit('bar_sit', 'bar_table', '19:30', '22:00', 150, 10, 3, 150), visit('recital_listen', 'sofa', '20:00', '20:20', 600, 30, once=True), visit('terrace_walk', 'bench', '19:30', '22:00', 100, 10, 2, 200)],
+     'notes': [{'text': '2부는 라운지에서 들었다', 'unlock': {'talked': True}}]},
+    {'id': 'seoha', 'name': '윤서하', 'call': ['서하', '윤'], 'symbol': '윤', 'color': '#5a5a6a', 'hair': '#26242c', 'cloth': '#6b4a32', 'x': 12, 'y': 6, 'stepSeconds': 5, 'sex': 'f',
+     'profile': '한국 · 28 · 직업 비밀 — 질문으로 대답한다', 'rel': {'trust': 40, 'affection': 40},
+     'agenda': [visit('watch_lounge', 'lounge_table', '19:30', '22:00', 120, 10, 3, 100), visit('corridor_watch', 'corridor', '19:30', '22:00', 90, 10, 2, 150), visit('bar_watch', 'counter', '19:30', '22:00', 80, 10, 1, 200)],
+     'notes': [{'text': '모두의 위치를 기억하고 있는 것 같다', 'unlock': {'talked': True}}]},
+    {'id': 'clara', 'name': '클라라 베버', 'call': ['클라라', '베버'], 'symbol': '클', 'color': '#9b7fd1', 'hair': '#8f72c9', 'cloth': '#1d1a24', 'x': 3, 'y': 4, 'stepSeconds': 7, 'sex': 'f',
+     'profile': '독일 · 34 · 피아니스트 — 소리에 예민하다', 'rel': {'trust': 40, 'affection': 40},
+     'agenda': [visit('recital_1', 'piano', '19:30', '19:50', 1180, 80, once=True, inter=False),
+                visit('move_brooch', 'case', '19:50', '20:25', 30, 85, once=True, inter=False, onCompleteFlag='brooch_gone', onCompleteFact='clara_moved', block={'tries': 3, 'wait': 45, 'urgent': True, 'reason': '진열장 앞에 꼭 볼일이 있어, 비켜 달라고 재촉하는 듯하다'}),
+                visit('recital_2', 'piano', '19:51', '20:20', 1200, 80, once=True, inter=False, onCompleteFlag='recital_done'),
+                visit('terrace_rest', 'bench', '20:20', '22:00', 300, 20, 1, 60)],
+     'notes': [{'text': '리사이틀 내내 피아노 앞에 있었다', 'unlock': {'seen': True}}, {'text': '휴식 시간에 진열장 앞에 섰다', 'unlock': {'fact': 'clara_moved'}}]},
+    {'id': 'odile', 'name': '오딜 르나르', 'call': ['오딜', '르나르'], 'symbol': '오', 'color': '#f08a3c', 'hair': '#f39a4a', 'cloth': '#2a2440', 'x': 21, 'y': 4, 'stepSeconds': 5, 'sex': 'f',
+     'profile': '프랑스 · 24 · 마술사 — 끝에 「짜잔」을 붙인다', 'rel': {'trust': 45, 'affection': 50}, 'knows': ['odile_trick'],
+     'agenda': [visit('bar_magic', 'counter', '19:44', '20:30', 2700, 60, once=True, onCompleteFact='odile_bar'), visit('bar_loiter', 'bar_table', '19:30', '22:00', 120, 10, 2, 120),
+                visit('corridor_trick', 'corridor', '20:30', '22:00', 90, 10, 1, 200)],
+     'notes': [{'text': '휴식 시간 내내 바에서 카드 마술을 했다', 'unlock': {'scene': 'odile_bar'}}, {'text': '7시 20분에 메이벨의 브로치로 마술을 보여 줬다', 'unlock': {'talked': True}}]},
+]
+
+FACTS = [
+    {'id': 'clara_moved', 'code': 'C4L7', 'self': {'clara': '휴식 시간에 피아노 소리에 떨리는 브로치를 장갑에 싸서 피아노 의자 수납칸에 넣었다'},
+     'seen': '휴식 시간에 클라라가 진열장에서 무언가를 꺼내 피아노 쪽으로 가는 걸 봤다', 'player': '클라라가 진열장에서 무언가를 꺼내 피아노 쪽으로 갔다'},
+    {'id': 'mei_case', 'code': 'M3Y8', 'self': {'mei': '7시 40분쯤 진열장 속 브로치가 제자리에 있는 걸 확인했다'},
+     'seen': '메이벨이 진열장 속 브로치를 들여다보는 걸 봤다', 'player': '7시 40분쯤 메이벨이 진열장 속 브로치를 들여다봤다'},
+    {'id': 'odile_trick', 'code': 'O5D2', 'self': {'odile': '7시 20분, 메이벨의 브로치로 마술을 보여 주고 진열장에 돌려놓으며 하트 퀸 카드를 꽂았다', 'mei': '7시 20분, 오딜이 내 브로치로 마술을 하고 진열장에 돌려놓았다'},
+     'seen': '', 'player': ''},
+    {'id': 'mei_glass', 'code': 'G2L9', 'self': {'mei': '그 브로치는 시장에서 산 유리 장식이다'}, 'seen': '', 'player': ''},
+    {'id': 'suzune_sketch', 'code': 'S6H1', 'self': {'suzune': '휴식 시간 전후로 진열장을 그렸다. 7시 45분엔 브로치가 반짝였고, 8시 5분엔 비어 있었다'},
+     'seen': '스즈네가 진열장 쪽을 보며 스케치북에 시각을 적는 걸 봤다', 'player': '스즈네가 진열장을 그리며 시각을 적었다'},
+    {'id': 'odile_bar', 'code': 'O7B3', 'self': {'odile': '7시 44분부터 바 카운터에서 카드 마술을 보이며 음료를 주문했다'},
+     'seen': '오딜이 바 카운터에서 카드 마술을 하는 걸 봤다', 'player': '오딜이 바 카운터에서 카드 마술을 했다'},
+]
+
+ITEMS = [
+    {'id': 'card', 'name': '하트 퀸 카드', 'at': 'case', 'desc': '진열장 유리 틈에 꽂혀 있던 트럼프. 뒷면에 「짜잔 — O.R.」'},
+    {'id': 'program', 'name': '리사이틀 프로그램', 'at': 'lounge_table', 'desc': '1부 19:30–19:50 · 휴식 19:50–20:00 · 2부 20:00–20:20. 여백에 각진 글씨: 「휴식 때 — 진열장 쪽 잡음」'},
+    {'id': 'score', 'name': '클라라의 악보', 'at': 'piano', 'desc': '2부 첫 곡의 B♭ 음표마다 빨간 동그라미. 여백: 「B♭ — 어디선가 떨림」'},
+    {'id': 'sketch', 'name': '스즈네의 크로키', 'at': 'sofa', 'from': '1일 20:06', 'desc': '구석마다 시각. 「19:45 진열장 — 반짝」 「20:05 진열장 — 비어 있음」'},
+    {'id': 'bar_log', 'name': '바 주문 장부', 'at': 'counter', 'from': '1일 20:13', 'desc': '오딜 르나르: 19:46 레모네이드 · 19:58 레모네이드 · 20:12 체리(「마술 관람료」)'},
+    {'id': 'velvet', 'name': '진열장 벨벳 받침', 'at': 'case', 'flag': 'brooch_gone', 'desc': '브로치 모양으로 눌린 자국. 고리 쪽에 흰 면 실 한 올이 걸려 있다.'},
+    {'id': 'glove', 'name': '흰 면장갑', 'at': 'piano', 'flag': 'brooch_gone', 'desc': '피아노 의자 수납칸 안. 손목에 「C.W.」 수. 무언가 둥근 것을 감싸 두었다.'},
+    {'id': 'brooch', 'name': '브로치', 'at': 'piano', 'flag': 'brooch_gone', 'desc': '장갑 속에 싸여 있었다. 보석치고 ((가볍다)). 장식 고리가 헐거워 손끝으로 튕기면 낮게 떨린다.'},
+]
+SCENES = [
+    {'id': 'clara_case', 'title': '진열장 앞의 클라라', 'fact': 'clara_moved', 'caption': '휴식 시간, 클라라가 진열장에서 무언가를 꺼내 피아노 쪽으로 돌아갔다.'},
+    {'id': 'odile_bar', 'title': '바의 카드 마술', 'npc': 'odile', 'from': '19:50', 'to': '20:00', 'near': 'counter', 'radius': 2, 'caption': '휴식 시간 내내, 오딜은 바 카운터에서 카드 마술을 하고 있었다.'},
+    {'id': 'mei_case', 'title': '브로치 자랑', 'fact': 'mei_case', 'caption': '메이벨이 진열장 속 브로치를 들여다보며 흐뭇하게 웃었다.'},
+]
+
+M = {  # 오답 반응(대상 인물 · 관계별)
+    'mei': miss('오호호, 엉뚱한 곳을 찌르셨답니다!', '웃음', 'point', [{'if': {'rel': {'affection': [4, 5]}}, 'text': '어머, 거긴 아니에요. ……당신답지 않네요.', 'face': '곤란'},
+                                                         {'if': {'rel': {'trust': [1, 2]}}, 'text': '야, 아무 데나 쏘지 마! ……가 아니라, 무례하답니다!', 'face': '격노'}]),
+    'odile': miss('짜잔~ 빗나갔네, 관객님.', '웃음', '', [{'if': {'rel': {'trust': [4, 5]}}, 'text': '아까워! 관객님이라면 다음엔 맞힐 거야.', 'face': '미소'}, {'if': {'rel': {'trust': [1, 2]}}, 'text': '……일부러 날 노리는 거야?', 'face': '불만', 'pose': 'crossed'}]),
+    'seoha': miss('그쪽이 찌른 곳, 근거는?', '의심', 'crossed', [{'if': {'rel': {'trust': [4, 5]}}, 'text': '……서두르지 마. 그쪽은 원래 그렇게 대충 하지 않잖아.', 'face': '기본'}]),
+    'ruoxi': miss('그 말은 사실관계와 무관해요.', '기본', 'think', [{'if': {'rel': {'affection': [4, 5]}}, 'text': '틀렸어요. 괜찮아요, 다시 보면 돼요.', 'face': '미소'}]),
+    'clara': miss('……그건 제 말의 요지가 아닙니다.', '불만', 'crossed', [{'if': {'rel': {'trust': [1, 2]}}, 'text': '근거 없이 지목하지 마십시오.', 'face': '격노', 'pose': 'point'}]),
+    'suzune': miss('에, 저, 저요? 그건 아닌 것 같은데요…….', '곤란', '', [{'if': {'rel': {'affection': [4, 5]}}, 'text': '괜찮아요, 천천히 같이 봐요.', 'face': '미소'}]),
+}
+MONO = ['……아니, 거기가 아니다. 증언을 다시 듣자.', '빗나갔다. 말의 어디가 증거와 부딪치는지 다시 보자.']
+
+def L(who, text, face='', pose='', **k):
+    d = {'who': who, 'text': text}
+    if face: d['face'] = face
+    if pose: d['pose'] = pose
+    d.update(k); return d
+
+CAST = ['suzune', 'mei', 'ruoxi', 'seoha', 'clara', 'odile']
+T1 = [
+    {'type': 'talk', 'lines': [
+        L('host', '모이셨군요. 오늘 밤 리사이틀이 끝난 뒤, 라운지 진열장에서 [[메이벨 님의 브로치]]가 사라졌습니다.', fx='flash', alt=[{'if': {'flag': 'mei_early'}, 'text': '모이셨군요. 오늘 밤 리사이틀이 끝난 뒤, 라운지 진열장에서 [[메이 님의 브로치]]가 사라졌습니다.'}]),
+        L('mei', '범인은 뻔하답니다! 진열장에 카드를 꽂아 둔 [[마술사]], 당신이에요!', '격노', 'point', fx='shake',
+          alt=[{'if': {'flag': 'mei_early'}, 'text': '정체는 들켰어도 브로치는 내 거야! 카드 꽂은 [[마술사]], 너지?', 'face': '격노', 'pose': 'point'},
+               {'if': {'rel': {'trust': [4, 5]}}, 'text': '당신이라면 범인을 바로 찾아 주실 거예요. ……아마 저 마술사겠지만요!', 'face': '격노', 'pose': 'point'}]),
+        L('odile', '짜잔~ 나한테 쏠린 시선, 기분 나쁘지 않은데?', '웃음'),
+        L('clara', '……소란스럽군요. 사실만 말씀하십시오.', '불만', 'crossed'),
+        L('', '죽은 사람은 없다. 그래도 이 자리 어딘가에 ((거짓말))이 섞여 있다.')]},
+    {'type': 'trans', 'issue': 'i1', 'text': '쟁점 하나'},
+    {'type': 'nonstop', 'title': '엇갈린 증언', 'guide': '빛나는 말(약점)에 증거를 쏴서 모순을 찌른다', 'issue': 'i1', 'lines': [
+        L('mei', '{제가 진열장을 본 건} {7시 40분}. 그 뒤로도 {쭉 반짝이고 있었답니다}.', '미소'),
+        L('odile', '{난 1부 끝나기 전부터} {바에 있었어}. 짜잔.', '웃음'),
+        L('seoha', '{사라진 건} {8시 반 직전}이겠지. {발견하기 바로 전에}.', '의심', 'think')],
+     'answers': [{'at': [2, 1], 'ev': ['sketch']}, {'at': [0, 2], 'ev': ['sketch']}], 'win': '스즈네의 크로키: 8시 5분에 이미 진열장은 비어 있었다. 사라진 건 7시 45분부터 8시 5분 사이다.',
+     'miss': M, 'mono': MONO},
+    {'type': 'talk', 'lines': [
+        L('suzune', '아, 제 그림……! 그리는 김에 시각을 적어 두는 버릇이 있어서요.', '부끄러움'),
+        L('clara', '……그림 구석에 시각까지? 놀랍군요.', '놀람'),
+        L('ruoxi', '7시 45분엔 있었고 8시 5분엔 없었다. 리사이틀 휴식 시간과 겹쳐요.', '기본', 'think'),
+        L('seoha', '……그쪽, 그 그림 언제 손에 넣었지?', '의심', alt=[{'if': {'rel': {'trust': [4, 5]}}, 'text': '……역시. 그쪽이라면 그 그림부터 찾을 줄 알았어.', 'face': '미소'}]),
+        L('host', '그럼 그 시각의 자료를 한데 놓고 맞대어 보시지요.')]},
+    {'type': 'combine', 'title': '구절 짝짓기', 'guide': '서로 다른 자료의 구절 두 개를 맞대어 새 사실을 얻는다', 'issue': 'i1', 'docs': [
+        {'title': '리사이틀 프로그램', 'parts': ['1부 19:30–19:50', '휴식 19:50–20:00', '2부 20:00–20:20']},
+        {'title': '스즈네의 크로키', 'parts': ['19:45 진열장 — 반짝', '20:05 진열장 — 비어 있음', '소파 자리에서 그림']},
+        {'title': '바 주문 장부', 'parts': ['오딜 19:46 레모네이드', '오딜 19:58 레모네이드', '오딜 20:12 체리']}],
+     'combos': [{'a': [1, 1], 'b': [0, 1], 'fact': '브로치가 사라진 건 휴식 시간 무렵이다'},
+                {'a': [2, 1], 'b': [0, 1], 'fact': '휴식 시간 한가운데에 오딜은 바에서 주문하고 있었다'},
+                {'a': [2, 0], 'b': [1, 0], 'fact': '브로치가 아직 반짝이던 무렵, 오딜은 이미 바에 있었다'}]},
+    {'type': 'talk', 'lines': [
+        L('odile', '짜잔! 장부에 내 이름이 세 번. 관객님, 이게 알리바이라는 거야.', '미소', 'point'),
+        L('mei', '그, 그래도……! 마술사라면 장부쯤이야……!', '곤란', 'think')]},
+    {'type': 'trans', 'issue': 'i2', 'text': '쟁점 둘'},
+    {'type': 'nonstop', 'title': '엇갈린 증언', 'guide': '한 사람의 말을 회수해 무기로 삼고, 그 말과 부딪치는 다른 사람의 약점에 쏜다', 'issue': 'i2', 'absorb': True, 'lines': [
+        L('mei', '{카드를 꽂은 건} {마술사뿐}. {그러니 가져간 것도} {당신이랍니다}!', '격노', 'point'),
+        L('odile', '{카드는 7시 20분}, {마술 끝내고 꽂아 둔 거야}. {휴식 시간엔} {바에 있었고}.', '기본', 'crossed'),
+        L('ruoxi', '{바 카운터에서는} {라운지 진열장이 보이지 않아요}.', '기본')],
+     'answers': [{'at': [0, 2], 'word': [1, 3]}, {'at': [1, 3], 'word': [0, 2]}], 'miss': M, 'mono': MONO},
+    {'type': 'talk', 'lines': [L('mei', '……그렇다면, 이건 어떠신가요!', '격노', 'point', cut='반론', fx='crack'),
+                               L('mei', '마술사라면 [[바에 있는 척]]하면서, 손재주로 진열장까지 다녀올 수 있답니다!', '하라구로')]},
+    {'type': 'rebut', 'npc': 'mei', 'claim': '마술사라면 바에 있는 척하면서 손재주로 진열장 브로치를 빼 올 수 있어요. 장부의 이름도 속임수일지 모른답니다!', 'event': 'T1_R1', 'holdEvent': 'T1_R1H', 'issue': 'i2', 'rel': {'mei': {'trust': 5}}},
+    {'type': 'talk', 'lines': [
+        L('mei', '으…… 거, 건너편 방까지 다녀올 틈은 없었다는 거군요.', '부끄러움', alt=[{'if': {'hold': 'i2'}, 'text': '……좋아요, 일단 보류해 드리죠. 하지만 눈은 떼지 않겠답니다.', 'face': '불만', 'pose': 'crossed'}]),
+        L('seoha', '그럼 남는 질문. 휴식 시간에 라운지에 남아 있던 건 누구지?', '의심', 'think'),
+        L('clara', '……저는 피아노 앞에 있었습니다. 다음 곡을 준비해야 했으니까요.', '기본', 'crossed')]},
+    {'type': 'trans', 'issue': 'i3', 'text': '쟁점 셋'},
+    {'type': 'route', 'title': '휴식 시간의 동선', 'guide': '휴식 시간, 클라라가 피아노 앞에서 진열장까지 간 길을 칸으로 그린다', 'who': 'clara', 'start': [3, 4], 'end': [11, 2], 'via': [[7, 3]], 'slack': 3, 'issue': 'i3'},
+    {'type': 'talk', 'lines': [
+        L('clara', '……네. 진열장 앞에 갔습니다. 2부를 앞두고 [[잡음]]이 들렸으니까요.', '곤란'),
+        L('ruoxi', '잡음? 악보의 빨간 동그라미와 관계가 있나요?', '의심', 'think'),
+        L('clara', 'B♭을 칠 때마다, 어디선가 금속이 떨렸습니다. 견딜 수 없었어요.', '불만')]},
+    {'type': 'dream', 'title': '꿈 조각 잇기', 'guide': "사선 왼쪽은 '전', 오른쪽은 '후'. 「?」 칸만 바꿔 휴식 시간의 흐름을 잇는다", 'issue': 'i3',
+     'cast': CAST, 'objs': ['brooch', 'glove', 'card'], 'ats': ['손', '바닥', '진열장', '피아노 의자', '바 카운터'], 'atProp': {'진열장': 'shelf', '피아노 의자': 'desk', '바 카운터': 'desk'},
+     'rel': {'clara': {'trust': 5}},
+     'rounds': [
+         {'cap': '휴식 시간 19:52 · 라운지', 'a': {'bg': '라운지', 'who': 'clara', 'pose': '서 있음', 'obj': 'brooch', 'at': '진열장'}, 'b': {'bg': '라운지', 'who': 'clara', 'pose': '서 있음', 'obj': 'brooch', 'at': '손'}, 'ask': [['a', 'who'], ['b', 'at']]},
+         {'cap': '19:55 · 라운지', 'a': {'bg': '라운지', 'who': 'clara', 'pose': '건넴', 'obj': 'glove', 'at': '손'}, 'b': {'bg': '라운지', 'who': '', 'pose': '서 있음', 'obj': 'glove', 'at': '피아노 의자'}, 'ask': [['a', 'obj'], ['b', 'at']]}]},
+    {'type': 'talk', 'lines': [L('host', '조각이 모였습니다. 진상을 굳혀 보시지요.', fx='flash', speed=0.7)]},
+    {'type': 'crystal', 'issue': 'i3', 'title': '진상 결정', 'guide': '모서리를 눌러 펼쳐지는 다섯 단서 중 하나를 고른다. 다섯 모서리가 모두 맞으면 진상이 굳는다', 'slots': [
+        {'label': '누가', 'answer': '클라라', 'options': ['클라라', '오딜', '메이벨', '스즈네', '아무도 아님']},
+        {'label': '무엇을', 'answer': '브로치를 장갑에 싸서 옮겼다', 'options': ['브로치를 장갑에 싸서 옮겼다', '브로치를 훔쳐 팔았다', '가짜와 바꿔치기했다', '바닥에 떨어뜨렸다', '카드를 꽂았다']},
+        {'label': '언제', 'answer': '휴식 시간', 'options': ['1부 연주 중', '휴식 시간', '2부 연주 중', '리사이틀 뒤', '7시 20분']},
+        {'label': '어디로', 'answer': '피아노 의자 수납칸', 'options': ['피아노 의자 수납칸', '바 카운터', '객실 옷장', '테라스 분수', '복도 화분']},
+        {'label': '왜', 'answer': '장식이 피아노 소리에 떨려서', 'options': ['장식이 피아노 소리에 떨려서', '탐이 나서', '메이벨을 곯려 주려고', '오딜에게 부탁받아서', '실수로']}]},
+    {'type': 'vote', 'question': '브로치를 옮긴 사람은?', 'answer': 'clara', 'options': CAST, 'follow': 4,
+     'beliefs': {'suzune': 'clara', 'mei': 'odile', 'ruoxi': 'clara', 'seoha': 'clara', 'clara': 'clara', 'odile': 'clara'}},
+    {'type': 'talk', 'lines': [
+        L('host', '정답입니다. 브로치를 옮긴 분은 [[클라라 님]]이었습니다.', fx='flash'),
+        L('clara', '……2부가 끝나면 돌려놓을 생각이었습니다. 연주를 마치고 그만 잊었어요. 죄송합니다.', '슬픔', alt=[{'if': {'rel': {'trust': [4, 5]}}, 'text': '……당신이 찾아 주어 다행입니다. 돌려놓는 걸 잊다니, 연주자로서 부끄럽군요.', 'face': '슬픔'}]),
+        L('ruoxi', '그런데 이 브로치, 보석치고 가벼워요. 헐거운 [[유리]] 장식이 공명한 거겠죠.', '의심', 'think'),
+        L('mei', '유, 유유, 유리라니 무슨 소리니! 이건 로슈벨 가문의……!', '패닉', fx='shake', alt=[{'if': {'flag': 'mei_early'}, 'text': '……응, 유리야. 시장에서 샀어. 영애 흉내에 맞춰서.', 'face': '부끄러움'}]),
+        L('seoha', '진짜 영애라면 가짜 보석 한 마디에 이렇게까지 당황하진 않겠지.', '하라구로', 'crossed', alt=[{'if': {'flag': 'mei_early'}, 'text': '위장과 이번 일은 별개야. 유리든 보석이든, 옮긴 사람은 따로 있었으니까.', 'face': '기본', 'pose': 'crossed'}])]},
+    {'type': 'talk', 'setFlags': ['mei_real'], 'lines': [
+        L('mei', '……아, 진짜. 알았어, 말할게.', '부끄러움', fx='zoom', alt=[{'if': {'flag': 'mei_early'}, 'text': '……아까 말한 대로야. 그래도 한 번 더 사과할게.', 'face': '곤란'}]),
+        L('mei', '띠리 메이. 미얀마 사람이고, 공사 현장에서 일해. 영애는…… 한 번 해 보고 싶었을 뿐이야.', '슬픔',
+          alt=[{'if': {'flag': 'mei_early'}, 'text': '내 허세 때문에 오딜이 의심받았잖아. 띠리 메이로서, 미안해.', 'face': '슬픔'},
+               {'if': {'rel': {'affection': [4, 5]}}, 'text': '띠리 메이. 미얀마 사람이고, 공사 현장에서 일해. ……당신한테는 진작 말하고 싶었어.', 'face': '부끄러움'}]),
+        L('suzune', '메이 씨, 그래도 오늘 진짜 멋졌어요.', '미소'),
+        L('odile', '짜잔~ 오늘의 최고 마술은 메이 쪽이었네!', '웃음'),
+        L('mei', '……시끄러워. 그래도, 고마워.', '웃음'),
+        L('', '소동은 웃음으로 끝났다.')]},
+]
+
+C1 = [
+    {'type': 'talk', 'lines': [
+        L('host', '모이셨군요. 라운지 진열장에서 [[메이벨 님의 브로치]]가 사라졌다는 신고가 있었습니다.', fx='flash',
+          alt=[{'if': {'not': {'allHere': True}}, 'text': '모이신 분들부터 말씀드리지요. 라운지 진열장에서 [[메이벨 님의 브로치]]가 사라졌습니다.'}]),
+        L('mei', '제 가문의 보물이 없어졌답니다! 이건 대사건이에요!', '패닉', here=True),
+        L('odile', '어머나, 마술처럼 사라졌네?', '웃음', here=True),
+        L('seoha', '……다들, 휴식 시간에 어디 있었지?', '의심', 'think', here=True),
+        L('host', '조사 시간을 드리겠습니다. 마감이 되면, 혹은 준비가 끝났다고 말씀하시면 재판을 시작하지요.', speed=0.8)]},
+    {'type': 'investigate', 'grant': ['velvet'], 'declare': True, 'afterFound': 50},
+    {'type': 'talk', 'lines': [L('host', '시간이 되었습니다. 재판을 시작하겠습니다.', fx='flash', speed=0.8)]},
+]
+
+LOOKS = {  # 맵 도트: 체크인 부품을 조립해 색만 칠한다(hc·oc·ec 는 #hex 직접 지정 가능)
+    'suzune': {'g': 1, 'hf': 0, 'hb': 2, 'hc': '#f4b6cf', 'eye': 2, 'ec': '#7a5ad0', 'sk': 0, 'of': 4, 'oc': '#f6eadf', 'ac': 0},
+    'mei': {'g': 1, 'hf': 1, 'hb': 4, 'hc': '#f1d27a', 'eye': 1, 'ec': '#3f9a6a', 'sk': 1, 'of': 4, 'oc': '#3f7a52', 'ac': 4},
+    'ruoxi': {'g': 1, 'hf': 2, 'hb': 3, 'hc': '#8a5a3a', 'eye': 3, 'ec': '#6b4630', 'sk': 0, 'of': 2, 'oc': '#f2f2f2', 'ac': 0},
+    'seoha': {'g': 1, 'hf': 0, 'hb': 1, 'hc': '#26242c', 'eye': 3, 'ec': '#2a2230', 'sk': 0, 'of': 2, 'oc': '#6b4a32', 'ac': 0},
+    'clara': {'g': 1, 'hf': 2, 'hb': 2, 'hc': '#8f72c9', 'eye': 1, 'ec': '#4a78c8', 'sk': 0, 'of': 4, 'oc': '#1d1a24', 'ac': 5},
+    'odile': {'g': 1, 'hf': 4, 'hb': 3, 'hc': '#f39a4a', 'eye': 0, 'ec': '#d0a040', 'sk': 0, 'of': 5, 'oc': '#2a2440', 'ac': 3},
+}
+for n in NPCS: n['look'] = LOOKS[n['id']]
+
+def BL(t, face='', pose='', alt=None, **k):
+    d = {'text': t}
+    if face: d['face'] = face
+    if pose: d['pose'] = pose
+    if alt: d['alt'] = alt
+    d.update(k); return d
+HI, LO = {'rel': {'trust': [4, 5]}}, {'rel': {'trust': [1, 2]}}
+BLOCK = {  # 비켜 달라는 말: [첫 부탁, 두 번째, 세 번째 이후] (AI 없이 나오는 대본, 관계에 따라 갈림)
+    'suzune': [[BL('저기, 죄송한데…… 거기 잠깐만 비켜 주실 수 있을까요?', '곤란', alt=[{'if': HI, 'text': '아, 거기 계셨네요. 잠깐 지나가도 될까요? 금방이에요.', 'face': '미소'}])],
+               [BL('저, 정말 죄송해요. 거기 꼭 가야 해서요…….', '곤란')], [BL('……알겠어요. 제가 나중에 다시 올게요.', '슬픔')]],
+    'mei': [[BL('어머, 거기 서 계시면 곤란하답니다. 잠시 비켜 주시겠어요?', '미소', alt=[{'if': HI, 'text': '당신, 거기 잠깐만 비켜 줄래요? 금방 끝나요. 오호호.', 'face': '웃음'}, {'if': LO, 'text': '……거기, 비켜 주시겠어요? 길을 막고 계시잖아요.', 'face': '불만', 'pose': 'crossed'}])],
+            [BL('저기요, 두 번 말하게 하지 마시라고요!', '불만', 'crossed')], [BL('야, 비키라니까! ……크흠, 비켜 주세요.', '격노', 'point', fx='shake')]],
+    'ruoxi': [[BL('실례합니다. 그 자리에 볼일이 있어요.', '기본', alt=[{'if': HI, 'text': '잠깐 그 자리 좀 빌릴게요. 30초면 됩니다.', 'face': '미소'}])],
+              [BL('같은 말을 두 번 하게 되네요. 비켜 주세요.', '불만')], [BL('……그 자리에 계속 계실 이유가 있나요?', '의심', 'think')]],
+    'seoha': [[BL('거기. 잠깐 비켜.', '기본', alt=[{'if': HI, 'text': '그쪽, 잠깐만. 그 자리 좀 쓰자.', 'face': '기본'}])],
+              [BL('……일부러 막는 거야?', '의심', 'crossed')], [BL('왜 거기서 안 움직이지? 이유를 듣고 싶은데.', '의심', 'think')]],
+    'clara': [[BL('실례합니다. 그 자리에 볼일이 있습니다. 비켜 주시겠습니까?', '기본', alt=[{'if': HI, 'text': '죄송하지만, 잠시만 자리를 비켜 주시겠어요? 곧 끝납니다.', 'face': '미소'}, {'if': LO, 'text': '비켜 주십시오. 지금 바로요.', 'face': '불만', 'pose': 'crossed'}])],
+              [BL('다시 말씀드립니다. 그 자리에서 비켜 주십시오. 다음 곡까지 시간이 없습니다.', '불만', 'crossed')],
+              [BL('……일부러 그러시는 겁니까? 지금 저를 방해하고 계십니다.', '격노', 'point', fx='shake')]],
+    'odile': [[BL('관객님, 무대 한가운데 서 계시네? 잠깐 비켜 줄래?', '웃음', alt=[{'if': HI, 'text': '관객님~ 거기 잠깐만. 짜잔, 하고 비켜 주면 고맙고!', 'face': '웃음'}])],
+              [BL('어라, 안 비켜 주는 거야? 이건 마술로도 안 되는데.', '곤란')], [BL('……관객님, 이건 장난 아냐. 비켜.', '불만', 'crossed')]],
+}
+for n in NPCS: n['block'] = BLOCK[n['id']]
+
+world = {
+    'version': 3, 'kind': 'troemerei-npc-topdown-test', 'title': '라운지의 사라진 브로치', 'notes': '본편 1장 전 기관 시험용. 죽음 없음. 인물·사건은 본편 설정이 아니다.',
+    'chapter': 0, 'dataVersion': 8, 'startTime': '19:30', 'talkRange': 2, 'sightRange': 30, 'blockTalk': {'tries': 1, 'wait': 40, 'reason': '당신이 서 있는 자리에 볼일이 있어, 잠시 비켜 주었으면 하는 듯하다'}, 'searchSeconds': 20,
+    'map': {'id': 'hotel_test', 'width': W_, 'height': H_, 'rows': rows(), 'tileSeconds': 4, 'areas': AREAS, 'landmarks': LANDMARKS, 'props': PROPS,
+            'floors': ['parquet', 'bar', 'carpet', 'room', 'terrace'], 'decor': [
+                {'t': 'rug', 'x': 5, 'y': 4, 'w': 6, 'h': 3}, {'t': 'mat', 'cells': [[15, 5], [7, 9], [22, 9], [5, 12], [20, 12]]},
+                {'t': 'flowers', 'cells': [[13, 14], [26, 16], [11, 15], [28, 14]]}, {'t': 'path', 'cells': [[20, 13], [20, 14], [21, 14], [22, 14], [19, 14], [18, 14], [17, 14]]}]},
+    'player': {'x': 5, 'y': 7, 'moveSeconds': 4, 'sex': 'm'},
+    'npcs': NPCS, 'onComplete': [],
+    'flagNames': ['brooch_gone', 'recital_done', 'mei_real', 'mei_early', 'true_route', 'trial_only', 'trial_brooch_done'],
+    'debugFlags': ['brooch_gone', 'mei_real', 'mei_early', 'true_route'],
+    'facts': FACTS,
+    'events': {'TRUE': {'npcs': ['suzune'], 'flag': 'true_route', 'log': '(시험) 진엔딩 루트 표식이 인정되었다.', 'kinds': ['T', 'I']},
+               'MEI_REAL': {'npcs': ['mei'], 'flag': 'mei_real', 'setFlags': ['mei_early'], 'kinds': ['T', 'I'], 'log': '메이벨이 본명과 내력을 털어놓았다.'},
+               'T1_R1': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'T1', 'phase': 9},
+               'T1_R1H': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'T1', 'phase': 9, 'hold': True}},
+    'markers': [{'flag': 'true_route', 'token': '#진루트'}, {'flag': 'mei_real', 'token': '#메이정체'}],
+    'items': ITEMS,
+    'notices': [{'time': '19:30', 'text': '리사이틀 1부', 'place': '라운지'}, {'time': '20:00', 'text': '리사이틀 2부', 'place': '라운지'}, {'time': '22:00', 'text': '소등', 'place': '객실'}],
+    'slots': [{'name': '아침', 'from': '06:00'}, {'name': '오후', 'from': '12:00'}, {'name': '저녁', 'from': '18:00'}, {'name': '밤', 'from': '22:00'}],
+    'branches': [], 'scenes': SCENES,
+    'trials': [
+        {'id': 'brooch', 'code': 'T1', 'title': '라운지의 사라진 브로치', 'stage': '라운지', 'hp': 5, 'flag': 'trial_brooch_done', 'evidence': ['card', 'program', 'score', 'sketch', 'bar_log', 'velvet', 'glove', 'brooch'],
+         'issues': [{'id': 'i1', 'q': '브로치는 언제 사라졌나?', 'a': '휴식 시간 무렵(19:45~20:05)'}, {'id': 'i2', 'q': '오딜이 가져갔나?', 'a': '아니다, 바에 있었다'},
+                    {'id': 'i3', 'q': '누가, 왜 옮겼나?', 'a': '클라라, 장식이 피아노 소리에 떨려서', 'confirmAt': 16}],
+         'phases': T1},
+        {'id': 'case_c1', 'code': 'C1', 'kind': 'case', 'title': '사라진 브로치', 'stage': '라운지', 'hp': 5, 'evidence': [], 'issues': [], 'then': [{'code': 'T1'}], 'phases': C1},
+    ],
+    'host': {'name': '지배인'},
+    'rel': {'aiStep': 5, 'firstTalk': {'trust': 6}, 'scales': [
+        {'id': 'trust', 'key': 't', 'name': '신뢰', 'levels': ['적대', '경계', '보통', '신뢰', '깊은 신뢰']},
+        {'id': 'affection', 'key': 'a', 'name': '애정', 'levels': ['냉담', '무심', '보통', '호감', '애정'], 'opposite': False}]},
+    'cases': [{'id': 'C1', 'flag': 'brooch_gone', 'spot': 'case', 'watchers': ['mei'], 'trial': 'C1', 'from': '20:30', 'wait': 600,
+               'notice': '지배인 방송: 라운지 진열장의 브로치가 사라졌다는 신고가 있었습니다. 모두 라운지로 모여 주십시오.',
+               'task': {'id': 'gather_C1', 'kind': 'visit', 'landmark': 'sofa', 'durationSeconds': 3600, 'priority': 300, 'weight': 1, 'interruptible': False, 'once': True}}],
+    'debugTalk': {
+        'greet': {'text': '안녕하세요.', 'face': '', 'alt': [
+            {'if': {'rel': {'affection': [4, 5], 'trust': [3, 5]}}, 'text': '아, 왔구나. [[기다리고 있었어]].', 'face': '웃음', 'fx': 'zoom'},
+            {'if': {'rel': {'affection': [4, 5], 'trust': [1, 2]}}, 'text': '……또 너야? 뭐, 싫진 않지만.', 'face': '부끄러움'},
+            {'if': {'rel': {'trust': [4, 5]}}, 'text': '마침 잘 왔어요. 당신이라면 믿을 수 있으니까.', 'face': '미소'},
+            {'if': {'rel': {'trust': [1, 1]}}, 'text': '<<가까이 오지 마>>.', 'face': '격노', 'pose': 'point', 'fx': 'shake'},
+            {'if': {'rel': {'trust': [2, 2]}}, 'text': '……무슨 용건이죠.', 'face': '의심', 'pose': 'crossed'}]},
+        'tests': [
+            {'label': '웃음·다가섬', 'face': '웃음', 'fx': 'zoom', 'text': '정말요? <<다행이다>>!'},
+            {'label': '놀람·흔들림', 'face': '놀람', 'fx': 'shake', 'text': '[[잠깐]], 그게 무슨……!'},
+            {'label': '속삭임', 'face': '미소', 'text': '((여기서만 하는 얘기인데……))'},
+            {'label': '격노·깨짐', 'face': '격노', 'pose': 'point', 'fx': 'crack', 'text': '<<그만해>>! 더는 못 참아.'},
+            {'label': '생각', 'face': '의심', 'pose': 'think', 'text': '……이상하네. 순서가 맞지 않아.'},
+            {'label': '팔짱·불만', 'face': '불만', 'pose': 'crossed', 'text': '흥, 그래서요?'},
+            {'label': '하라구로', 'face': '하라구로', 'text': '후후…… 다 알고 있어요.'},
+            {'label': '패닉', 'face': '패닉', 'fx': 'shake', 'text': '아, 아니, 그게 아니라……!'},
+            {'label': '슬픔', 'face': '슬픔', 'text': '……미안해요.'},
+            {'label': '곤란', 'face': '곤란', 'pose': 'think', 'text': '음…… 어떡하죠.'},
+            {'label': '부끄러움', 'face': '부끄러움', 'text': '그, 그렇게 보지 마세요……'}]},
+}
+json.dump(world, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+print('world.json', len(T1), '단계 +', len(C1), '/ 칸', W_, 'x', H_)
+for r in world['map']['rows']: print(r)

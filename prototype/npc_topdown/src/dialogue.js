@@ -5,7 +5,9 @@ const TroemereiTalk = (() => {
   const LINE = /^([^:：*|()]{1,20})(?:\(([^()]{1,20})\))?\s*[:：]\s*(.+)$/s;
   // 괄호 안: 표정과 움직임을 · , / 로 함께 쓸 수 있다. 예) 유리(놀람·흔들림):…  움직임: 흔들림·다가섬·번쩍·깨짐
   const FX = { '흔들림': 'shake', '흔들': 'shake', shake: 'shake', '다가섬': 'zoom', '다가': 'zoom', zoom: 'zoom', '번쩍': 'flash', flash: 'flash', '깨짐': 'crack', crack: 'crack' };
-  function face(expr) { const t = String(expr || '').split(/[·,\/\s]+/).filter(Boolean); return { expression: t.filter(x => !FX[x]).join(' '), fx: (t.map(x => FX[x]).find(Boolean)) || '' }; }
+  // 자세 낱말(생각·지목·팔짱·기본자세)은 표정과 따로 뽑는다
+  const POSE = { '생각': 'think', '고민': 'think', '추리': 'think', '지목': 'point', '가리킴': 'point', '삿대질': 'point', '팔짱': 'crossed', '기본자세': 'default', think: 'think', point: 'point', crossed: 'crossed' };
+  function face(expr) { const t = String(expr || '').split(/[·,\/\s]+/).filter(Boolean); return { expression: t.filter(x => !FX[x] && !POSE[x]).join(' '), fx: (t.map(x => FX[x]).find(Boolean)) || '', pose: (t.map(x => POSE[x]).find(Boolean)) || '' }; }
   function parse(raw) {
     if (!raw) return [];
     return String(raw).split('|').map(x => x.trim()).filter(Boolean).slice(0, 24).map(part => {

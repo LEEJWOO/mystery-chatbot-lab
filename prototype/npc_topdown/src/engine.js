@@ -31,7 +31,10 @@ const TroemereiNPC = (() => {
     while(!(x===b.x&&y===b.y)){const e2=2*err;if(e2>=dy){err+=dy;x+=sx;}if(e2<=dx){err+=dx;y+=sy;}if(x===b.x&&y===b.y)break;if(B.has(posKey(x,y)))return false;}
     return true;
   }
-  function sees(w,a,b){const ra=areaOf(w,a.x,a.y),rb=areaOf(w,b.x,b.y);if(ra!==rb)return false;return manhattan(a,b)<=(ra<0?3:6)&&lineOfSight(w,a,b);}
+  // 시야: 같은 방 안 w.sightRange 칸(기본 6). 문 칸(어느 방에도 속하지 않음)은 맞닿은 방들에 함께 속한 것으로 본다.
+  function areasNear(w,x,y){const r=areaOf(w,x,y);if(r>=0)return [r];const o=[];for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const k=areaOf(w,x+dx,y+dy);if(k>=0&&!o.includes(k))o.push(k);}return o;}
+  function sees(w,a,b){const A=areasNear(w,a.x,a.y),B=areasNear(w,b.x,b.y);if(!A.some(k=>B.includes(k)))return false;
+    const both=areaOf(w,a.x,a.y)<0&&areaOf(w,b.x,b.y)<0;return manhattan(a,b)<=(both?3:(w.sightRange||6))&&lineOfSight(w,a,b);}
   // 기억: [사실ID, 역할, 시각]. 역할 0 직접 · 1 목격 · 2+i 인물 i에게 들음(증언). 인물당 최근 12개.
   function learn(target,factId,role,time){
     if(!target.mem)target.mem=[];
@@ -60,7 +63,7 @@ const TroemereiNPC = (() => {
         else for(const id of c.watchers||[]){const i=s.npcs.findIndex(n=>n.id===id);if(i>=0&&sees(w,s.npcs[i],l)){by=i+1;break;}}
         if(by<0)continue;
         s.cases[c.id]=[1,s.clock,by];
-        addLog(w,s,(c.notice||'사건이 발견되었습니다.')+' (발견: '+(by===0?'당신':w.npcs[by-1].name)+')','world');
+        addLog(w,s,(c.notice||'사건이 발견되었습니다.')+' (발견: '+(by===0?'당신':nm(w,s,w.npcs[by-1].id))+')','world');
         for(const n of s.npcs){ // 모두 현장으로
           if(n.mode==='accompany')continue;
           n.queued=n.queued.filter(t=>t.id!==c.task.id);n.queued.unshift(clone(c.task));
@@ -95,11 +98,12 @@ const TroemereiNPC = (() => {
     if(s.logs.length>100)s.logs.shift();
   }
   function createWorld(w,seed=246813579){
-    const s={schema:'TROEMEREI_NPC_V1',version:1,worldId:w.map.id,day:1,clock:9*3600,
+    const t0=w.startTime?secs(w.startTime):9*3600; // 시작 시각(세계 데이터 startTime, 없으면 09:00)
+    const s={schema:'TROEMEREI_NPC_V1',version:1,worldId:w.map.id,day:1,clock:t0,
       rng:seed>>>0 || 1, player:{x:w.player.x,y:w.player.y,route:[],nextMoveAt:0,mem:[],seen:{},items:{},talked:{},scenes:{}},
       npcs:w.npcs.map((n,i)=>({id:n.id,x:n.x,y:n.y,mode:'idle',intent:null,route:[],
-        nextMoveAt:9*3600+10+i*4,busyUntil:0,blockedSince:null,completed:[],
-        excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:[]})),
+        nextMoveAt:t0+10+i*4,busyUntil:0,blockedSince:null,completed:[],
+        excluded:[],lastTask:'',lastCompleted:{},queued:[],meetings:[],followOffset:0,mem:(n.knows||[]).map(f=>[f,0,t0])})),
       flags:Object.fromEntries((w.flagNames||[]).map(f=>[f,false])),
       logs:[],revision:0,pend:null,pk:'',pc:0};
     relInit(w,s.player);
@@ -145,7 +149,7 @@ const TroemereiNPC = (() => {
     const direct=route(w,s,n,g.goal,{ignoreNpc:n.id});
     if(direct.length || manhattan(n,g.goal)===0)return direct;
     // A point of interest can be occupied by another NPC; approach its free side.
-    const occupied=s.npcs.some(other=>other.id!==n.id&&other.x===g.goal.x&&other.y===g.goal.y);
+    const occupied=s.npcs.some(other=>other.id!==n.id&&other.x===g.goal.x&&other.y===g.goal.y)||(s.player.x===g.goal.x&&s.player.y===g.goal.y); // 플레이어가 서 있어도 옆으로
     if(occupied){
       let best=null;
       for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
@@ -185,7 +189,7 @@ const TroemereiNPC = (() => {
       n.nextMoveAt=s.clock+20;return;
     }
     n.intent=task;n.mode='moving';n.route=way;n.nextMoveAt=s.clock+(spec.stepSeconds||7);n.blockedSince=null;
-    addLog(w,s,spec.name+'이(가) 새로운 목적지를 향해 움직이기 시작했다.','npc',n);
+    addLog(w,s,nm(w,s,spec.id)+'이(가) 새로운 목적지를 향해 움직이기 시작했다.','npc',n);
     if(!way.length)arrive(w,s,n);
   }
   function hasReached(w,s,n,task){
@@ -210,24 +214,24 @@ const TroemereiNPC = (() => {
       m.mode='paused';m.busyUntil=Math.max(m.busyUntil||0,s.clock+(task.durationSeconds||30));m.nextMoveAt=m.busyUntil;m.route=[];
     }
     n.mode='busy';n.route=[];n.busyUntil=s.clock+(task.durationSeconds||30);n.nextMoveAt=n.busyUntil;
-    if(task.targetPlayer){addLog(w,s,spec.name+'이(가) 다가와 말을 걸었다.','call',n);return;}
-    addLog(w,s,spec.name+'이(가) '+(task.kind==='meet'?'다른 인물과 대화를 시작했다.':'목적지에서 행동을 시작했다.'),'npc',n);
+    if(task.targetPlayer){addLog(w,s,nm(w,s,spec.id)+'이(가) 다가와 말을 걸었다.','call',n);return;}
+    addLog(w,s,nm(w,s,spec.id)+'이(가) '+(task.kind==='meet'?'다른 인물과 대화를 시작했다.':'목적지에서 행동을 시작했다.'),'npc',n);
   }
   function complete(w,s,n){
     const task=n.intent;if(!task){n.mode='idle';return;}
     const spec=w.npcs.find(x=>x.id===n.id);
-    if(task.targetPlayer){finishCall(s,n);addLog(w,s,spec.name+'이(가) 대답을 기다리다 돌아갔다.','npc',n);return;}
+    if(task.targetPlayer){finishCall(s,n);addLog(w,s,nm(w,s,spec.id)+'이(가) 대답을 기다리다 돌아갔다.','npc',n);return;}
     if(task.targetNpc){
       // 끝나는 순간에도 상대가 곁에 있어야 만남이 성립한다(도중에 데려가면 무산 → 다시 찾아간다).
       const m=node(s,task.targetNpc);
       if(!m||m.mode==='accompany'||manhattan(n,m)!==1){
         n.mode='moving';n.route=[];n.busyUntil=0;n.nextMoveAt=s.clock+5;
-        addLog(w,s,spec.name+'의 만남이 중간에 끊겼다.','npc',n);return;
+        addLog(w,s,nm(w,s,spec.id)+'의 만남이 중간에 끊겼다.','npc',n);return;
       }
     }
     n.completed.push(task.id);n.lastCompleted[task.id]=s.clock;n.lastTask=task.id;
     n.queued=n.queued.filter(t=>t.id!==task.id);
-    addLog(w,s,spec.name+'이(가) '+(task.kind==='meet'?'만남':'활동')+'을 마쳤다.','npc',n);
+    addLog(w,s,nm(w,s,spec.id)+'이(가) '+(task.kind==='meet'?'만남':'활동')+'을 마쳤다.','npc',n);
     for(const r of w.onComplete||[]){
       if(r.when.npc===n.id&&r.when.task===task.id&&(!r.when.targetNpc||r.when.targetNpc===task.targetNpc)){
         if(r.setFlag)s.flags[r.setFlag]=true;
@@ -252,6 +256,8 @@ const TroemereiNPC = (() => {
     if(n.mode==='idle'){decide(w,s,n);return;}
     if(n.mode!=='moving')return;
     if(!n.intent){n.mode='idle';n.nextMoveAt=s.clock+5;return;}
+    if(playerBlocks(w,s,n.intent)){if(manhattan(n,s.player)===1){askMove(w,s,n,n.intent);return;}}
+    else if(s.block&&s.block.npc===n.id)s.block=null;
     if(hasReached(w,s,n,n.intent)){arrive(w,s,n);return;}
     if(!n.route.length || !isStepNext(n,n.route[0])){
       const r=routeFor(w,s,n,n.intent);n.route=r||[];
@@ -266,10 +272,10 @@ const TroemereiNPC = (() => {
         const alternate=routeFor(w,s,n,n.intent);
         if(alternate&&alternate.length&&posKey(alternate[0].x,alternate[0].y)!==blocker){
           n.route=alternate;n.blockedSince=null;
-          addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 막힌 통로를 피해 우회했다.','npc',n);
+          addLog(w,s,nm(w,s,n.id)+'이(가) 막힌 통로를 피해 우회했다.','npc',n);
         }else if(s.clock-n.blockedSince>=35){
           n.intent=null;n.mode='idle';n.route=[];n.nextMoveAt=s.clock+30;n.blockedSince=null;
-          addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 이동 계획을 잠시 보류했다.','npc',n);
+          addLog(w,s,nm(w,s,n.id)+'이(가) 이동 계획을 잠시 보류했다.','npc',n);
         }
       }
       n.nextMoveAt=s.clock+4;return;
@@ -277,6 +283,22 @@ const TroemereiNPC = (() => {
     n.x=next.x;n.y=next.y;n.route.shift();n.blockedSince=null;
     n.nextMoveAt=s.clock+(w.npcs.find(x=>x.id===n.id).stepSeconds||7);
     if(hasReached(w,s,n,n.intent))arrive(w,s,n);
+  }
+  // ---------- 비켜 달라는 말: 플레이어가 인물이 가려던 자리에 서 있으면, 다가와 말을 건다(AI 없이 대본 대사) ----------
+  // task.block = {tries(몇 번까지 부탁하나, 기본 w.blockTalk.tries 또는 1), wait(대답 기다리는 초, 기본 40), urgent, reason}
+  // 부탁 횟수를 넘기면 단념: 한 번뿐인 일(once)은 그날 다시 하지 않는다(→ 사건을 막는 길), 반복하는 일은 쉬었다가 다시 고른다.
+  function playerBlocks(w,s,task){if(!task||task.targetPlayer||task.targetNpc)return false;const g=goalOf(w,s,task);return !!g&&s.player.x===g.goal.x&&s.player.y===g.goal.y;}
+  function askMove(w,s,n,task){
+    const b=task.block||{},bt=w.blockTalk||{},max=b.tries||bt.tries||1;if(!n.asks)n.asks={};
+    const k=(n.asks[task.id]||0)+1;
+    if(k>max){
+      delete n.asks[task.id];if(task.once)n.excluded.push(task.id);else n.lastCompleted[task.id]=s.clock;
+      n.intent=null;n.mode='idle';n.route=[];n.nextMoveAt=s.clock+20;if(s.block&&s.block.npc===n.id)s.block=null;
+      addLog(w,s,nm(w,s,n.id)+'이(가) 단념하고 다른 일을 하러 갔다.','npc',n);return;
+    }
+    n.asks[task.id]=k;n.mode='paused';n.route=[];n.busyUntil=s.clock+(b.wait||bt.wait||40);n.nextMoveAt=n.busyUntil;
+    s.block={npc:n.id,task:task.id,n:k,max,urgent:!!b.urgent,at:s.clock,reason:b.reason||bt.reason||'당신이 서 있는 자리에 볼일이 있어 비켜 주었으면 하는 듯하다'};
+    addLog(w,s,nm(w,s,n.id)+'이(가) 다가와 비켜 달라고 말을 걸었다.','call',n);
   }
   // 먼저 말 걸기 일정 끝내기(대화를 받았거나, 거절했거나, 기다리다 지침)
   function finishCall(s,n){const t=n.intent;if(t){n.completed.push(t.id);n.lastCompleted[t.id]=s.clock;n.lastTask=t.id;}n.mode='idle';n.intent=null;n.route=[];n.busyUntil=0;n.nextMoveAt=s.clock+5;}
@@ -392,6 +414,7 @@ const TroemereiNPC = (() => {
       if(rule.hold){const tr=w.trials[s.trial.i],ph=tr.phases[s.trial.phase],k=(tr.issues||[]).findIndex(x=>x.id===(ph&&ph.issue));if(k>=0)s.trial.hold=(s.trial.hold||0)|(1<<k);}
       trialNext(w,s);return {state:s,accepted:true,reason:'',hold:!!rule.hold};}
     if(rule.flag)s.flags[rule.flag]=true;
+    for(const f of rule.setFlags||[])s.flags[f]=true; // 함께 켜는 깃발(예: 재판 전에 이미 밝혀졌다는 표시)
     addLog(w,s,rule.log||('사건 '+code+' 기록'),'world');
     return {state:s,accepted:true,reason:''};
   }
@@ -422,6 +445,8 @@ const TroemereiNPC = (() => {
   function relInit(w,player){player.rel={};for(const n of w.npcs){const o={};for(const sc of relScales(w))if(n.rel&&n.rel[sc.id]!==undefined)o[sc.id]=n.rel[sc.id];player.rel[n.id]=o;}}
   // 척도에 opposite:true면 플레이어(체크인 성별, 없으면 player.sex)와 성별이 다른 인물에게만 있다
   function relOn(w,s,id,sc){const S=relScales(w).find(x=>x.id===sc);if(!S||!S.opposite)return true;const n=w.npcs.find(x=>x.id===id),L=(s.player||{}).look,ps=L?(L.g===1?'f':'m'):(w.player.sex||'m');return !!n&&n.sex!==ps;}
+  // 화면에 보이는 이름: 가명(alias)은 그 깃발이 설 때까지
+  function nm(w,s,id){const n=w.npcs.find(x=>x.id===id);if(!n)return id;return n.alias&&!((s&&s.flags)||{})[n.alias.until]?n.alias.name:n.name;}
   function relLevel(w,s,id,sc){const v=(((s.player||{}).rel||{})[id]||{})[sc];if(v===undefined||!relOn(w,s,id,sc))return 0;const S=relScales(w).find(x=>x.id===sc),N=((S&&S.levels)||[0,0,0,0,0]).length;return Math.min(N,Math.floor(v/(100/N))+1);}
   function relAdd(w,s,id,d){if(!d||!id)return;const all=s.player.rel||(s.player.rel={}),r=all[id]||(all[id]={});for(const k in d)if(r[k]!==undefined&&relOn(w,s,id,k))r[k]=Math.max(0,Math.min(100,r[k]+(d[k]|0)));}
   // AI의 r='t+1a-1': 대화 상대의 마음 변화. 척도마다 한 번에 ±1단계(=aiStep점)까지만.
@@ -449,7 +474,9 @@ const TroemereiNPC = (() => {
   }
   // 조사 단계에 들어가면: 마감 시각을 sub에 적고, 자료를 지급하고, 모인 사람들을 풀어 준다(각자 일정으로).
   function enterPhase(w,s){
-    const T=s.trial;if(!T)return;const ph=w.trials[T.i].phases[T.phase];if(!ph||ph.type!=='investigate')return;
+    const T=s.trial;if(!T)return;const ph=w.trials[T.i].phases[T.phase];if(!ph)return;
+    for(const f of ph.setFlags||[])s.flags[f]=true; // 이 단계에 들어서면 서는 깃발(예: 가명이 본명으로 바뀜)
+    if(ph.type!=='investigate')return;
     const cs=(w.cases||[]).find(c=>c.trial===w.trials[T.i].code),found=cs&&(s.cases||{})[cs.id]?s.cases[cs.id][1]:null;
     T.sub=ph.until?Math.floor(s.clock/DAY)*DAY+secs(ph.until):(ph.afterFound!=null&&found!=null)?found+ph.afterFound*60:s.clock+(ph.minutes||30)*60;
     T.sub=Math.max(T.sub,s.clock+300); // 최소 5분
@@ -517,11 +544,11 @@ const TroemereiNPC = (() => {
         if(n.intent.onInterruptFact)learn(n,n.intent.onInterruptFact,0,s.clock);
       }
       n.mode='accompany';n.intent=null;n.route=[];n.nextMoveAt=0;n.busyUntil=0;n.blockedSince=null;
-      addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 동행을 수락했다. 기존 방문 일정은 취소됐다.','player');
+      addLog(w,s,nm(w,s,n.id)+'이(가) 동행을 수락했다. 기존 방문 일정은 취소됐다.','player');
     }else if(action.type==='RELEASE'){
       const n=node(s,action.npcId);
       if(n&&n.mode==='accompany'){n.mode='idle';n.nextMoveAt=s.clock+5; n.route=[];
-        addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 다시 독립 행동을 시작했다.','player');}
+        addLog(w,s,nm(w,s,n.id)+'이(가) 다시 독립 행동을 시작했다.','player');}
     }else if(action.type==='TALK_REQUEST'){
       // 대화는 AI가 응답한 뒤 applyTalk()로 시간을 반영한다. 여기서는 대상만 잠근다.
       const n=node(s,action.npcId);
@@ -547,7 +574,7 @@ const TroemereiNPC = (() => {
       return s;
     }else if(action.type==='DISMISS_CALL'){
       const n=node(s,action.npcId);
-      if(n&&n.mode==='busy'&&n.intent&&n.intent.targetPlayer){finishCall(s,n);addLog(w,s,w.npcs.find(x=>x.id===n.id).name+'이(가) 아쉬운 얼굴로 돌아갔다.','player');}
+      if(n&&n.mode==='busy'&&n.intent&&n.intent.targetPlayer){finishCall(s,n);addLog(w,s,nm(w,s,n.id)+'이(가) 아쉬운 얼굴로 돌아갔다.','player');}
     }else if(action.type==='UNSTUCK'){
       // 끼임 탈출: 지금 칸에서 한 칸도 못 움직일 때만, 가장 가까운 '빠져나갈 수 있는 빈칸'으로 옮긴다(시간 0).
       const occ=new Set(s.npcs.filter(n=>n.mode!=='accompany').map(n=>posKey(n.x,n.y)));
@@ -575,7 +602,7 @@ const TroemereiNPC = (() => {
     if(n&&(n.mode==='busy'||n.mode==='paused')){n.busyUntil=Math.max(n.busyUntil||s.clock,s.clock)+sec;n.nextMoveAt=Math.max(n.nextMoveAt,n.busyUntil);}
     else if(n&&n.mode!=='accompany'){n.mode='paused';n.busyUntil=s.clock+sec;n.nextMoveAt=n.busyUntil;}
     s.player.route=[];s.player.nextMoveAt=0;s.pend=null;s.pk='';s.pc=0;
-    if(sec>0){addLog(w,s,(n?w.npcs.find(x=>x.id===n.id).name+'와(과) ':'')+'대화하며 '+sec+'초가 지났다.','player');s=advance(w,s,sec);}
+    if(sec>0){addLog(w,s,(n?nm(w,s,n.id)+'와(과) ':'')+'대화하며 '+sec+'초가 지났다.','player');s=advance(w,s,sec);}
     else s.revision++;
     return s;
   }
@@ -583,14 +610,15 @@ const TroemereiNPC = (() => {
   function talkSeconds(userChars,replyChars){return Math.max(5,Math.min(600,Math.ceil(((userChars|0)+(replyChars|0))/6)+4));}
   // NPC가 스스로 아는 현재 행동을 짧은 말로.
   function describe(w,s,n){
-    const name=id=>(w.npcs.find(x=>x.id===id)||{}).name||id, place=id=>(landmark(w,id)||{}).name||'어딘가';
+    const name=id=>nm(w,s,id), place=id=>(landmark(w,id)||{}).name||'어딘가';
     if(n.mode==='accompany')return '플레이어와 동행 중';
+    if(s.block&&s.block.npc===n.id)return place(n.intent&&n.intent.landmark)+'에 볼일이 있는데 플레이어가 그 자리에 서 있어, 비켜 달라고 말을 건 참('+s.block.n+'번째 부탁'+(s.block.urgent?', 급한 일':'')+')';
     if(n.mode==='busy'&&n.intent)return n.intent.targetNpc?name(n.intent.targetNpc)+'와 이야기하는 중':place(n.intent.landmark)+'에서 일하는 중';
     if(n.intent)return n.intent.targetNpc?name(n.intent.targetNpc)+'에게 가는 중':place(n.intent.landmark)+' 쪽으로 가는 중';
     return '한가함';
   }
   function diagnostics(w,s){
-    return s.npcs.map(n=>({id:n.id,name:w.npcs.find(x=>x.id===n.id).name,mode:n.mode,
+    return s.npcs.map(n=>({id:n.id,name:nm(w,s,n.id),mode:n.mode,
       pos:`(${n.x},${n.y})`,plan:n.intent?.id||null,nextMoveAt:n.nextMoveAt,remaining:n.route.length,
       completed:n.completed.join(',')||'—',excluded:n.excluded.join(',')||'—'}));
   }
@@ -599,6 +627,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {createWorld, nm, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;
