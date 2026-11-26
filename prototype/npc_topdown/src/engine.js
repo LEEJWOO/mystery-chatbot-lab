@@ -31,7 +31,10 @@ const TroemereiNPC = (() => {
     while(!(x===b.x&&y===b.y)){const e2=2*err;if(e2>=dy){err+=dy;x+=sx;}if(e2<=dx){err+=dx;y+=sy;}if(x===b.x&&y===b.y)break;if(B.has(posKey(x,y)))return false;}
     return true;
   }
-  function sees(w,a,b){const ra=areaOf(w,a.x,a.y),rb=areaOf(w,b.x,b.y);if(ra!==rb)return false;return manhattan(a,b)<=(ra<0?3:6)&&lineOfSight(w,a,b);}
+  // 시야: 같은 방 안 w.sightRange 칸(기본 6). 문 칸(어느 방에도 속하지 않음)은 맞닿은 방들에 함께 속한 것으로 본다.
+  function areasNear(w,x,y){const r=areaOf(w,x,y);if(r>=0)return [r];const o=[];for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const k=areaOf(w,x+dx,y+dy);if(k>=0&&!o.includes(k))o.push(k);}return o;}
+  function sees(w,a,b){const A=areasNear(w,a.x,a.y),B=areasNear(w,b.x,b.y);if(!A.some(k=>B.includes(k)))return false;
+    const both=areaOf(w,a.x,a.y)<0&&areaOf(w,b.x,b.y)<0;return manhattan(a,b)<=(both?3:(w.sightRange||6))&&lineOfSight(w,a,b);}
   // 기억: [사실ID, 역할, 시각]. 역할 0 직접 · 1 목격 · 2+i 인물 i에게 들음(증언). 인물당 최근 12개.
   function learn(target,factId,role,time){
     if(!target.mem)target.mem=[];

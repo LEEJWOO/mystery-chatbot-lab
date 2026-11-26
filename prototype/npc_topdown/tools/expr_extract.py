@@ -60,8 +60,16 @@ def extract(base_p, expr_p, mask_p, erode=22, feather=6, eye=False, clean=False,
         rgb = rgb * (1 - kg) + base[..., :3] * kg   # 투명하게 하지 않고 기본 그림의 피부색으로 덧칠(입·눈 같은 이웃 선은 그대로)
         # 흰 배경 번짐 빼기: 마스크 가장자리 근처(경계에서 60px 안)에서 인페인트는 순백인데 기본 그림은 머리카락·윤곽(채도 있거나 어두움)인 곳
         hb = mc.rgb_to_hsv(base[..., :3] / 255); dist = nd.distance_transform_edt(m)
-        white = (hr[..., 2] > 0.94) & (hr[..., 1] < 0.06) & m & (dist < erode + 60) & ((hb[..., 1] > 0.22) | (hb[..., 2] < 0.6)) & (base[..., 3] > 128)
-        white = nd.binary_opening(nd.binary_closing(white, iterations=2), iterations=4) & white  # 넓은 덩어리만(입·눈 같은 가는 선 자리는 제외)
+        # 덩어리마다: 인페인트가 순백인 곳 중 기본 그림도 흰(피부·흰자·이) 비율이 낮으면 = 머리카락 자리에 스민 배경 → 뺀다.
+        # 눈 흰자·이·밝은 피부는 기본 그림에서도 대부분 희므로 남는다.
+        rw = (hr[..., 2] > 0.94) & (hr[..., 1] < 0.06) & m & (dist < erode + 60)
+        bw = (hb[..., 2] > 0.82) & (hb[..., 1] < 0.18)
+        lab, nlab = nd.label(nd.binary_closing(rw, iterations=1))
+        white = np.zeros_like(rw)
+        if nlab:
+            idx = np.arange(1, nlab + 1); area = nd.sum(np.ones_like(rw), lab, idx); fr = nd.mean(bw, lab, idx)
+            bad_ids = idx[(fr < 0.3) & (area >= 12)]
+            white = np.isin(lab, bad_ids) & rw & (base[..., 3] > 128)
         kw = nd.gaussian_filter(nd.binary_dilation(white, iterations=2).astype(float), 1.5)
         a = a * (1 - np.clip(kw * 1.4, 0, 1))
     out = np.dstack([rgb, a]).clip(0, 255).astype('uint8')

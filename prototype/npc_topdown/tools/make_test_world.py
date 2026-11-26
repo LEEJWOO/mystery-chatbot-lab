@@ -21,16 +21,16 @@ AREAS = [
 DOORS = [(15, 5), (7, 9), (22, 9), (5, 12), (20, 12)]
 PROPS = [
     # 라운지
-    {'t': 'piano', 'x': 2, 'y': 2, 'w': 3, 'h': 2}, {'t': 'case', 'x': 11, 'y': 1, 'w': 2, 'h': 1},
+    {'t': 'piano', 'x': 2, 'y': 2, 'w': 3, 'h': 2, 'low': True}, {'t': 'case', 'x': 11, 'y': 1, 'w': 2, 'h': 1, 'low': True},
     {'t': 'sofa', 'x': 6, 'y': 6, 'w': 3, 'h': 1, 'low': True}, {'t': 'table', 'x': 7, 'y': 4, 'w': 2, 'h': 1, 'low': True},
-    {'t': 'pot', 'x': 1, 'y': 8, 'w': 1, 'h': 1}, {'t': 'pot', 'x': 14, 'y': 8, 'w': 1, 'h': 1}, {'t': 'flamp', 'x': 14, 'y': 2, 'w': 1, 'h': 1, 'low': True},
+    {'t': 'pot', 'x': 1, 'y': 8, 'w': 1, 'h': 1, 'low': True}, {'t': 'pot', 'x': 14, 'y': 8, 'w': 1, 'h': 1, 'low': True}, {'t': 'flamp', 'x': 14, 'y': 2, 'w': 1, 'h': 1, 'low': True},
     # 바
     {'t': 'shelf', 'x': 18, 'y': 1, 'w': 8, 'h': 1}, {'t': 'counter', 'x': 18, 'y': 3, 'w': 8, 'h': 1, 'low': True},
-    {'t': 'table', 'x': 23, 'y': 6, 'w': 2, 'h': 1, 'low': True}, {'t': 'table', 'x': 18, 'y': 6, 'w': 1, 'h': 1, 'low': True}, {'t': 'pot', 'x': 28, 'y': 8, 'w': 1, 'h': 1},
+    {'t': 'table', 'x': 23, 'y': 6, 'w': 2, 'h': 1, 'low': True}, {'t': 'table', 'x': 18, 'y': 6, 'w': 1, 'h': 1, 'low': True}, {'t': 'pot', 'x': 28, 'y': 8, 'w': 1, 'h': 1, 'low': True},
     # 복도
     {'t': 'planter', 'x': 27, 'y': 10, 'w': 1, 'h': 1, 'low': True}, {'t': 'planter', 'x': 1, 'y': 10, 'w': 1, 'h': 1, 'low': True},
     # 객실
-    {'t': 'bed', 'x': 1, 'y': 13, 'w': 2, 'h': 3}, {'t': 'wardrobe', 'x': 8, 'y': 13, 'w': 2, 'h': 1}, {'t': 'desk', 'x': 5, 'y': 15, 'w': 2, 'h': 1, 'low': True},
+    {'t': 'bed', 'x': 1, 'y': 13, 'w': 2, 'h': 3, 'low': True}, {'t': 'wardrobe', 'x': 8, 'y': 13, 'w': 2, 'h': 1}, {'t': 'desk', 'x': 5, 'y': 15, 'w': 2, 'h': 1, 'low': True},
     # 테라스
     {'t': 'tree', 'x': 12, 'y': 13, 'w': 1, 'h': 1}, {'t': 'tree', 'x': 27, 'y': 13, 'w': 1, 'h': 1}, {'t': 'tree', 'x': 12, 'y': 16, 'w': 1, 'h': 1},
     {'t': 'bench', 'x': 16, 'y': 15, 'w': 2, 'h': 1, 'low': True}, {'t': 'fountain', 'x': 23, 'y': 14, 'w': 2, 'h': 2, 'low': True},
@@ -266,7 +266,7 @@ for n in NPCS: n['look'] = LOOKS[n['id']]
 
 world = {
     'version': 3, 'kind': 'troemerei-npc-topdown-test', 'title': '라운지의 사라진 브로치', 'notes': '본편 1장 전 기관 시험용. 죽음 없음. 인물·사건은 본편 설정이 아니다.',
-    'chapter': 0, 'dataVersion': 8, 'startTime': '19:30', 'talkRange': 2, 'searchSeconds': 20,
+    'chapter': 0, 'dataVersion': 8, 'startTime': '19:30', 'talkRange': 2, 'sightRange': 30, 'searchSeconds': 20,
     'map': {'id': 'hotel_test', 'width': W_, 'height': H_, 'rows': rows(), 'tileSeconds': 4, 'areas': AREAS, 'landmarks': LANDMARKS, 'props': PROPS,
             'floors': ['parquet', 'bar', 'carpet', 'room', 'terrace'], 'decor': [
                 {'t': 'rug', 'x': 5, 'y': 4, 'w': 6, 'h': 3}, {'t': 'mat', 'cells': [[15, 5], [7, 9], [22, 9], [5, 12], [20, 12]]},
