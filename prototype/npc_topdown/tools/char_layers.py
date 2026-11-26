@@ -64,6 +64,16 @@ def match(ref_im, box, pose_im):
         if not best or v > best[0]: best = (v, loc[0] * D, loc[1] * D, t)
     return best + ((x0, y0),)
 
+def chin_y(im, ex, ey, ed):
+    """얼굴 피부 덩어리의 턱 끝(눈 아래로 피부가 끊기는 곳) y"""
+    a = np.array(im.convert('RGBA')).astype(float); h = mc.rgb_to_hsv(a[..., :3] / 255)
+    skin = ((h[..., 0] < .11) | (h[..., 0] > .93)) & (h[..., 1] < .38) & (h[..., 2] > .72) & (a[..., 3] > 200)
+    lab, _ = nd.label(nd.binary_opening(skin, iterations=2)); ex, cy = int(ex), int(ey + ed * .8); l = lab[cy, ex]
+    if not l: return None
+    col = (lab == l)[:, ex - 10:ex + 10].any(1); y = cy
+    while y < a.shape[0] - 1 and col[y]: y += 1
+    return y
+
 files = sorted(glob.glob(os.path.join(SRC, '*.png')))
 pat = re.compile(r'^\d+-[a-z]+-(default|think|point|crossed)-([a-z]+)\.png$')
 table = json.load(open(TABLE, encoding='utf-8'))
@@ -75,7 +85,9 @@ total = 0
 REF_BOX = face_box('default'); REF_F = [f for f in files if re.search(r'-default-neutral\.png$', f)][0]; REF_IM = Image.open(REF_F).convert('RGBA')
 REF_H = eyes(REF_IM)
 if REF_H and not (REF_BOX[0] < REF_H[0][0] < REF_BOX[2] and REF_BOX[1] < REF_H[0][1] < REF_BOX[3]): REF_H = None
+REF_E0 = None
 REF_E = ((REF_BOX[0] + REF_BOX[2]) / 2, REF_BOX[1] + (REF_BOX[3] - REF_BOX[1]) * .40); REF_D = (REF_BOX[2] - REF_BOX[0]) * .42
+REF_C = chin_y(REF_IM, REF_E[0], REF_E[1], REF_D)
 files.sort(key=lambda f: '-default-' not in f)
 for f in files:
     m = pat.match(os.path.basename(f))
@@ -94,6 +106,14 @@ for f in files:
         else:
             v, mx, my, t, o = E_
             P['eye'] = [round(mx + (REF_E[0] - o[0]) * t), round(my + (REF_E[1] - o[1]) * t)]; P['ed'] = round(REF_D * t, 1); P['fit'] = 'face %.2f' % v
+        # 눈과 턱의 절충: 자세 그림마다 얼굴 길이가 조금씩 달라(따로 생성) 눈만 맞추면 턱이, 턱만 맞추면 눈이 어긋난다.
+        # → 배율은 '눈 사이'와 '눈~턱' 비율의 기하평균, 기준점은 눈과 턱의 가운데로 잡아 어긋남을 반씩 나눈다.
+        cp = chin_y(im, P['eye'][0], P['eye'][1], P['ed'])
+        if REF_C and cp and cp > P['eye'][1]:
+            r_ed = REF_D / P['ed']; r_h = (REF_C - REF_E[1]) / (cp - P['eye'][1])
+            if 0.7 < r_h < 1.4:
+                sm = (r_ed * r_h) ** .5; Mp = (P['eye'][1] + cp) / 2; Md = (REF_E[1] + REF_C) / 2
+                P['eye'] = [P['eye'][0], round(Mp - (Md - REF_E[1]) / sm)]; P['ed'] = round(REF_D / sm, 1); P['fit'] += ' chin %.2f' % r_h
     P.setdefault('faces', {}); ch['poses'][pose] = P
     for g in ([] if ALIGN_ONLY else files):
         mm = pat.match(os.path.basename(g))

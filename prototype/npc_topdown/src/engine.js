@@ -149,7 +149,7 @@ const TroemereiNPC = (() => {
     const direct=route(w,s,n,g.goal,{ignoreNpc:n.id});
     if(direct.length || manhattan(n,g.goal)===0)return direct;
     // A point of interest can be occupied by another NPC; approach its free side.
-    const occupied=s.npcs.some(other=>other.id!==n.id&&other.x===g.goal.x&&other.y===g.goal.y);
+    const occupied=s.npcs.some(other=>other.id!==n.id&&other.x===g.goal.x&&other.y===g.goal.y)||(s.player.x===g.goal.x&&s.player.y===g.goal.y); // 플레이어가 서 있어도 옆으로
     if(occupied){
       let best=null;
       for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
@@ -197,7 +197,7 @@ const TroemereiNPC = (() => {
     if(!g)return false;
     if(g.target)return manhattan(n,g.target)===1;
     if(manhattan(n,g.goal)===0)return true;
-    const occupied=s.npcs.some(other=>other.id!==n.id&&other.x===g.goal.x&&other.y===g.goal.y);
+    const occupied=s.npcs.some(other=>other.id!==n.id&&other.x===g.goal.x&&other.y===g.goal.y)||(s.player.x===g.goal.x&&s.player.y===g.goal.y); // 플레이어가 서 있어도 옆으로
     return occupied&&manhattan(n,g.goal)===1;
   }
   function arrive(w,s,n){

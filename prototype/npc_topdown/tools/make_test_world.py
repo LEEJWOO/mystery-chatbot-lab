@@ -100,7 +100,7 @@ NPCS = [
     {'id': 'clara', 'name': '클라라 베버', 'call': ['클라라', '베버'], 'symbol': '클', 'color': '#9b7fd1', 'hair': '#8f72c9', 'cloth': '#1d1a24', 'x': 3, 'y': 4, 'stepSeconds': 7, 'sex': 'f',
      'profile': '독일 · 34 · 피아니스트 — 소리에 예민하다', 'rel': {'trust': 40, 'affection': 40},
      'agenda': [visit('recital_1', 'piano', '19:30', '19:50', 1180, 80, once=True, inter=False),
-                visit('move_brooch', 'case', '19:50', '19:57', 30, 85, once=True, inter=False, onCompleteFlag='brooch_gone', onCompleteFact='clara_moved'),
+                visit('move_brooch', 'case', '19:50', '20:25', 30, 85, once=True, inter=False, onCompleteFlag='brooch_gone', onCompleteFact='clara_moved'),
                 visit('recital_2', 'piano', '19:51', '20:20', 1200, 80, once=True, inter=False, onCompleteFlag='recital_done'),
                 visit('terrace_rest', 'bench', '20:20', '22:00', 300, 20, 1, 60)],
      'notes': [{'text': '리사이틀 내내 피아노 앞에 있었다', 'unlock': {'seen': True}}, {'text': '휴식 시간에 진열장 앞에 섰다', 'unlock': {'fact': 'clara_moved'}}]},
@@ -286,11 +286,11 @@ world = {
     'slots': [{'name': '아침', 'from': '06:00'}, {'name': '오후', 'from': '12:00'}, {'name': '저녁', 'from': '18:00'}, {'name': '밤', 'from': '22:00'}],
     'branches': [], 'scenes': SCENES,
     'trials': [
-        {'id': 'brooch', 'code': 'T1', 'title': '라운지의 사라진 브로치', 'hp': 5, 'flag': 'trial_brooch_done', 'evidence': ['card', 'program', 'score', 'sketch', 'bar_log', 'velvet', 'glove', 'brooch'],
+        {'id': 'brooch', 'code': 'T1', 'title': '라운지의 사라진 브로치', 'stage': '라운지', 'hp': 5, 'flag': 'trial_brooch_done', 'evidence': ['card', 'program', 'score', 'sketch', 'bar_log', 'velvet', 'glove', 'brooch'],
          'issues': [{'id': 'i1', 'q': '브로치는 언제 사라졌나?', 'a': '휴식 시간 무렵(19:45~20:05)'}, {'id': 'i2', 'q': '오딜이 가져갔나?', 'a': '아니다, 바에 있었다'},
                     {'id': 'i3', 'q': '누가, 왜 옮겼나?', 'a': '클라라, 장식이 피아노 소리에 떨려서', 'confirmAt': 16}],
          'phases': T1},
-        {'id': 'case_c1', 'code': 'C1', 'kind': 'case', 'title': '사라진 브로치', 'hp': 5, 'evidence': [], 'issues': [], 'then': [{'code': 'T1'}], 'phases': C1},
+        {'id': 'case_c1', 'code': 'C1', 'kind': 'case', 'title': '사라진 브로치', 'stage': '라운지', 'hp': 5, 'evidence': [], 'issues': [], 'then': [{'code': 'T1'}], 'phases': C1},
     ],
     'host': {'name': '지배인'},
     'rel': {'aiStep': 5, 'firstTalk': {'trust': 6}, 'scales': [
