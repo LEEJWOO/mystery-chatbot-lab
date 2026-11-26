@@ -299,6 +299,17 @@ function trItemPic(it, size) {
   return <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">{btn ? <><circle cx="20" cy="20" r="12" fill="#c9b48a" stroke="#6b5530" strokeWidth="1.5" />{[[16, 16], [24, 16], [16, 24], [24, 24]].map(([x, y]) => <circle key={x + '' + y} cx={x} cy={y} r="1.8" fill="#6b5530" />)}</>
     : <><path d="M10 5 H26 L32 11 V35 H10 Z" fill="#f3ead6" stroke="#8a7550" strokeWidth="1.2" /><path d="M26 5 V11 H32" fill="#d9ccb0" stroke="#8a7550" strokeWidth="1" />{[15, 19, 23, 27].map(y => <path key={y} d={`M14 ${y} H${y === 27 ? 22 : 28}`} stroke="#9a8a6a" strokeWidth="1.2" />)}</>}</svg>;
 }
+// 논스톱에서 빗나갔을 때: 맞힌 줄의 인물 한마디(관계 단계 1~5에 따라) + 주인공 혼잣말. ph.miss[who] / ph.mono 로 덮어쓸 수 있다.
+const TR_MISS = [
+  { if: { rel: { trust: [4, 5] } }, text: '음…… 그건 좀 아닌 것 같아요. 제 말을 한 번만 더 들어 봐 주실래요?', face: '' },
+  { if: { rel: { trust: [1, 2] } }, text: '하, 엉뚱한 데를 찌르시네. 똑바로 좀 들어요.', face: '불만' },
+  { text: '에? 그게 지금 이 얘기랑 무슨 상관인데요?', face: '놀람' }];
+const TR_MONO = ['……아니야, 그게 아니야. 다시 생각해 보자.', '엉뚱한 곳을 찔렀다. 증언 어딘가에 진짜 모순이 숨어 있을 거야…….', '침착하자. 누가 무슨 말을 했는지, 처음부터 다시 듣자.'];
+function trMissLine(st, ph, who) {
+  const own = (ph.miss || {})[who];
+  if (own) return trLineOf(st, { who, ...own });
+  const m = TR_MISS.find(a => trCond(st, a.if, who)) || TR_MISS[TR_MISS.length - 1]; return { who, text: m.text, face: m.face };
+}
 // 논스톱 증언: {구절}이 약점(쏠 수 있는 말). 괄호는 화면에 보이지 않는다.
 function trNsParse(text) {
   const out = []; let seg = 0; String(text).split(/(\{[^}]*\})/).forEach(t => { if (!t) return; if (t[0] === '{') out.push({ t: t.slice(1, -1), s: seg++ }); else out.push({ t, s: -1 }); });
@@ -671,7 +682,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   function trNonstop(ph, evid) {
     const g = tv.g || {}, li = g.li || 0, sh = g.sh || 0, lines = ph.lines.map(L => trNsParse(L.text)), mode = g.mode || 'fire', words = g.words || [];
     const lens = lines.map(P => P.reduce((n, x) => n + Array.from(x.t).length, 0));
-    nsRef.current = g.shot || g.pause || tv.fx ? null : { lens, hold: 26, ms: 80 };
+    nsRef.current = g.shot || g.pause || g.miss || tv.fx ? null : { lens, hold: 26, ms: 80 };
     const bullets = [...evid.map(it => ({ key: 'e:' + it.id, k: 'ev', id: it.id, t: it.name })), ...words.map(x => ({ key: 'w:' + x.l + '.' + x.s, k: 'w', l: x.l, s: x.s, t: x.t }))];
     const sel = bullets.find(b => b.key === g.sel) || null, who = ph.lines[li].who, c = trNpc(who);
     const setG = f => setTv(v => ({ ...v, g: { ...v.g, ...(typeof f === 'function' ? f(v.g || {}) : f) } }));
@@ -690,7 +701,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       setG({ shot: { kind: 'fire', x0: q.x, y0: q.y, x1: p.x, y1: p.y, t: sel.t, ok } });
       setTimeout(() => {
         if (ok) { setG({ broke: l + '.' + x }); if (sel.k === 'ev') setTv(v => ({ ...v, ev: sel.id })); trialRight('모순!', 1500); }
-        else { setG(o => ({ shot: { ...o.shot, back: true }, hint: '튕겨 나갔다 — 그 말은 이 약점과 부딪치지 않는다' })); trialWrong(); setTimeout(() => setG({ shot: null }), 480); }
+        else { setG(o => ({ shot: { ...o.shot, back: true }, hint: '' })); trialWrong();
+          setTimeout(() => setG(o => ({ shot: null, miss: { step: 0, who: ph.lines[l].who, n: o.nmiss || 0 }, nmiss: (o.nmiss || 0) + 1 })), 560); }
       }, 300);
     };
     let n = 0;
@@ -698,7 +710,14 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       const part = L.slice(0, vis).join(''); if (x.s < 0) return <span key={i}>{part}</span>;
       const id = li + '.' + x.s, held = words.some(y => y.l === li && y.s === x.s), now = vis < L.length || (sh === n && sh < lens[li]);
       return <span key={i} className={'tr-nseg' + (now ? ' now' : '') + (mode === 'take' ? ' take' : '') + (held ? ' held' : '') + (g.broke === id ? ' broke' : '')} onClick={e => onSeg(li, x.s, x.t, e)}>{part}</span>; });
-    const S = g.shot;
+    const S = g.shot, M = g.miss;
+    if (M) { // 빗나간 뒤: 인물의 한마디 → 내 혼잣말 → 다시 증언 처음부터
+      const L = M.step === 0 ? trMissLine(state, ph, M.who) : null, mono = (ph.mono || TR_MONO)[M.n % (ph.mono || TR_MONO).length], me = state.player.look ? state.player.look.name : '나';
+      return <div className="tr-ns" ref={nsBox} onClick={() => setG(o => o.miss.step === 0 ? { miss: { ...o.miss, step: 1 } } : { miss: null, sh: 0 })}>
+        <div className="tr-ns-top"><b>NONSTOP</b><span>{ph.title}</span></div>
+        <div key={M.step} className="tr-vn tr-ns-missbox"><div className="tr-vn-name" style={{ '--c': L ? trNpc(L.who).color : '#3a6a8a' }}>{L ? trNpc(L.who).name : me}</div>
+          <div className={'tr-ttext' + (L ? '' : ' mono')}>{trTyped(trSegs(L ? L.text : mono), 999)}</div><i className="tr-vn-next">▼</i></div></div>;
+    }
     return <div className="tr-ns" ref={nsBox}>
       <div className="tr-ns-top"><b>NONSTOP</b><span>{ph.title}</span><button onClick={() => setG(o => ({ pause: !o.pause }))}>{g.pause ? '▶ 계속' : 'Ⅱ 멈춤'}</button></div>
       <div className="tr-ns-guide">{ph.guide}</div>
@@ -710,7 +729,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
           {!bullets.length ? <span className="tr-mut">쓸 수 있는 탄환이 없다</span> : null}</div>
         <div className="tr-ns-hint">{g.hint || (sel ? '장전: ' + sel.t + ' — 빛나는 말을 눌러 쏜다' : '탄환을 고른 뒤, 흐르는 증언의 빛나는 말을 누른다')}</div>
       </div>
-      {S ? <div className={'tr-bul ' + S.kind + (S.back ? ' back' : '') + (S.ok ? ' ok' : '')} style={{ '--x0': S.x0 + 'px', '--y0': S.y0 + 'px', '--x1': S.x1 + 'px', '--y1': S.y1 + 'px' }}><span className={'tr-blade' + (S.kind === 'take' || (sel && sel.k === 'w') ? ' word' : '')}>{S.t}</span></div> : null}
+      {S ? <div className={'tr-bul ' + S.kind + (S.back ? ' back' : '') + (S.ok ? ' ok' : '')} style={{ '--x0': S.x0 + 'px', '--y0': S.y0 + 'px', '--x1': S.x1 + 'px', '--y1': S.y1 + 'px', '--rot': (S.kind === 'fire' ? Math.atan2(S.y1 - S.y0, S.x1 - S.x0) * 180 / Math.PI : 0) + 'deg' }}><span className={'tr-blade' + (S.kind === 'take' || (sel && sel.k === 'w') ? ' word' : '')}>{S.t}</span></div> : null}
     </div>;
   }
   // ---------- 꿈 조각 잇기: 사선으로 나뉜 '전 → 후' 두 장면. 「?」 칸만 바꿀 수 있다 ----------
@@ -793,7 +812,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const issueOf = TR.phases.slice(0, T.phase + 1).reduce((a, p) => p.issue || a, '');
     const ns = !cur && !sent && ph.type === 'nonstop', rb = !cur && !sent && ph.type === 'rebut', rbStep = rb ? ((tv.g || {}).rb || 0) : -1;
     const split = rbStep === 1, stageFx = cur && cur.fx ? cur.fx : '', mini = !cur && ph.type !== 'trans' && !rb && !ns;
-    const speakerId = cur ? cur.who : ns ? ph.lines[(tv.g || {}).li || 0].who : (ph.type === 'debate' ? ph.lines[tv.stmt].who : ph.type === 'rebut' ? ph.npc : '');
+    const nsMiss = ns && (tv.g || {}).miss, nsMissL = nsMiss && nsMiss.step === 0 ? trMissLine(state, ph, nsMiss.who) : null;
+    const speakerId = cur ? cur.who : nsMissL ? nsMissL.who : ns ? ph.lines[(tv.g || {}).li || 0].who : (ph.type === 'debate' ? ph.lines[tv.stmt].who : ph.type === 'rebut' ? ph.npc : '');
     let body = null;
     if (sent) body = <div className="tr-tcard"><div className="tr-mut">반론을 전달했습니다. 상대의 대답이 새 화면에서 이어집니다.</div></div>;
     else if (cur) body = <div className="tr-tbox2" onClick={tapLine}>
@@ -889,7 +909,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         {/* 무대: 말하는 사람의 모습(표정 조각)과 재판 참가자 자리 */}
         <div key={T.phase + '-' + speakerId + '-' + (stageFx || (cur && cur.cut) ? tv.idx : '') + (tv.reply ? 'r' : '')} className={'tr-stage' + (mini ? ' mini' : '') + (split ? ' split' : '') + (stageFx ? ' fx-' + stageFx : '')}>
           {TR_A.bg && TR_A.bg['재판장'] ? <img src={trUrl(TR_A.bg['재판장'])} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .6 }} /> : <div className="tr-spot-light" />}
-          {!mini && ch ? <div className="tr-actor"><div className="tr-actor-in">{trSprite(ch, trFace(ch, cur ? cur.face : ''), u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div></div> : null}
+          {!mini && ch ? <div className="tr-actor"><div className="tr-actor-in">{trSprite(ch, trFace(ch, cur ? cur.face : nsMissL ? nsMissL.face : ''), u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div></div> : null}
           {!mini && speakerId === 'host' ? <div className={'tr-actor host' + (T.phase === 0 && tv.idx === 0 ? ' enter' : '')}><div className="tr-hspot" /><div className="tr-hspot-floor" />{trHostSil()}</div> : null}
           {split ? <div className="tr-objc"><div className="tr-objc-dim" /><div className="tr-objc-cut">{state.player.look && TR_A.parts ? trCutinImg(state.player.look, { left: 0, top: 0 }) : <div className="tr-objc-band"><div className="tr-objc-face">{trMeSil()}</div></div>}</div><b className="tr-objc-word">반론!</b><span className="tr-objc-name">{state.player.look ? state.player.look.name : '나'}</span></div> : null}
           {stageFx === 'flash' ? <div className="tr-flash" /> : null}
