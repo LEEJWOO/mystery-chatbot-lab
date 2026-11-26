@@ -373,7 +373,7 @@ function trThumb(id) {
 // 레이어 방식 의상: 몸(P.src) 위에 얹는다. 인물별로 고른 옷(TR_WEAR) → 그림표의 wear → casual 순.
 const TR_WEAR = {};
 function trWear(id, c, P) {
-  const O = P.outfits; if (!O) return null;
+  const O = P.outfits; if (!O || TR_WEAR[id] === '-') return null;   // '-' = 맨몸(디버그 갤러리)
   return O[TR_WEAR[id]] || O[(c && c.wear) || 'casual'] || O[Object.keys(O)[0]] || null;
 }
 function trActor(id, expr, pose, onBad, bad) {
@@ -1219,6 +1219,9 @@ function trGallery(g, setG, badImg, setBadImg) {
     <div className="tr-dbgrw">{W.npcs.map(n => <button key={n.id} className={n.id === g.id ? 'on' : ''} onClick={() => setG({ ...g, id: n.id })}>{trNpc(n.id).name}</button>)}</div>
     <div className="tr-dbgrw">{poses.map(p => <button key={p} className={p === g.pose ? 'on' : ''} onClick={() => setG({ ...g, pose: p })}>{TR_POSE_NAME[p]}{P[p] ? '' : '·'}</button>)}</div>
     <div className="tr-dbgrw">{TR_FACES.map(f => <button key={f} className={(f === g.face ? 'on' : '') + (has(g.pose, f) ? '' : ' dim')} onClick={() => setG({ ...g, face: f })}>{f}</button>)}</div>
+    {(() => { const names = [...new Set(poses.flatMap(p => Object.keys((P[p] || {}).outfits || {})))]; if (!names.length) return null;
+      const cur = TR_WEAR[g.id] || (c && c.wear) || 'casual', KO = { '-': '맨몸', casual: '평상복', swim: '수영복', under: '속옷' };
+      return <div className="tr-dbgrw">{['-', ...names].map(o => <button key={o} className={o === cur ? 'on' : ''} onClick={() => { TR_WEAR[g.id] = o; setG({ ...g, w: o }); }}>{KO[o] || o}</button>)}</div>; })()}
     <div className="tr-dbgrw"><button onClick={() => setG(null)}>닫기</button></div>
   </div>;
 }
