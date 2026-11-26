@@ -1220,53 +1220,54 @@
   "h": 648
  },
  "sprites": {
-  "src": "ea7c9abcf434.webp",
-  "w": 720,
-  "h": 270,
+  "src": "a663b46f027e.webp",
+  "w": 432,
+  "h": 324,
   "ids": [
-   "player",
-   "companion",
-   "contact",
-   "librarian",
-   "courier"
+   "suzune",
+   "mei",
+   "ruoxi",
+   "seoha",
+   "clara",
+   "odile"
   ],
   "cw": 36,
   "ch": 54,
   "dirs": {
    "down": {
-    "idle": 0,
+    "idle": 1,
     "walk": [
+     0,
      1,
      2,
+     1
+    ]
+   },
+   "left": {
+    "idle": 4,
+    "walk": [
      3,
+     4,
+     5,
      4
     ]
    },
-   "up": {
-    "idle": 5,
+   "right": {
+    "idle": 7,
     "walk": [
      6,
      7,
      8,
-     9
+     7
     ]
    },
-   "left": {
+   "up": {
     "idle": 10,
     "walk": [
+     9,
+     10,
      11,
-     12,
-     13,
-     14
-    ]
-   },
-   "right": {
-    "idle": 15,
-    "walk": [
-     16,
-     17,
-     18,
-     19
+     10
     ]
    }
   }
