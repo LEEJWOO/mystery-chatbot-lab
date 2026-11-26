@@ -1200,6 +1200,27 @@ const trNPC = /* @__PURE__ */ (() => {
     const blocker = posKey(next.x, next.y);
     const blockedByPlayer = blocker === posKey(s.player.x, s.player.y);
     const blockedByNpc = s.npcs.some((other) => other.id !== n.id && blocker === posKey(other.x, other.y));
+    if (blockedByNpc) {
+      const other = s.npcs.find((o) => o.id !== n.id && posKey(o.x, o.y) === blocker);
+      if (other && other.mode === "moving" && other.route.length && other.route[0].x === n.x && other.route[0].y === n.y) {
+        if (s.npcs.indexOf(n) < s.npcs.indexOf(other)) {
+          n.nextMoveAt = s.clock + 3;
+          return;
+        }
+        const occ = /* @__PURE__ */ new Set([...s.npcs.map((o) => posKey(o.x, o.y)), posKey(s.player.x, s.player.y)]);
+        const dx = Math.sign(next.x - n.x), dy = Math.sign(next.y - n.y);
+        const side = [[dy, dx], [-dy, -dx], [-dx, -dy]].map(([ax, ay]) => ({ x: n.x + ax, y: n.y + ay })).find((p) => walkable(w, p.x, p.y) && !occ.has(posKey(p.x, p.y)));
+        if (side) {
+          n.x = side.x;
+          n.y = side.y;
+          n.route = [];
+          n.blockedSince = null;
+          n.nextMoveAt = s.clock + (w.npcs.find((x) => x.id === n.id).stepSeconds || 7);
+          addLog(w, s, nm(w, s, n.id) + "\uC774(\uAC00) " + nm(w, s, other.id) + "\uC5D0\uAC8C \uAE38\uC744 \uBE44\uCF1C \uC8FC\uC5C8\uB2E4.", "npc", n);
+          return;
+        }
+      }
+    }
     if (blockedByPlayer || blockedByNpc) {
       if (n.blockedSince === null) n.blockedSince = s.clock;
       if (s.clock - n.blockedSince >= 8) {

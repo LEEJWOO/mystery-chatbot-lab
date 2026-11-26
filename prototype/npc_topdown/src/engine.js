@@ -266,6 +266,18 @@ const TroemereiNPC = (() => {
     const next=n.route[0];const blocker=posKey(next.x,next.y);
     const blockedByPlayer=blocker===posKey(s.player.x,s.player.y);
     const blockedByNpc=s.npcs.some(other=>other.id!==n.id&&blocker===posKey(other.x,other.y));
+    if(blockedByNpc){
+      // 마주 걸어오다 서로 막힘(상대의 다음 칸이 내 자리): 같은 쪽으로 동시에 비켜서 '와리가리'가 나지 않게, 목록 뒤쪽 인물만 옆으로 비킨다.
+      const other=s.npcs.find(o=>o.id!==n.id&&posKey(o.x,o.y)===blocker);
+      if(other&&other.mode==='moving'&&other.route.length&&other.route[0].x===n.x&&other.route[0].y===n.y){
+        if(s.npcs.indexOf(n)<s.npcs.indexOf(other)){n.nextMoveAt=s.clock+3;return;}   // 앞쪽 인물은 그대로 기다린다
+        const occ=new Set([...s.npcs.map(o=>posKey(o.x,o.y)),posKey(s.player.x,s.player.y)]);
+        const dx=Math.sign(next.x-n.x),dy=Math.sign(next.y-n.y);
+        const side=[[dy,dx],[-dy,-dx],[-dx,-dy]].map(([ax,ay])=>({x:n.x+ax,y:n.y+ay})).find(p=>walkable(w,p.x,p.y)&&!occ.has(posKey(p.x,p.y)));
+        if(side){n.x=side.x;n.y=side.y;n.route=[];n.blockedSince=null;n.nextMoveAt=s.clock+(w.npcs.find(x=>x.id===n.id).stepSeconds||7);
+          addLog(w,s,nm(w,s,n.id)+'이(가) '+nm(w,s,other.id)+'에게 길을 비켜 주었다.','npc',n);return;}
+      }
+    }
     if(blockedByPlayer||blockedByNpc){
       if(n.blockedSince===null)n.blockedSince=s.clock;
       if(s.clock-n.blockedSince>=8){
