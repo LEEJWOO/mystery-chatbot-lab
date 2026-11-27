@@ -2463,7 +2463,7 @@ const trJosa = (w, a, b) => {
 const trVisible = (s, n) => trNPC.sees(TN_WORLD, s.player, n);
 const trChars = (lines) => lines.reduce((k, l) => k + Array.from(l.text).length, 0);
 const TR_A = typeof TN_ASSETS === "object" && TN_ASSETS ? TN_ASSETS : {};
-const trUrl = (f) => f ? /^https?:/.test(f) ? f : (TR_A.url || "") + f : "";
+const trUrl = (f) => f ? /^(https?:|data:|blob:)/.test(f) ? f : (TR_A.url || "") + f : "";
 const TR_FACES = ["\uAE30\uBCF8", "\uBBF8\uC18C", "\uC6C3\uC74C", "\uC758\uC2EC", "\uB180\uB78C", "\uACE4\uB780", "\uBD80\uB044\uB7EC\uC6C0", "\uBD88\uB9CC", "\uC2AC\uD514", "\uACA9\uB178", "\uD328\uB2C9", "\uD558\uB77C\uAD6C\uB85C"];
 const TR_SYN = {
   \uD558\uB77C\uAD6C\uB85C: ["\uD558\uB77C\uAD6C\uB85C", "\uC74C\uD749", "\uC0AC\uC545", "\uBE44\uC5F4", "\uC18D\uAC80", "\uD751\uC2EC", "\uBE44\uC6C3", "\uB0C9\uC18C", "\uC545\uB784"],

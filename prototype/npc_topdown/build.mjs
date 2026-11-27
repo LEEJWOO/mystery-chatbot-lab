@@ -12,7 +12,7 @@ const assets = JSON.parse(read('./src/assets.' + (process.env.ASSETS || 'web') +
 if (process.env.ASSET_URL) assets.url = process.env.ASSET_URL;
 // 본편 세계는 시험판 지도 그림·방 배경을 쓰지 않는다(지도 그림이 나올 때까지 칸 색으로 그림).
 if (WN) { delete assets.map; assets.bg = {}; }
-const jsx = [
+const makeJsx = assets => [
   '// 몽환의 트로이메라이 · 탑다운 시험판 v2.0 (TRM1) — UUMMAI에 컴포넌트 1개로 등록: 이름 Troemerei',
   '// import·fetch·브라우저 저장소 없음. 그림은 아래 TN_ASSETS의 외부 이미지 주소(<img>·CSS 배경)로만 불러온다. useState/useEffect/useRef/useMemo/sendMessage는 호스트 제공.',
   '// AI 출력 형식: <Troemerei s=\'상태코드\' d=\'이름(표정):대사|*서술\' />  (자유 행동 t=\'초\', 사건 e=\'…\', 증언 k=\'기억K3R8@줄\', 화면 밖 대화 f=\'1\')',
@@ -27,11 +27,12 @@ const jsx = [
 ].join('\n')
   // 등록용 출력에서는 내부 객체 이름을 소문자로 바꿔, UUMMAI 컴포넌트 목록에 Troemerei 하나만 보이게 한다.
   .replace(/\bTroemereiNPC\b/g, 'trNPC').replace(/\bTroemereiCodec\b/g, 'trCodec').replace(/\bTroemereiTalk\b/g, 'trTalk');
+const jsx = makeJsx(assets);
 fs.mkdirSync(new URL('./dist/', import.meta.url), { recursive: true });
 fs.writeFileSync(new URL('./dist/Troemerei' + SUF + '.jsx', import.meta.url), jsx);
 
 // 문법 검사 겸 브라우저 시험본 생성
-const js = transformSync(jsx, { loader: 'jsx', jsx: 'transform', jsxFactory: 'React.createElement', jsxFragment: 'React.Fragment' }).code;
+const makeHtml = jsx => { const js = transformSync(jsx, { loader: 'jsx', jsx: 'transform', jsxFactory: 'React.createElement', jsxFragment: 'React.Fragment' }).code;
 const react = read('./node_modules/react/umd/react.production.min.js');
 const reactDom = read('./node_modules/react-dom/umd/react-dom.production.min.js');
 const harness = read('./tools/harness.js');
@@ -42,7 +43,14 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta n
 <script>const {useState,useEffect,useRef,useMemo}=React;
 ${js}
 ${harness}</script></body></html>`;
-fs.writeFileSync(new URL('./dist/Troemerei' + SUF + '_Standalone.html', import.meta.url), html);
+return html; };
+fs.writeFileSync(new URL('./dist/Troemerei' + SUF + '_Standalone.html', import.meta.url), makeHtml(jsx));
+// 오프라인 시험본(로컬 전용): OFFLINE_DIR의 그림을 data: 주소로 시험용 HTML에만 넣는다. 등록용 JSX에는 넣지 않으며 저장소에도 올리지 않는다.
+if (process.env.OFFLINE_DIR) {
+  const off = JSON.parse(JSON.stringify(assets).replace(/"([0-9a-f]{12}\.webp)"/g, (m, n) => { const f = process.env.OFFLINE_DIR + '/' + n; return fs.existsSync(f) ? JSON.stringify('data:image/webp;base64,' + fs.readFileSync(f).toString('base64')) : m; }));
+  fs.writeFileSync(new URL('./dist/Troemerei' + SUF + '_Offline.html', import.meta.url), makeHtml(makeJsx(off)));
+  console.log('오프라인 시험본 생성(로컬 전용)');
+}
 console.log('Troemerei' + SUF + '.jsx', jsx.length, '자 /', Buffer.byteLength(jsx), '바이트');
 
 // 기억 코드 로어북(본편 비밀은 채팅에 보이지 않게 코드로 보내고, 내용은 로어북에 둔다). 코드는 사실마다 고정(world.facts[].code).

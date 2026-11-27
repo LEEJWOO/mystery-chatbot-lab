@@ -28,7 +28,7 @@ const trChars = lines => lines.reduce((k, l) => k + Array.from(l.text).length, 0
 // ---------- 그림: 장소 배경 + 인물 레이어(몸 + 표정 조각) ----------
 // 주소 표(TN_ASSETS)는 빌드할 때 끼워 넣는다. 파일 이름은 내용 해시라 이름만으로 무엇인지 알 수 없다.
 const TR_A = typeof TN_ASSETS === 'object' && TN_ASSETS ? TN_ASSETS : {};
-const trUrl = f => f ? (/^https?:/.test(f) ? f : (TR_A.url || '') + f) : '';
+const trUrl = f => f ? (/^(https?:|data:|blob:)/.test(f) ? f : (TR_A.url || '') + f) : '';
 // AI가 쓴 표정 낱말 → 준비된 표정. 목록에 없으면 기본 표정.
 // 표정 12종(대본·AI 공통 이름). AI가 쓴 낱말은 아래 유의어로 맞춘다. 앞쪽이 우선.
 const TR_FACES = ['기본', '미소', '웃음', '의심', '놀람', '곤란', '부끄러움', '불만', '슬픔', '격노', '패닉', '하라구로'];
