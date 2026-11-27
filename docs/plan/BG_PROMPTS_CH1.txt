@@ -1,0 +1,101 @@
+1장 대화 배경 프롬프트 17곳 (2026-11-28)
+각 장소: [작가·퀄리티 블록] + [공통 배경 블록] + [장소 태그]를 이어 붙인 것. 아래에는 이어 붙인 완성본을 장소마다 적었다.
+- 위치·구도 지시 문장(예: placed in upper area, lower third ...)은 넣지 않는다. 비율별로 받아 Claude가 잘라 맞춘다.
+- 핵심 소품은 1.2~1.3 가중치로 분명히 그리게 한다.
+- 전지·숨은 틈·시신·혈흔 등 사건 단서는 그리지 않는다.
+
+[작가·퀄리티 블록 — 그대로 유지]
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::,
+
+[공통 배경 블록]
+hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light,
+
+[권장 UC(제외 프롬프트) 추가분]
+1girl, 1boy, person, people, character, crowd, silhouette, text, sign, signboard, logo, watermark, letters, numbers, blood, corpse
+
+==================================================================
+01 로비
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, hotel lobby, 1.3::glass display case ::, reception desk, glass door, entrance hall, marble floor, chandelier, potted plant, sofa, symmetrical, wide shot,
+
+==================================================================
+02 라운지 바
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, hotel bar, lounge, 1.3::grand piano ::, 1.2::bar counter ::, liquor bottles, shelves, bar stool, armchair, carpet, large window, ocean view, wooden interior, warm lighting,
+
+==================================================================
+03 연회장
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, banquet hall, 1.3::long table ::, tablecloth, chairs, 1.2::chandelier ::, high ceiling, tall windows, curtains, carpet, symmetrical, wide shot,
+
+==================================================================
+04 주방
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, kitchen, commercial kitchen, 1.3::stainless steel counter ::, stove, range hood, pots, pans, hanging utensils, shelves, refrigerator, tile floor, tile wall,
+
+==================================================================
+05 1층 복도
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, hallway, hotel corridor, wide corridor, carpet, wall lamp, wooden doors, window, potted plant, one-point perspective,
+
+==================================================================
+06 계단홀
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, stairwell, 1.3::staircase ::, stairs, 1.2::stairs going up, stairs going down ::, landing, handrail, marble floor, wall lamp, window,
+
+==================================================================
+07 2층 복도
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, hotel corridor, long hallway, 1.3::row of doors ::, doors on both sides, carpet, wall lamp, ceiling light, one-point perspective, window at end of hallway,
+
+==================================================================
+08 객실 (12실 공용)
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, hotel room, bedroom, 1.2::bed ::, white bed sheet, pillow, nightstand, lamp, desk, chair, curtains, 1.2::window, ocean view ::, carpet, wardrobe,
+
+==================================================================
+09 리넨실
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, storage room, linen room, 1.3::shelves ::, 1.2::folded towels, stacked sheets ::, laundry cart, cardboard box, narrow room, ceiling light, cramped,
+
+==================================================================
+10 휴게 코너
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, lounge, sitting area, 1.2::sofa ::, coffee table, 1.2::vending machine ::, magazine rack, potted plant, large window, ocean view, carpet,
+
+==================================================================
+11 앞마당 (호텔 정면)
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, outdoors, 1.3::hotel exterior, building facade ::, front entrance, glass door, courtyard, stone pavement, palm tree, bush, blue sky, cloud, island,
+
+==================================================================
+12 정원
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, outdoors, garden, 1.3::fountain ::, stone path, hedge, flower bed, bench, palm tree, grass, blue sky, cloud, overgrown,
+
+==================================================================
+13 수영장
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, outdoors, 1.2::swimming pool ::, poolside, pool deck, 1.3::diving board, high diving platform, ladder ::, deck chair, parasol, palm tree, ocean, horizon, blue sky, water,
+
+==================================================================
+14 탈의실
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, indoors, locker room, 1.3::lockers ::, bench, mirror, tile floor, tile wall, towel, shower curtain, ceiling light,
+
+==================================================================
+15 해변
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, outdoors, 1.3::beach ::, sand, ocean, waves, horizon, blue sky, cloud, rock, palm tree, seashell, shore,
+
+==================================================================
+16 선착장
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, day, natural light, outdoors, 1.3::pier, wooden pier ::, dock, mooring post, rope, ocean, horizon, blue sky, cloud, 1.2::no boat ::, empty, seagull,
+
+==================================================================
+17 재판장
+==================================================================
+0.7::artist:tokiame ::, 1.3::artist:kimhiro ::, 0.7::ssambatea ::, 0.2::yoneyama mai ::, 0.3::artist:deaver ::, 0.7::artist:k-suwabe ::, 0.3::artist:try (lsc) ::, 0.4::artist:re0n ::, 0.5::artist:nanahara fuyuki ::, 0.7::artist:null (nyanpyoun) ::, 0.9::artist:nakayama miyuki ::, year 2026, year 2025, -3::artist collaboration ::, 2::redrawn ::, -1::blender (medium) ::, 1.5::black outline, thick outline ::, depth of field, -3::simple illustration, rough sketch, production art , minimalism, aliasing, official art, official style, variant set, text ::, 1.8::highres, absurdres, high detail, masterpiece, amazing quality, novel illustration, best illustration ::, hand-painted anime background, broad shadow shapes, no humans, scenery, resort hotel, luxury, abandoned, empty, quiet, slightly dusty, indoors, underground, 1.3::courtroom ::, 1.2::podiums arranged in a circle ::, lectern, dark, spotlight, dramatic lighting, stone wall, high ceiling, red carpet, symmetrical, wide shot,
+
+※ 재판장은 지하라 공통 블록에서 day, natural light를 뺐다.
