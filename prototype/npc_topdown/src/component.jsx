@@ -5,7 +5,7 @@ const TR_BG = ['#25344a', '#2d3a30', '#283a4a', '#2c3550'];
 // 화면 이름: 가명(alias)이 있으면 그 깃발이 서기 전까지 가명으로 보인다. TR_FLAGS는 그릴 때마다 상태의 깃발로 갱신.
 let TR_FLAGS = {};
 const trNpcRaw = id => TN_WORLD.npcs.find(n => n.id === id);
-const trNpc = id => { const n = trNpcRaw(id); if (!n) return { name: id, color: '#999', symbol: '?' }; return n.alias && !TR_FLAGS[n.alias.until] ? { ...n, name: n.alias.name, real: n.name } : n; };
+const trNpc = id => { const n = trNpcRaw(id); if (!n) { const c = (TR_A.chars || {})[id]; return { name: (c && c.label) || id, color: '#999', symbol: '?' }; } return n.alias && !TR_FLAGS[n.alias.until] ? { ...n, name: n.alias.name, real: n.name } : n; };
 // 대사의 화자 이름 → 인물 id. 본명·가명·부르는 이름(call) 모두 받는다.
 const trNameIs = (n, name) => n.name === name || (n.alias && n.alias.name === name) || (n.call || []).includes(name);
 const trArea = (x, y) => { const i = TroemereiNPC.areaOf(TN_WORLD, x, y); return i < 0 ? '통로' : TN_WORLD.map.areas[i].name; };
@@ -352,7 +352,7 @@ function trShards() {
 
 // 인물 레이어: 자세 그림(평상시 얼굴 포함) 위에 표정 조각, 그 위에 '맨 위 조각'(턱 앞 손 등)을 같은 비율 좌표로 겹친다.
 // 인물마다 fit = {s: 배율, dy: 위아래 보정(px)} 으로 키·머리 크기를 맞춘다. 그림이 없으면 임시 실루엣.
-const TR_U = .55, TR_TOP = -10; // 인물 그림 기본 배율(캔버스 1px → 화면 px)과 캔버스 위쪽 자리
+const TR_U = .55, TR_FLOOR = 500; // 인물 그림 기본 배율(캔버스 1px → 화면 px)과 바닥선(인물 상자 위에서부터 px)
 // 동선 재현용 최단 걸음 수: 점들을 차례로 지나 마지막 점(또는 그 옆 칸)까지
 function trShortest(pts, end) {
   const W = TN_WORLD, bfs = (a, goal) => { const seen = new Set([a + '']), q = [[a, 0]];
@@ -380,9 +380,10 @@ function trActor(id, expr, pose, onBad, bad) {
   const c = (TR_A.chars || {})[id], pick = trPick(c, expr, pose), P = pick.P;
   if (!P || !P.src || bad[trUrl(P.src)]) return trActorStub(id, pick.face, pose || TR_AUTO_POSE[pick.face] || 'default');
   // 표시 규칙(docs/DISPLAY_RULES.md): 같은 인물의 그림(자세·표정·의상)은 모두 같은 배율·같은 자리.
-  // 인물마다 배율 s 와 y(캔버스 픽셀 단위) 하나씩만 쓴다(줄 세우기 도구 결과). 그림별 자동 맞춤은 하지 않는다.
+  // 인물마다 배율 s 와 y 하나씩만 쓴다(줄 세우기 도구 결과, docs/LINEUP_B.json). 그림별 자동 맞춤은 하지 않는다.
+  // y = 그림 아래 끝이 바닥선보다 내려가는 거리(캔버스 px, 배율 적용 전) — 줄 세우기 도구와 같은 뜻.
   const R = (c.poses || {}).default || P, d = (c && c.disp) || {}, u = TR_U * (d.s || 1);
-  const W = P.w * u, H = P.h * u, left = (TR_W - R.w * u) / 2, top = TR_TOP + (d.y || 0) * u;
+  const W = P.w * u, H = P.h * u, left = (TR_W - R.w * u) / 2, top = TR_FLOOR + (d.y || 0) * u - R.h * u;
   const f = (P.faces || {})[pick.face]; // 빈 얼굴 방식이면 기본 표정도 조각으로 덮는다
   const pct = (a, b) => (a / b * 100) + '%', layer = (L, k) => L && !bad[trUrl(L.src)] ? <img key={k} src={trUrl(L.src)} alt="" onError={() => onBad(trUrl(L.src))} style={{ position: 'absolute', left: pct(L.x, P.w), top: pct(L.y, P.h), width: pct(L.w, P.w), height: pct(L.h, P.h) }} /> : null;
   // 하라구로: 그림에는 그림자를 넣지 않고, 눈 위쪽에 어두운 그늘을 인물 윤곽 안에만 덮는다.
@@ -1216,7 +1217,7 @@ function trGallery(g, setG, badImg, setBadImg) {
   const has = (pose, f) => trHasFace(P[pose], f);
   return <div className="tr-gal"><div className="tr-gal-stage"><div className="tr-actor-in" style={{ transform: 'none' }}>{trActor(g.id, g.face, g.pose, u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div>
     <div className="tr-gal-cap">{trNpc(g.id).name} · {TR_POSE_NAME[g.pose]} · {g.face}{has(g.pose, g.face) ? '' : ' (없음→대체)'}</div></div>
-    <div className="tr-dbgrw">{W.npcs.map(n => <button key={n.id} className={n.id === g.id ? 'on' : ''} onClick={() => setG({ ...g, id: n.id })}>{trNpc(n.id).name}</button>)}</div>
+    <div className="tr-dbgrw">{[...W.npcs.map(n => n.id), ...Object.keys(TR_A.chars || {}).filter(k => !W.npcs.some(n => n.id === k))].map(k => <button key={k} className={k === g.id ? 'on' : ''} onClick={() => setG({ ...g, id: k })}>{trNpc(k).name}</button>)}</div>
     <div className="tr-dbgrw">{poses.map(p => <button key={p} className={p === g.pose ? 'on' : ''} onClick={() => setG({ ...g, pose: p })}>{TR_POSE_NAME[p]}{P[p] ? '' : '·'}</button>)}</div>
     <div className="tr-dbgrw">{TR_FACES.map(f => <button key={f} className={(f === g.face ? 'on' : '') + (has(g.pose, f) ? '' : ' dim')} onClick={() => setG({ ...g, face: f })}>{f}</button>)}</div>
     {(() => { const names = [...new Set(poses.flatMap(p => Object.keys((P[p] || {}).outfits || {})))]; if (!names.length) return null;

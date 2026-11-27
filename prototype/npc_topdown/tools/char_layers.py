@@ -104,7 +104,9 @@ def look_img(pose):
     if bl and ne:
         a = Image.open(bl).convert('RGBA'); n = Image.open(ne).convert('RGB').resize(a.size); n.putalpha(a.split()[3]); return n
     return Image.open(ne or bl).convert('RGBA')
-REF_BOX = face_box('default'); REF_IM = look_img('default')
+REF_IM = look_img('default'); REF_BOX = face_box('default')
+if REF_BOX is None:   # 표정 없이 기본 그림만 있을 때(얼굴 위치 근사)
+    _w, _h = REF_IM.size; REF_BOX = (_w * .3, _h * .08, _w * .7, _h * .38)
 REF_H = eyes(REF_IM)
 if REF_H and not (REF_BOX[0] < REF_H[0][0] < REF_BOX[2] and REF_BOX[1] < REF_H[0][1] < REF_BOX[3]): REF_H = None
 REF_E = ((REF_BOX[0] + REF_BOX[2]) / 2, REF_BOX[1] + (REF_BOX[3] - REF_BOX[1]) * .40); REF_D = (REF_BOX[2] - REF_BOX[0]) * .42
