@@ -31,7 +31,12 @@ FIT = float(sys.argv[sys.argv.index('--fit') + 1]) if '--fit' in sys.argv else 1
 TABLE = sys.argv[sys.argv.index('--table') + 1] if '--table' in sys.argv else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'assets.web.json')
 if not os.path.exists(TABLE): json.dump({'chars': {}}, open(TABLE, 'w'))   # 확인용 빈 표
 KO = {'neutral': '기본', 'smile': '미소', 'laugh': '웃음', 'suspicious': '의심', 'surprised': '놀람', 'troubled': '곤란', 'embarrassed': '부끄러움',
-      'annoyed': '불만', 'sad': '슬픔', 'furious': '격노', 'panic': '패닉', 'darksmile': '하라구로'}
+      'annoyed': '불만', 'sad': '슬픔', 'furious': '격노', 'panic': '패닉', 'darksmile': '하라구로',
+      # 추가 25종 (docs/plan/EXPRESSION_PROMPTS.txt)
+      'serious': '진지', 'eyesclosed': '눈 감음', 'blank': '멍함', 'burst': '폭소', 'shysmile': '수줍은 미소', 'smug': '의기양양',
+      'wink': '장난', 'sneer': '냉소', 'relieved': '안도', 'moved': '감동', 'glare': '노려봄', 'irritated': '짜증', 'unimpressed': '질림',
+      'disgust': '혐오', 'shock': '충격', 'nervous': '당황', 'holdtears': '눈물 참기', 'sob': '오열', 'pain': '고통', 'fear': '공포',
+      'despair': '절망', 'breakdown': '붕괴', 'determined': '결의', 'tired': '피곤'}
 
 def save(im, q=90):
     buf = io.BytesIO(); im.save(buf, 'WEBP', quality=q, method=6); data = buf.getvalue()

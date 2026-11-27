@@ -39,20 +39,27 @@ const TR_SYN = {
   의심: ['의심', '수상', '미심', '갸웃', '노려', '흘겨', '경계', '날카'], 불만: ['불만', '짜증', '삐', '언짢', '뾰로통', '찡그', '못마땅', '부루퉁', '토라', '화'],
   놀람: ['놀', '깜짝', '어리둥절', '의아', '멍', '헉'], 웃음: ['웃음', '활짝', '폭소', '깔깔', '신나', '즐거', '기뻐', '환하', '장난'],
   미소: ['미소', '웃', '흐뭇', '반가', '상냥', '다정', '부드'], 기본: ['기본', '평상', '무표정', '담담', '차분', '진지', '덤덤'] };
+// 추가 표정 25종 → 그림이 없을 때 대신 보여 줄 핵심 표정.
+const TR_FB = { 진지: '기본', '눈 감음': '기본', 멍함: '놀람', 폭소: '웃음', '수줍은 미소': '부끄러움', 의기양양: '미소', 장난: '웃음', 냉소: '하라구로',
+  안도: '미소', 감동: '미소', 노려봄: '의심', 짜증: '불만', 질림: '불만', 혐오: '불만', 충격: '놀람', 당황: '곤란', '눈물 참기': '슬픔', 오열: '슬픔',
+  고통: '곤란', 공포: '패닉', 절망: '슬픔', 붕괴: '패닉', 결의: '기본', 피곤: '곤란' };
+const TR_FACES_ALL = [...TR_FACES, ...Object.keys(TR_FB)];
+const TR_FB_BY_LEN = Object.keys(TR_FB).sort((a, b) => b.length - a.length);
 function trFaceWord(expr) {
   const e = String(expr || '').trim(); if (!e) return '기본';
-  if (TR_FACES.includes(e)) return e;
+  if (TR_FACES_ALL.includes(e)) return e;
+  const x = TR_FB_BY_LEN.find(k => e.includes(k)); if (x) return x;
   for (const k of Object.keys(TR_SYN)) if (TR_SYN[k].some(w => e.includes(w))) return k;
   return '기본';
 }
 // 자세 4종. 자세를 안 정했으면 표정에 따라 고른다(그 자세에 그 표정 그림이 있을 때만).
 const TR_POSE_NAME = { default: '기본', think: '생각', point: '지목', crossed: '팔짱' };
-const TR_AUTO_POSE = { 의심: 'think', 곤란: 'think', 격노: 'point', 하라구로: 'point', 불만: 'crossed' };
+const TR_AUTO_POSE = { 의심: 'think', 곤란: 'think', 격노: 'point', 하라구로: 'point', 불만: 'crossed', 진지: 'think', 노려봄: 'point', 냉소: 'crossed' };
 const trPoses = c => c ? (c.poses || { default: c }) : {};
 const trHasFace = (P, f) => !!P && (f === (P.def || '기본') || !!(P.faces || {})[f]);
 // 고를 그림: {pose, P, face}. 요청 자세에 그 표정이 없으면 기본 자세로.
 function trPick(c, expr, pose) {
-  const ps = trPoses(c), f = trFaceWord(expr), want = pose && ps[pose] ? pose : (TR_AUTO_POSE[f] && ps[TR_AUTO_POSE[f]] && trHasFace(ps[TR_AUTO_POSE[f]], f) ? TR_AUTO_POSE[f] : 'default');
+  const ps = trPoses(c), f0 = trFaceWord(expr), f = TR_FB[f0] && Object.values(ps).some(P => trHasFace(P, f0)) ? f0 : (TR_FB[f0] || f0), want = pose && ps[pose] ? pose : (TR_AUTO_POSE[f] && ps[TR_AUTO_POSE[f]] && trHasFace(ps[TR_AUTO_POSE[f]], f) ? TR_AUTO_POSE[f] : 'default');
   const k = trHasFace(ps[want], f) ? want : (ps.default ? 'default' : want);
   const P = ps[k] || ps.default; return { pose: k, P, face: trHasFace(P, f) ? f : (P && P.def) || '기본' };
 }
@@ -558,7 +565,11 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
 
   function act(a) { if (busy) return; setState(v => TroemereiNPC.dispatch(TN_WORLD, v, a)); }
   function step(dx, dy) {
-    setPreview(null); setMenu(null);
+    setPreview(null);
+    // 바로 옆(상하좌우 1칸) 인물 쪽으로 한 칸 더 가려 하면, 그 인물을 눌렀을 때와 같은 행동 창을 연다.
+    const P0 = state.player, nb = !P0.route.length && state.npcs.find(n => n.x === P0.x + dx && n.y === P0.y + dy && (debug || trVisible(state, n)));
+    if (nb) { padUp(); keyRef.current = ''; setMenu({ kind: 'npc', id: nb.id }); return; }
+    setMenu(null);
     setState(v => { if (v.player.route.length) return v; const a = TroemereiNPC.dispatch(TN_WORLD, v, { type: 'MOVE_ONE', dx, dy }); return a.player.route.length ? TroemereiNPC.advance(TN_WORLD, a, TN_WORLD.player.moveSeconds || 4) : a; });
   }
   function padDown(dx, dy) { if (busy) return; step(dx, dy); clearInterval(padRef.current); padRef.current = setInterval(() => step(dx, dy), 240); }
@@ -566,10 +577,18 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   // 키보드 방향키 = 십자 패드(누르고 있으면 계속 걷는다). 글 입력 중에는 무시.
   const keyRef = useRef('');
   useEffect(() => {
-    const K = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+    // 방향키는 e.key, WASD는 e.code(한글 입력 상태에서도 같은 자판 위치로 동작).
+    const K = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
+    const kid = e => K[e.key] ? e.key : K[e.code] ? e.code : '';
     const typing = e => /INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '') || (e.target && e.target.isContentEditable);
-    const down = e => { const d = K[e.key]; if (!d || typing(e)) return; e.preventDefault(); if (keyRef.current === e.key) return; keyRef.current = e.key; padDown(d[0], d[1]); };
-    const up = e => { if (!K[e.key] || keyRef.current !== e.key) return; keyRef.current = ''; padUp(); };
+    const down = e => {
+      if (typing(e)) return;
+      if (e.key === 'Escape') { e.preventDefault(); if (sheet) setSheet(''); else if (menu) setMenu(null); else setSheet('set'); return; }
+      if (e.code === 'Space') { const r = outRef.current, el = r && [...r.querySelectorAll('[data-adv]')].pop(); if (el) { e.preventDefault(); if (!e.repeat) el.click(); } return; }
+      const id = kid(e), d = K[id]; if (!d || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (talk || sheet || gal) return;   // 대화창·시트가 열려 있으면 이동하지 않는다
+      e.preventDefault(); if (keyRef.current === id) return; keyRef.current = id; padDown(d[0], d[1]); };
+    const up = e => { const id = kid(e); if (!id || keyRef.current !== id) return; keyRef.current = ''; padUp(); };
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); const bl = () => { if (keyRef.current) { keyRef.current = ''; padUp(); } }; window.addEventListener('blur', bl);
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', bl); };
   });
@@ -921,7 +940,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const speakerId = cur ? cur.who : nsMissL ? nsMissL.who : nsL ? nsL.who : (ph.type === 'debate' ? ph.lines[tv.stmt].who : ph.type === 'rebut' ? ph.npc : '');
     let body = null;
     if (sent) body = <div className="tr-tcard"><div className="tr-mut">반론을 전달했습니다. 상대의 대답이 새 화면에서 이어집니다.</div></div>;
-    else if (cur) body = <div className="tr-tbox2" onClick={tapLine}>
+    else if (cur) body = <div className="tr-tbox2" data-adv="1" onClick={tapLine}>
       <div className="tr-name"><b style={{ color: cur.who && cur.who !== 'host' && cur.who !== 'me' ? trNpc(cur.who).color : '#e9c98c' }}>{cur.who === 'host' ? TR_HOST.name : cur.who === 'me' ? '나' : cur.who ? (cur.name || trNpc(cur.who).name) : ''}</b><span>{tv.idx + 1}/{total}{done ? ' ▼' : ''}</span></div>
       <div className={'tr-ttext' + (cur.who ? '' : ' narr')}>{trTyped(segs, tv.shown)}</div></div>;
     else if (ph.type === 'trans') {
@@ -1080,7 +1099,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
             {trDebugTalk(state, talk.npc).map((b, i) => <button key={i} onClick={() => setTalk(v => ({ ...v, local: TroemereiTalk.paginate(b.lines), idx: 0, shown: 0, fresh: false, done: false }))}>{b.label}</button>)}</div> : null}
           <div className="tr-hud"><span className="tr-pill">{def.name} · {trArea(n ? n.x : state.player.x, n ? n.y : state.player.y)}</span><span style={{ flex: 1 }} /><span className="tr-pill tr-time">{TroemereiNPC.clock(state.clock)}</span></div>
           <div className="tr-toast" style={{ right: 'auto' }}>{closed ? '조사 시간이 끝났다 · 대화를 마치면 재판으로' : toast || (n ? TR_IMP[n.mode] : '행동의 결과')}</div>
-          {line ? <div className="tr-box" style={{ bottom: boxBottom }} onClick={() => { if (talk.cut) return; if (!full) setTalk(v => ({ ...v, shown: chars.length })); else if (!lastLine) setTalk(v => ({ ...v, idx: v.idx + 1, shown: 0 })); else if (talk.block) { setToast(talk.block); setTalk(null); } }}>
+          {line ? <div className="tr-box" data-adv="1" style={{ bottom: boxBottom }} onClick={() => { if (talk.cut) return; if (!full) setTalk(v => ({ ...v, shown: chars.length })); else if (!lastLine) setTalk(v => ({ ...v, idx: v.idx + 1, shown: 0 })); else if (talk.block) { setToast(talk.block); setTalk(null); } }}>
             <div className="tr-name"><b style={{ color: sp ? sp.color : '#b9c9d6' }}>{line.narration ? '서술' : line.speaker}{line.expression ? ' · ' + line.expression : ''}</b><span>{talk.local && !talk.block ? '시험 · ' : ''}{talk.idx + 1}/{tlines.length}{talk.cut ? ' · 멈춤' : full ? ' ▼' : ''}</span></div>
             <div className={'tr-line' + (line.narration ? ' narr' : '')}>{trTyped(segsL, talk.shown)}</div>
             <div className="tr-ctl" onClick={e => e.stopPropagation()}>
@@ -1219,7 +1238,7 @@ function trGallery(g, setG, badImg, setBadImg) {
     <div className="tr-gal-cap">{trNpc(g.id).name} · {TR_POSE_NAME[g.pose]} · {g.face}{has(g.pose, g.face) ? '' : ' (없음→대체)'}</div></div>
     <div className="tr-dbgrw">{[...W.npcs.map(n => n.id), ...Object.keys(TR_A.chars || {}).filter(k => !W.npcs.some(n => n.id === k))].map(k => <button key={k} className={k === g.id ? 'on' : ''} onClick={() => setG({ ...g, id: k })}>{trNpc(k).name}</button>)}</div>
     <div className="tr-dbgrw">{poses.map(p => <button key={p} className={p === g.pose ? 'on' : ''} onClick={() => setG({ ...g, pose: p })}>{TR_POSE_NAME[p]}{P[p] ? '' : '·'}</button>)}</div>
-    <div className="tr-dbgrw">{TR_FACES.map(f => <button key={f} className={(f === g.face ? 'on' : '') + (has(g.pose, f) ? '' : ' dim')} onClick={() => setG({ ...g, face: f })}>{f}</button>)}</div>
+    <div className="tr-dbgrw">{TR_FACES_ALL.map(f => <button key={f} className={(f === g.face ? 'on' : '') + (has(g.pose, f) ? '' : ' dim')} onClick={() => setG({ ...g, face: f })}>{f}</button>)}</div>
     {(() => { const names = [...new Set(poses.flatMap(p => Object.keys((P[p] || {}).outfits || {})))]; if (!names.length) return null;
       const cur = TR_WEAR[g.id] || (c && c.wear) || 'casual', KO = { '-': '맨몸', casual: '평상복', swim: '수영복', under: '속옷' };
       return <div className="tr-dbgrw">{['-', ...names].map(o => <button key={o} className={o === cur ? 'on' : ''} onClick={() => { TR_WEAR[g.id] = o; setG({ ...g, w: o }); }}>{KO[o] || o}</button>)}</div>; })()}
