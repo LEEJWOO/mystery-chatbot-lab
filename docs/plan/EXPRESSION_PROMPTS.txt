@@ -1,0 +1,259 @@
+표정 인페인트 프롬프트 목록 v1 (2026-11-28) — 착의·기본 자세, 얼굴 안쪽만 인페인트
+
+쓰는 법
+- 인물 프롬프트(눈 색·머리·화풍)는 그대로 두고, 아래 한 표정의 줄들만 덧붙인다.
+- 얼굴 안쪽만 칠하므로 손·어깨·자세·배경·구도(upper body, close-up, cowboy shot)·chibi 태그는 넣지 않았다. 넣으면 마스크 안에 손가락·배경 무늬가 끼거나 얼굴 비율이 바뀐다.
+- 얼굴 안에 들어가는 효과(땀방울, 홍조, 눈물, 얼굴 위 그늘, 미간의 파란 세로줄)만 넣었다. 머리 위 먹구름·배경 집중선 같은 효과는 화면(JSX) 연출로 따로 얹는다.
+- 이름 뒤 [핵심]은 AI가 태그로 고르는 기본 목록(지금 12가지), [추가]는 새로 늘리는 표정이다.
+
+==================================================================
+기본·생각
+==================================================================
+기본 [핵심]
+1.4::neutral expression, calm face, relaxed eyebrows::,
+1.3::closed mouth, natural lips::,
+1.2::looking at viewer, steady gaze, soft eyes::,
+
+진지 [추가] (생각할 때, 재판에서 집중)
+1.4::serious expression, focused eyes, thinking face::,
+1.3::slightly lowered eyebrows, straight eyebrows::,
+1.3::closed mouth, lips pressed lightly together::,
+1.2::sharp gaze, calm determination::,
+
+눈 감음 [추가] (침착, 묵념, 한숨 직전)
+1.5::closed eyes, peaceful expression::,
+1.3::relaxed eyebrows, calm face::,
+1.2::closed mouth, slight exhale::,
+
+멍함 [추가] (넋이 나감, 충격 직후)
+1.5::blank stare, empty eyes, dazed expression::,
+1.4::dull eyes, no highlights in eyes, unfocused gaze::,
+1.3::slightly open mouth, slack expression::,
+1.2::pale face::,
+
+==================================================================
+웃음 계열
+==================================================================
+미소 [핵심] (약)
+1.4::gentle smile, soft expression, warm eyes::,
+1.3::closed mouth smile, slightly upturned lips::,
+1.2::relaxed eyebrows, kind gaze::,
+
+웃음 [핵심] (중)
+1.5::happy expression, bright smile, cheerful face::,
+1.4::open mouth smile, visible upper teeth::,
+1.3::narrowed smiling eyes, raised cheeks::,
+1.2::light blush::,
+
+폭소 [추가] (강)
+1.5::laughing, big open mouth laugh, joyful expression::,
+1.4::eyes squeezed shut with laughter, ^_^ eyes::,
+1.3::raised cheeks, tears of laughter at eye corners::,
+1.2::blush, energetic expression::,
+
+수줍은 미소 [추가] (부끄러움 약)
+1.4::shy smile, bashful expression, faint blush::,
+1.3::eyes glancing down, looking away slightly::,
+1.3::small closed mouth smile::,
+1.2::soft eyebrows::,
+
+부끄러움 [핵심] (강)
+1.5::flustered expression, deeply embarrassed, heavy blush::,
+1.4::blush spreading across cheeks and nose, red face::,
+1.4::wavy mouth, flustered open mouth::,
+1.3::eyes darting away, teary eyes, raised inner eyebrows::,
+1.2::small sweatdrop::,
+
+의기양양 [추가] (도야, 자랑 끝)
+1.5::smug expression, proud face, confident smirk::,
+1.4::half-closed eyes, self-satisfied look::,
+1.3::one corner of mouth raised, closed mouth grin::,
+1.2::raised chin feel, relaxed eyebrows::,
+
+장난 [추가] (윙크·혀, 오딜·카림용)
+1.5::playful expression, mischievous grin, winking::,
+1.4::one eye closed, one eye open::,
+1.3::tongue slightly out, teasing smile::,
+1.2::light blush, lively eyes::,
+
+하라구로 [핵심] (속셈 있는 웃음)
+1.5::scheming smile, sly expression, sinister smile::,
+1.4::half-lidded eyes, narrowed eyes, shadowed eyes::,
+1.4::wide closed-mouth smile, corners of mouth deeply raised::,
+1.3::eyebrows slightly lowered, calculating gaze::,
+1.2::faint shadow over upper face::,
+
+냉소 [추가] (비웃음, 경멸)
+1.5::contemptuous expression, mocking smile, sneer::,
+1.4::looking down on viewer, cold half-lidded eyes::,
+1.3::asymmetrical smirk, one side of lip raised::,
+1.2::one eyebrow raised::,
+
+안도 [추가]
+1.4::relieved expression, relaxed face, soft sigh::,
+1.3::eyes half-closed, gentle droopy eyes::,
+1.3::small relieved smile, slightly open mouth::,
+1.2::tension leaving face, lowered eyebrows::,
+
+감동 [추가] (울먹이는 미소)
+1.5::moved to tears, touched expression::,
+1.4::teary eyes, glistening eyes, tears welling up::,
+1.3::trembling smile, wavering lips::,
+1.2::raised inner eyebrows, light blush::,
+
+==================================================================
+의심·불만·분노
+==================================================================
+의심 [핵심]
+1.5::suspicious expression, doubtful look::,
+1.4::narrowed eyes, squinting, side glance::,
+1.3::one eyebrow raised, furrowed brow::,
+1.2::small frown, closed mouth::,
+
+노려봄 [추가] (경계 강, 추궁)
+1.5::glaring, intense stare, sharp eyes::,
+1.4::furrowed brows, deeply lowered eyebrows::,
+1.3::tight closed mouth, clenched jaw::,
+1.2::shadow under eyes, hostile gaze::,
+
+불만 [핵심] (삐침)
+1.5::pouting, sulking expression, displeased face::,
+1.4::puffed cheeks, small pout::,
+1.3::furrowed eyebrows, looking away::,
+1.2::light blush::,
+
+짜증 [추가] (찡그림)
+1.5::grimacing, irritated expression, annoyed face::,
+1.4::squinting eyes, tense eyelids::,
+1.4::furrowed brows, scrunched nose, asymmetrical mouth::,
+1.3::partially open mouth, gritted teeth::,
+1.2::vein popping on forehead::,
+
+질림 [추가] (어이없음, 반쯤 감은 눈)
+1.5::unimpressed expression, deadpan, exasperated::,
+1.4::half-lidded eyes, droopy eyes, flat stare::,
+1.3::flat mouth, straight line mouth::,
+1.2::subtly furrowed eyebrows, small sweatdrop::,
+
+혐오 [추가]
+1.5::disgusted expression, revulsion::,
+1.4::wrinkled nose, raised upper lip::,
+1.3::narrowed eyes, leaning-away look::,
+1.3::furrowed brows, grimace::,
+1.2::shadow over upper face, pale::,
+
+격노 [핵심]
+1.5::furious expression, intense anger, rage::,
+1.5::wide angry eyes, small pupils, glaring::,
+1.4::sharply furrowed eyebrows, deep V brows::,
+1.4::open mouth shouting, clenched teeth, visible teeth::,
+1.2::red face, vein on forehead::,
+
+==================================================================
+놀람·곤란·당황
+==================================================================
+놀람 [핵심] (중)
+1.5::surprised expression, startled face::,
+1.4::wide eyes, small pupils::,
+1.3::raised eyebrows::,
+1.3::small open mouth, o-shaped mouth::,
+
+충격 [추가] (놀람 강)
+1.5::shocked expression, stunned, jaw dropped::,
+1.5::blank white eyes, pupil-less eyes::,
+1.4::wide open mouth, raised eyebrows::,
+1.3::pale face, vertical shadow lines on face::,
+1.2::cold sweat::,
+
+곤란 [핵심]
+1.5::troubled expression, uneasy face::,
+1.4::raised inner eyebrows, worried eyebrows::,
+1.3::awkward smile, wavy mouth::,
+1.3::single sweatdrop on cheek::,
+1.2::faint blush, eyes looking aside::,
+
+당황 [추가] (눈 피하기, 식은땀)
+1.5::nervous side-eye, avoiding eye contact::,
+1.4::pupils shifted to one side, eyes glancing sideways::,
+1.4::large sweatdrop on cheek, nervous sweating::,
+1.3::tiny closed mouth, awkward little smile::,
+1.2::slightly raised eyebrows, guilty expression::,
+
+==================================================================
+슬픔·공포·붕괴
+==================================================================
+슬픔 [핵심] (약)
+1.5::sad expression, downcast eyes, melancholy::,
+1.4::raised inner eyebrows, drooping eyebrows::,
+1.3::small frown, closed mouth::,
+1.2::slightly teary eyes::,
+
+눈물 참기 [추가]
+1.5::holding back tears, trying not to cry::,
+1.4::teary eyes, tears welling up, glistening eyes::,
+1.4::biting lip, trembling lips, pressed lips::,
+1.3::furrowed raised inner eyebrows, scrunched face::,
+1.2::red nose, light blush::,
+
+오열 [추가] (슬픔 강)
+1.5::crying, sobbing, tears streaming down face::,
+1.4::eyes squeezed shut, teardrops::,
+1.4::open mouth wailing, trembling mouth::,
+1.3::raised inner eyebrows, scrunched face::,
+1.2::red nose, flushed cheeks::,
+
+고통 [추가] (부상·통증)
+1.5::pained expression, wincing, agony::,
+1.4::one eye shut, squinting in pain::,
+1.4::gritted teeth, clenched jaw::,
+1.3::furrowed brows, cold sweat::,
+1.2::pale face::,
+
+공포 [추가]
+1.5::terrified expression, overwhelming fear::,
+1.5::wide-open eyes, constricted pupils, panicked stare::,
+1.4::raised inner eyebrows, trembling lips, mouth agape::,
+1.4::pale face, cold sweat, tears welling up::,
+1.3::tense facial muscles, frozen expression::,
+
+패닉 [핵심] (강)
+1.5::panic, overwhelmed expression, hyperventilating face::,
+1.4::wide eyes, fearful confusion, raised eyebrows::,
+1.4::open mouth, gasping, quivering lips::,
+1.3::profuse sweating, tears forming::,
+1.2::frantic expression, loss of composure::,
+
+절망 [추가]
+1.5::expression of despair, hopeless face::,
+1.4::dark horizontal shadow covering upper half of face, eyes visible beneath shadow::,
+1.4::blank stare, dull eyes without highlights::,
+1.3::small open mouth, trembling lips::,
+1.2::pale face::,
+
+붕괴 [추가] (억지 웃음, 이성의 끈)
+1.5::nervous breakdown, unhinged expression::,
+1.5::forced smile, strained grin, trembling smile::,
+1.4::wide unfocused eyes, constricted pupils::,
+1.4::raised inner eyebrows, twitching face, strained cheeks::,
+1.3::cold sweat, tears in eyes, dark circles under eyes::,
+
+==================================================================
+의지·상태
+==================================================================
+결의 [추가]
+1.5::determined expression, resolute face::,
+1.4::sharp focused eyes, strong gaze::,
+1.3::eyebrows drawn together, firm straight eyebrows::,
+1.3::closed mouth, set jaw::,
+
+피곤 [추가]
+1.4::tired expression, exhausted face::,
+1.4::half-lidded eyes, heavy eyelids, dark circles under eyes::,
+1.3::slightly open mouth, sigh::,
+1.2::drooping eyebrows, pale face::,
+
+==================================================================
+오딜·메이벨 등 개성 표정을 따로 만들 때
+==================================================================
+- 같은 표정이라도 인물의 성격 단어를 한 줄 더하면 차이가 난다. 예: 메이벨 웃음 + 1.3::haughty laugh, ojou-sama laugh::, / 클라라 노려봄 + 1.3::cold elegant glare::, / 바룬 진지 + 1.3::stoic face::,
+- 앞머리가 눈을 가리는 인물(클라라·프레디)은 눈썹 띠까지 마스크에 넣고, 끝난 뒤 hair_lock으로 앞머리를 다시 덮는다.
