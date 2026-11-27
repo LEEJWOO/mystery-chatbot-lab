@@ -1238,7 +1238,7 @@
     "s": 1.015,
     "y": 301
    },
-   "label": "바룬"
+   "label": "바룬 가스파르"
   },
   "justin": {
    "poses": {
@@ -1259,7 +1259,7 @@
     "s": 1.055,
     "y": 239
    },
-   "label": "저스틴"
+   "label": "저스틴 트루먼"
   },
   "freddie": {
    "poses": {
@@ -1280,9 +1280,9 @@
     "s": 0.91,
     "y": 164
    },
-   "label": "프레디"
+   "label": "프레디 데이비스"
   },
-  "musician": {
+  "killian": {
    "poses": {
     "default": {
      "src": "24f753151055.webp",
@@ -1301,9 +1301,9 @@
     "s": 0.975,
     "y": 218
    },
-   "label": "뮤지션"
+   "label": "킬리언 하퍼"
   },
-  "chef": {
+  "karim": {
    "poses": {
     "default": {
      "src": "6349c69174d9.webp",
@@ -1322,7 +1322,7 @@
     "s": 1.125,
     "y": 253
    },
-   "label": "셰프"
+   "label": "카림 아타르"
   }
  },
  "map": {
@@ -1331,16 +1331,21 @@
   "h": 648
  },
  "sprites": {
-  "src": "a663b46f027e.webp",
+  "src": "d32c544c7824.webp",
   "w": 432,
-  "h": 324,
+  "h": 594,
   "ids": [
    "suzune",
    "mei",
    "ruoxi",
    "seoha",
    "clara",
-   "odile"
+   "odile",
+   "varun",
+   "justin",
+   "freddie",
+   "killian",
+   "karim"
   ],
   "cw": 36,
   "ch": 54,

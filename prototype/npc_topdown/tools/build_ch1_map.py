@@ -150,7 +150,20 @@ if __name__ == '__main__':
     def center(name):
         a = next(a for a in areas if a['name'] == name); return [(a['x0'] + a['x1']) // 2, (a['y0'] + a['y1']) // 2 + 1]
     w['player'] = dict(base['player'], x=21, y=F1 + 18)
-    spots = {'suzune': '정원', 'mei': '로비', 'ruoxi': '라운지 바', 'seoha': '2층 복도', 'clara': '라운지 바', 'odile': '연회장'}
+    # 남성 5명(본편 정본). 일정은 3단계에서 채운다.
+    MEN = [('varun', '바룬 가스파르', ['바룬', '가스파르'], '바', '#c0392b', '#9a9a9a', '#b8302a', '인도계 모리셔스 · 34 · 라이프가드 — 말수가 적고 수칙을 지킨다', '거기 지나간다. 비켜.'),
+           ('justin', '저스틴 트루먼', ['저스틴', '트루먼'], '저', '#d9532c', '#c8442a', '#7a1f2a', '미국 · 22 · 쿼터백 — 별명을 붙이고 작전판처럼 본다', '헤이, 길 좀 터 줄래?'),
+           ('freddie', '프레디 데이비스', ['프레디', '데이비스'], '프', '#c9c9d4', '#d8d8e0', '#2a3450', '영국 · 28 · 성우 — 조용히 빈정거린다', '……거기 서 있으면 방해되는데.'),
+           ('killian', '킬리언 하퍼', ['킬리언', '하퍼'], '킬', '#2d4fa8', '#2a4fb0', '#6a6a50', '아일랜드 · 32 · 베이시스트 — 대화를 정리하고 중재한다', '잠깐 지나가도 될까요?'),
+           ('karim', '카림 아타르', ['카림', '아타르'], '카', '#1f6f6a', '#22222a', '#1f5a5a', '레바논 · 25 · 셰프 — 붙임성 좋고 음식으로 사람을 모은다', '어이, 잠깐만 비켜 줘. 뜨거운 거 지나간다.')]
+    tpl = base['npcs'][0]
+    for id_, nm, call, sym, col, hair, cloth, prof, line in MEN:
+        n = copy.deepcopy(tpl); n.update({'id': id_, 'name': nm, 'call': call, 'symbol': sym, 'color': col, 'hair': hair, 'cloth': cloth, 'sex': 'm',
+                  'profile': prof, 'rel': {'trust': 50, 'affection': 50}, 'block': [[{'text': line, 'face': '기본'}]]})
+        n.pop('alias', None); n['look'] = dict(n.get('look') or {}, g=0)
+        w['npcs'].append(n)
+    spots = {'suzune': '정원', 'mei': '로비', 'ruoxi': '라운지 바', 'seoha': '2층 복도', 'clara': '라운지 바', 'odile': '연회장',
+             'varun': '수영장', 'justin': '로비', 'freddie': '라운지 바', 'killian': '연회장', 'karim': '주방'}
     used = set()
     for n in w['npcs']:
         x, y = center(spots.get(n['id'], '로비'))

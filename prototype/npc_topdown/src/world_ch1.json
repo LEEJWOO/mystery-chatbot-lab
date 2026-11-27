@@ -1620,6 +1620,226 @@
      }
     ]
    ]
+  },
+  {
+   "id": "varun",
+   "name": "바룬 가스파르",
+   "call": [
+    "바룬",
+    "가스파르"
+   ],
+   "symbol": "바",
+   "color": "#c0392b",
+   "hair": "#9a9a9a",
+   "cloth": "#b8302a",
+   "x": 32,
+   "y": 7,
+   "stepSeconds": 6,
+   "sex": "m",
+   "profile": "인도계 모리셔스 · 34 · 라이프가드 — 말수가 적고 수칙을 지킨다",
+   "rel": {
+    "trust": 50,
+    "affection": 50
+   },
+   "agenda": [],
+   "notes": [],
+   "look": {
+    "g": 0,
+    "hf": 0,
+    "hb": 2,
+    "hc": "#f4b6cf",
+    "eye": 2,
+    "ec": "#7a5ad0",
+    "sk": 0,
+    "of": 4,
+    "oc": "#f6eadf",
+    "ac": 0
+   },
+   "block": [
+    [
+     {
+      "text": "거기 지나간다. 비켜.",
+      "face": "기본"
+     }
+    ]
+   ],
+   "knows": []
+  },
+  {
+   "id": "justin",
+   "name": "저스틴 트루먼",
+   "call": [
+    "저스틴",
+    "트루먼"
+   ],
+   "symbol": "저",
+   "color": "#d9532c",
+   "hair": "#c8442a",
+   "cloth": "#7a1f2a",
+   "x": 20,
+   "y": 47,
+   "stepSeconds": 6,
+   "sex": "m",
+   "profile": "미국 · 22 · 쿼터백 — 별명을 붙이고 작전판처럼 본다",
+   "rel": {
+    "trust": 50,
+    "affection": 50
+   },
+   "agenda": [],
+   "notes": [],
+   "look": {
+    "g": 0,
+    "hf": 0,
+    "hb": 2,
+    "hc": "#f4b6cf",
+    "eye": 2,
+    "ec": "#7a5ad0",
+    "sk": 0,
+    "of": 4,
+    "oc": "#f6eadf",
+    "ac": 0
+   },
+   "block": [
+    [
+     {
+      "text": "헤이, 길 좀 터 줄래?",
+      "face": "기본"
+     }
+    ]
+   ],
+   "knows": []
+  },
+  {
+   "id": "freddie",
+   "name": "프레디 데이비스",
+   "call": [
+    "프레디",
+    "데이비스"
+   ],
+   "symbol": "프",
+   "color": "#c9c9d4",
+   "hair": "#d8d8e0",
+   "cloth": "#2a3450",
+   "x": 8,
+   "y": 47,
+   "stepSeconds": 6,
+   "sex": "m",
+   "profile": "영국 · 28 · 성우 — 조용히 빈정거린다",
+   "rel": {
+    "trust": 50,
+    "affection": 50
+   },
+   "agenda": [],
+   "notes": [],
+   "look": {
+    "g": 0,
+    "hf": 0,
+    "hb": 2,
+    "hc": "#f4b6cf",
+    "eye": 2,
+    "ec": "#7a5ad0",
+    "sk": 0,
+    "of": 4,
+    "oc": "#f6eadf",
+    "ac": 0
+   },
+   "block": [
+    [
+     {
+      "text": "……거기 서 있으면 방해되는데.",
+      "face": "기본"
+     }
+    ]
+   ],
+   "knows": []
+  },
+  {
+   "id": "killian",
+   "name": "킬리언 하퍼",
+   "call": [
+    "킬리언",
+    "하퍼"
+   ],
+   "symbol": "킬",
+   "color": "#2d4fa8",
+   "hair": "#2a4fb0",
+   "cloth": "#6a6a50",
+   "x": 33,
+   "y": 47,
+   "stepSeconds": 6,
+   "sex": "m",
+   "profile": "아일랜드 · 32 · 베이시스트 — 대화를 정리하고 중재한다",
+   "rel": {
+    "trust": 50,
+    "affection": 50
+   },
+   "agenda": [],
+   "notes": [],
+   "look": {
+    "g": 0,
+    "hf": 0,
+    "hb": 2,
+    "hc": "#f4b6cf",
+    "eye": 2,
+    "ec": "#7a5ad0",
+    "sk": 0,
+    "of": 4,
+    "oc": "#f6eadf",
+    "ac": 0
+   },
+   "block": [
+    [
+     {
+      "text": "잠깐 지나가도 될까요?",
+      "face": "기본"
+     }
+    ]
+   ],
+   "knows": []
+  },
+  {
+   "id": "karim",
+   "name": "카림 아타르",
+   "call": [
+    "카림",
+    "아타르"
+   ],
+   "symbol": "카",
+   "color": "#1f6f6a",
+   "hair": "#22222a",
+   "cloth": "#1f5a5a",
+   "x": 32,
+   "y": 35,
+   "stepSeconds": 6,
+   "sex": "m",
+   "profile": "레바논 · 25 · 셰프 — 붙임성 좋고 음식으로 사람을 모은다",
+   "rel": {
+    "trust": 50,
+    "affection": 50
+   },
+   "agenda": [],
+   "notes": [],
+   "look": {
+    "g": 0,
+    "hf": 0,
+    "hb": 2,
+    "hc": "#f4b6cf",
+    "eye": 2,
+    "ec": "#7a5ad0",
+    "sk": 0,
+    "of": 4,
+    "oc": "#f6eadf",
+    "ac": 0
+   },
+   "block": [
+    [
+     {
+      "text": "어이, 잠깐만 비켜 줘. 뜨거운 거 지나간다.",
+      "face": "기본"
+     }
+    ]
+   ],
+   "knows": []
   }
  ],
  "onComplete": {},
