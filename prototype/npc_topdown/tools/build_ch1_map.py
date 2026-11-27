@@ -145,7 +145,7 @@ if __name__ == '__main__':
     w.update({'kind': 'troemerei-ch1', 'title': '몽환의 트로이메라이 1장 (뼈대)', 'chapter': 1, 'startTime': '18:00', 'map': MAP,
               'notes': '1장 뼈대: 지도·계단·숨은 공간만. 사건·일정·재판 데이터는 비어 있음.',
               'facts': [], 'events': {}, 'markers': [], 'items': [], 'notices': [], 'slots': [], 'branches': [], 'scenes': [],
-              'trials': [], 'cases': [], 'debugTalk': [], 'onComplete': {}, 'debugFlags': ['secret_linen', 'secret_wine']})
+              'trials': [], 'cases': [], 'debugTalk': [], 'onComplete': [], 'debugFlags': ['secret_linen', 'secret_wine']})
     w['flagNames'] = sorted(set((base.get('flagNames') or []) + ['secret_linen', 'secret_wine']))
     def center(name):
         a = next(a for a in areas if a['name'] == name); return [(a['x0'] + a['x1']) // 2, (a['y0'] + a['y1']) // 2 + 1]

@@ -379,6 +379,8 @@ function trThumb(id) {
   return { src: P.src, crop: { width: P.w * k, maxWidth: 'none', marginLeft: P.eye ? 75 - P.eye[0] * k : 75 - P.w * k / 2, marginBottom: P.eye ? 300 - (P.h - P.eye[1]) * k - 14 : 0 } };
 }
 // 레이어 방식 의상: 몸(P.src) 위에 얹는다. 인물별로 고른 옷(TR_WEAR) → 그림표의 wear → casual 순.
+// 방 이름으로 배경 찾기: 정확한 이름 → 끝 번호를 뗀 이름(객실 201 → 객실).
+const trBgOf = name => { const B = TR_A.bg || {}, n = String(name || ''); return B[n] || B[n.replace(/\s*\d+$/, '')] || ''; };
 const TR_WEAR = {};
 // 보행 도트: 시트 여러 장(sprites + spritesExtra) 중에서 '인물@의상' 줄을 먼저 찾고, 없으면 기본 줄.
 function trSprite(id) {
@@ -871,7 +873,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const cyc = (side, f, d) => { const k = side + '.' + f, o = OPT[f], cur = pick[k], n = cur === undefined ? (d > 0 ? 0 : o.length - 1) : (o.indexOf(cur) + d + o.length) % o.length;
       setTv(v => ({ ...v, g: { ...v.g, bad: 0, r: { ...(v.g.r || {}), [ri]: { ...pick, [k]: o[n] } } } })); };
     const label = (f, x) => x === undefined ? '?' : f === 'who' ? (x ? trNpc(x).name : '아무도 없음') : f === 'obj' ? (x ? (trItem(x) || {}).name || x : '없음') : x;
-    const room = name => { const b = (TR_A.bg || {})[name]; if (b) return { backgroundImage: `url(${trUrl(b)})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+    const room = name => { const b = trBgOf(name); if (b) return { backgroundImage: `url(${trUrl(b)})`, backgroundSize: 'cover', backgroundPosition: 'center' };
       const A = (TN_WORLD.map.areas || []).find(x => x.name === name), M = TR_A.map; if (!A || !M) return { background: '#1a1626' };
       const w = (A.x1 - A.x0 + 1) * TR_CELL, k = 230 / w; // 그 방 부분만 확대
       return { backgroundImage: `url(${trUrl(M.src)})`, backgroundSize: `${M.w * k}px ${M.h * k}px`, backgroundPosition: `${-A.x0 * TR_CELL * k}px ${-A.y0 * TR_CELL * k + 20}px` }; };
@@ -1042,7 +1044,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       <div className="tr-card tr-court" style={{ transform: `scale(${scale})` }}>
         {/* 무대: 말하는 사람의 모습(표정 조각)과 재판 참가자 자리 */}
         <div key={T.phase + '-' + speakerId + '-' + (stageFx || (cur && cur.cut) ? tv.idx : '') + (tv.reply ? 'r' : '')} className={'tr-stage' + (mini ? ' mini' : '') + (split ? ' split' : '') + (stageFx ? ' fx-' + stageFx : '')}>
-          {TR_A.bg && TR_A.bg[TR.stage || '재판장'] ? <img src={trUrl(TR_A.bg[TR.stage || '재판장'])} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .6 }} /> : <div className="tr-spot-light" />}
+          {trBgOf(TR.stage || '재판장') ? <img src={trUrl(trBgOf(TR.stage || '재판장'))} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: .6 }} /> : <div className="tr-spot-light" />}
           {!mini && speakerId && speakerId !== 'host' && speakerId !== 'me' && trNpcRaw(speakerId) ? <div className="tr-actor"><div className="tr-actor-in">{trActor(speakerId, cur ? cur.face : nsMissL ? nsMissL.face : nsL ? nsL.face || '' : '', cur ? cur.pose || '' : nsMissL ? nsMissL.pose || '' : nsL ? nsL.pose || '' : '', u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div></div> : null}
           {!mini && speakerId === 'host' ? <div className={'tr-actor host' + (T.phase === 0 && tv.idx === 0 ? ' enter' : '')}><div className="tr-hspot" /><div className="tr-hspot-floor" />{trHostSil()}</div> : null}
           {split ? <div className="tr-objc"><div className="tr-objc-dim" /><div className="tr-objc-cut">{state.player.look && TR_A.parts ? trCutinImg(state.player.look, { left: 0, top: 0 }) : <div className="tr-objc-band"><div className="tr-objc-face">{trMeSil()}</div></div>}</div><b className="tr-objc-word">반론!</b><span className="tr-objc-name">{state.player.look ? state.player.look.name : '나'}</span></div> : null}
@@ -1091,7 +1093,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     if (line) for (let i = talk.idx; i >= 0; i--) { const L = tlines[i]; if (!L.narration) { const m = TN_WORLD.npcs.find(x => trNameIs(x, L.speaker)); who = { npc: m ? trNpc(m.id) : { name: L.speaker, color: '#6b7a8c', symbol: '?' }, id: m ? m.id : '', expr: L.expression, pose: L.pose || '' }; break; } }
     const ch = who && who.id && (TR_A.chars || {})[who.id];
     const face = ch ? trFace(ch, who.expr) : '';
-    const bg = trUrl((TR_A.bg || {})[trArea(state.player.x, state.player.y)]);
+    const bg = trUrl(trBgOf(trArea(state.player.x, state.player.y)));
     const boxBottom = canInput ? 92 : 5;
     return <div className="tr-out" ref={outRef} style={{ height: TR_H * scale }}><style>{TN_CSS}</style>
       <div className="tr-card" style={{ transform: `scale(${scale})`, background: TR_BG[Math.max(0, area)] }}>
@@ -1244,7 +1246,8 @@ function trDebugBox(state, onDbg, onGal) {
 function trGallery(g, setG, badImg, setBadImg) {
   const W = TN_WORLD, c = (TR_A.chars || {})[g.id], P = trPoses(c), poses = ['default', 'think', 'point', 'crossed'];
   const has = (pose, f) => trHasFace(P[pose], f);
-  return <div className="tr-gal"><div className="tr-gal-stage"><div className="tr-actor-in" style={{ transform: 'none' }}>{trActor(g.id, g.face, g.pose, u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div>
+  const BGS = { ...(TR_A.bgExtra || {}), ...(TR_A.bg || {}) }, bgKeys = Object.keys(BGS), gbg = g.bg && BGS[g.bg] ? trUrl(BGS[g.bg]) : '';
+  return <div className="tr-gal"><div className="tr-gal-stage">{gbg ? <img src={gbg} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : null}<div className="tr-actor-in" style={{ transform: 'none' }}>{trActor(g.id, g.face, g.pose, u => setBadImg(v => ({ ...v, [u]: true })), badImg)}</div>
     <div className="tr-gal-cap">{trNpc(g.id).name} · {TR_POSE_NAME[g.pose]} · {g.face}{has(g.pose, g.face) ? '' : ' (없음→대체)'}</div></div>
     <div className="tr-dbgrw">{[...W.npcs.map(n => n.id), ...Object.keys(TR_A.chars || {}).filter(k => !W.npcs.some(n => n.id === k))].map(k => <button key={k} className={k === g.id ? 'on' : ''} onClick={() => setG({ ...g, id: k })}>{trNpc(k).name}</button>)}</div>
     <div className="tr-dbgrw">{poses.map(p => <button key={p} className={p === g.pose ? 'on' : ''} onClick={() => setG({ ...g, pose: p })}>{TR_POSE_NAME[p]}{P[p] ? '' : '·'}</button>)}</div>
@@ -1253,6 +1256,8 @@ function trGallery(g, setG, badImg, setBadImg) {
       const names = [...new Set(['casual', ...poses.flatMap(p => Object.keys((P[p] || {}).outfits || {})), ...spr])]; if (names.length < 2) return null;
       const cur = TR_WEAR[g.id] || (c && c.wear) || 'casual', KO = { '-': '맨몸', casual: '평상복', light: '가벼운 차림', swim: '수영복', under: '속옷' };
       return <div className="tr-dbgrw">{['-', ...names].map(o => <button key={o} className={o === cur ? 'on' : ''} onClick={() => { TR_WEAR[g.id] = o; setG({ ...g, w: o }); }}>{KO[o] || o}</button>)}</div>; })()}
+    {bgKeys.length ? <div className="tr-dbgrw"><span className="tr-mut" style={{ alignSelf: 'center' }}>배경</span>{['', ...bgKeys].map(k => <button key={k || '-'} className={(g.bg || '') === k ? 'on' : ''} onClick={() => setG({ ...g, bg: k })}>{k || '없음'}</button>)}
+      <button onClick={() => { const i = (['', ...bgKeys].indexOf(g.bg || '') + 1) % (bgKeys.length + 1); setG({ ...g, bg: ['', ...bgKeys][i] }); }}>다음 ›</button></div> : null}
     <div className="tr-dbgrw"><button onClick={() => setG(null)}>닫기</button></div>
   </div>;
 }

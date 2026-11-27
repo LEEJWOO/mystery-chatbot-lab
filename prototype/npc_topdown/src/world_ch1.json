@@ -1842,7 +1842,7 @@
    "knows": []
   }
  ],
- "onComplete": {},
+ "onComplete": [],
  "flagNames": [
   "brooch_gone",
   "mei_early",

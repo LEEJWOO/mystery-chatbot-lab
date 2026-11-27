@@ -498,6 +498,7 @@ test('1장 지도: 모든 방이 이어지고(잠긴 옥상·재판장·지배�
     assert.equal(t.flags[q.flag], true, q.id); assert.deepEqual([t.player.x, t.player.y], [q.x, q.y], q.id + ' 안으로');
   }
   const lv = w.map.levels.map(l => l.name); assert.deepEqual(lv, ['외부', '1층', '2층', '옥상', '지하']);
+  assert.equal(C.pack(w, C.unpack(w, C.pack(w, s))), C.pack(w, s), '1장 세계 상태 코드 왕복');
 });
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
 console.log(`${pass}/${tests.length} 통과`);
