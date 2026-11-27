@@ -1331,9 +1331,9 @@
   "h": 648
  },
  "sprites": {
-  "src": "d32c544c7824.webp",
+  "src": "dc14b02405f6.webp",
   "w": 432,
-  "h": 594,
+  "h": 864,
   "ids": [
    "suzune",
    "mei",
@@ -1345,7 +1345,12 @@
    "justin",
    "freddie",
    "killian",
-   "karim"
+   "karim",
+   "clara@light",
+   "odile@light",
+   "suzune@light",
+   "mei@light",
+   "ruoxi@light"
   ],
   "cw": 36,
   "ch": 54,

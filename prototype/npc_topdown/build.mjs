@@ -48,6 +48,11 @@ fs.writeFileSync(new URL('./dist/Troemerei' + SUF + '_Standalone.html', import.m
 // 오프라인 시험본(로컬 전용): OFFLINE_DIR의 그림을 data: 주소로 시험용 HTML에만 넣는다. 등록용 JSX에는 넣지 않으며 저장소에도 올리지 않는다.
 if (process.env.OFFLINE_DIR) {
   const off = JSON.parse(JSON.stringify(assets).replace(/"([0-9a-f]{12}\.webp)"/g, (m, n) => { const f = process.env.OFFLINE_DIR + '/' + n; return fs.existsSync(f) ? JSON.stringify('data:image/webp;base64,' + fs.readFileSync(f).toString('base64')) : m; }));
+  // LOCAL_EXTRA: 저장소에 올리지 않는 그림(속옷 보행 도트 등) 목록 JSON. 오프라인 시험본에만 넣는다.
+  if (process.env.LOCAL_EXTRA && fs.existsSync(process.env.LOCAL_EXTRA)) {
+    const ex = JSON.parse(fs.readFileSync(process.env.LOCAL_EXTRA, 'utf8'));
+    off.spritesExtra = (ex.spritesExtra || []).map(s => ({ ...s, src: 'data:image/png;base64,' + fs.readFileSync(s.file).toString('base64'), file: undefined }));
+  }
   fs.writeFileSync(new URL('./dist/Troemerei' + SUF + '_Offline.html', import.meta.url), makeHtml(makeJsx(off)));
   console.log('오프라인 시험본 생성(로컬 전용)');
 }

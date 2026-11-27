@@ -219,10 +219,11 @@ function trCharSprite(c, animRef, movedRef, sel, bad, look) {
   }
   const el = now - a.at, walking = el < TR_STEP_MS;
   if (el < TR_STEP_MS + TR_FRAME_MS) movedRef.current = true;
-  const sp = TR_A.sprites, row = sp ? sp.ids.indexOf(c.id) : -1;
+  const { sp, row } = trSprite(c.id);
   const df = c.n ? trNpc(c.id) : { name: '나', color: '#f6dfab', symbol: '나' };
   const pos = { transform: `translate(${c.x * TR_CELL}px,${c.y * TR_CELL}px)` };
-  const tag = c.n ? <div className="tr-tag" style={{ borderColor: df.color }}>{df.name}{c.n.mode === 'accompany' ? ' ★' : ''}</div> : null;
+  // 이름표: 옆 칸 인물과 겹치지 않게 홀수 열은 한 줄 위로 엇갈린다.
+  const tag = c.n ? <div className="tr-tag" style={{ borderColor: df.color, ...(c.x % 2 ? { transform: 'translate(-50%, -15px)' } : null) }}>{df.name}{c.n.mode === 'accompany' ? ' ★' : ''}</div> : null;
   if (c.n) { const raw = trNpcRaw(c.id); look = raw && raw.look && !(sp && row >= 0 && !bad[trUrl(sp.src)]) ? raw.look : null; } // 보행 도트 시트에 없는 인물만 조립 도트(체크인 부품)로
   if ((c.id === 'player' || (c.n && trNpcRaw(c.id) && trNpcRaw(c.id).look)) && look && TR_A.avatar) { const ac = TR_A.avatar.dirs[a.dir] || TR_A.avatar.dirs.down; let k = ac.idle;
     if (walking) { const per = Math.max(1, Math.ceil(ac.walk.length / 2)); k = ac.walk[((a.step - 1) * per + Math.min(per - 1, Math.floor(el / (TR_STEP_MS / per)))) % ac.walk.length]; }
@@ -379,6 +380,13 @@ function trThumb(id) {
 }
 // 레이어 방식 의상: 몸(P.src) 위에 얹는다. 인물별로 고른 옷(TR_WEAR) → 그림표의 wear → casual 순.
 const TR_WEAR = {};
+// 보행 도트: 시트 여러 장(sprites + spritesExtra) 중에서 '인물@의상' 줄을 먼저 찾고, 없으면 기본 줄.
+function trSprite(id) {
+  const sheets = [TR_A.sprites, ...(TR_A.spritesExtra || [])].filter(Boolean), ch = (TR_A.chars || {})[id] || {};
+  const wear = TR_WEAR[id] || ch.wear || 'casual', want = wear !== 'casual' && wear !== '-' ? [id + '@' + wear, id] : [id];
+  for (const k of want) for (const sp of sheets) { const row = (sp.ids || []).indexOf(k); if (row >= 0) return { sp, row }; }
+  return { sp: TR_A.sprites || null, row: -1 };
+}
 function trWear(id, c, P) {
   const O = P.outfits; if (!O || TR_WEAR[id] === '-') return null;   // '-' = 맨몸(디버그 갤러리)
   return O[TR_WEAR[id]] || O[(c && c.wear) || 'casual'] || O[Object.keys(O)[0]] || null;
@@ -1241,8 +1249,9 @@ function trGallery(g, setG, badImg, setBadImg) {
     <div className="tr-dbgrw">{[...W.npcs.map(n => n.id), ...Object.keys(TR_A.chars || {}).filter(k => !W.npcs.some(n => n.id === k))].map(k => <button key={k} className={k === g.id ? 'on' : ''} onClick={() => setG({ ...g, id: k })}>{trNpc(k).name}</button>)}</div>
     <div className="tr-dbgrw">{poses.map(p => <button key={p} className={p === g.pose ? 'on' : ''} onClick={() => setG({ ...g, pose: p })}>{TR_POSE_NAME[p]}{P[p] ? '' : '·'}</button>)}</div>
     <div className="tr-dbgrw">{TR_FACES_ALL.map(f => <button key={f} className={(f === g.face ? 'on' : '') + (has(g.pose, f) ? '' : ' dim')} onClick={() => setG({ ...g, face: f })}>{f}</button>)}</div>
-    {(() => { const names = [...new Set(poses.flatMap(p => Object.keys((P[p] || {}).outfits || {})))]; if (!names.length) return null;
-      const cur = TR_WEAR[g.id] || (c && c.wear) || 'casual', KO = { '-': '맨몸', casual: '평상복', swim: '수영복', under: '속옷' };
+    {(() => { const spr = [TR_A.sprites, ...(TR_A.spritesExtra || [])].filter(Boolean).flatMap(s => (s.ids || []).filter(k => k.startsWith(g.id + '@')).map(k => k.split('@')[1]));
+      const names = [...new Set(['casual', ...poses.flatMap(p => Object.keys((P[p] || {}).outfits || {})), ...spr])]; if (names.length < 2) return null;
+      const cur = TR_WEAR[g.id] || (c && c.wear) || 'casual', KO = { '-': '맨몸', casual: '평상복', light: '가벼운 차림', swim: '수영복', under: '속옷' };
       return <div className="tr-dbgrw">{['-', ...names].map(o => <button key={o} className={o === cur ? 'on' : ''} onClick={() => { TR_WEAR[g.id] = o; setG({ ...g, w: o }); }}>{KO[o] || o}</button>)}</div>; })()}
     <div className="tr-dbgrw"><button onClick={() => setG(null)}>닫기</button></div>
   </div>;
@@ -1321,7 +1330,7 @@ function trNoteOpen(st, id, u) {
 }
 // 인물 그림: 대화용 몸 그림이 있으면 윗부분, 없으면 탐색 스프라이트(정면)를 크게.
 function trPortrait(id, w, h) {
-  const c = (TR_A.chars || {})[id], sp = TR_A.sprites, row = sp ? sp.ids.indexOf(id) : -1, df = trNpc(id);
+  const c = (TR_A.chars || {})[id], { sp, row } = trSprite(id), df = trNpc(id);
   const P = c && c.poses && c.poses.default;
   if (P && P.src && P.eye) { const k = w * .3 / (P.ed || P.w * .12); // 자세 그림: 눈을 기준으로 얼굴·상반신을 잘라 보인다
     return <div style={{ width: w, height: h, overflow: 'hidden', position: 'relative', background: '#e9dcc0' }}><img src={trUrl(P.src)} alt="" style={{ position: 'absolute', left: w / 2 - P.eye[0] * k, top: h * .36 - P.eye[1] * k, width: P.w * k, height: P.h * k, maxWidth: 'none' }} /></div>; }
