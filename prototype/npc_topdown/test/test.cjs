@@ -455,6 +455,33 @@ test('시험 세계: 대본 참조(증거·인물·구절·쟁점·반론 단계
   assert.deepEqual(FACES.filter(f => !usedF.has(f)), [], '대본에 안 쓰인 표정'); assert.deepEqual(['think', 'point', 'crossed'].filter(p => !usedP.has(p)), [], '대본에 안 쓰인 자세');
 });
 
+
+test('층 연결(계단)과 숨은 공간: 경로가 계단을 지나고, 정해진 칸에서 벽으로 한 번 더 가면 열림', () => {
+  const w = JSON.parse(JSON.stringify(W)), M = w.map, rows = M.rows.map(r => [...r]);
+  const open = []; rows.forEach((r, y) => r.forEach((c, x) => { if (c !== '#') open.push([x, y]); }));
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]], s0 = E.createWorld(W), npcAt = new Set(s0.npcs.map(n => n.x + ',' + n.y));
+  const wallN = ([x, y]) => dirs.some(([dx, dy]) => rows[y + dy] && rows[y + dy][x + dx] === '#' && y + dy > 0 && x + dx > 0 && y + dy < rows.length - 1 && x + dx < rows[0].length - 1);
+  const openN = ([x, y]) => dirs.some(([dx, dy]) => rows[y + dy] && rows[y + dy][x + dx] !== '#' && !npcAt.has((x + dx) + ',' + (y + dy)));
+  const P = open.find(c => !npcAt.has(c + '') && wallN(c) && openN(c)); w.player.x = P[0]; w.player.y = P[1];
+  // 플레이어 칸 옆 벽 하나를 숨은 칸으로
+  const d = dirs.find(([dx, dy]) => { const x = P[0] + dx, y = P[1] + dy; return rows[y] && rows[y][x] === '#' && y > 0 && x > 0 && y < rows.length - 1 && x < rows[0].length - 1; });
+  assert.ok(d, '플레이어 옆에 벽이 있어야 시험 가능');
+  const sx = P[0] + d[0], sy = P[1] + d[1];
+  M.secrets = [{ id: 'hid', x: sx, y: sy, from: P, flag: 'secret_test' }]; w.flagNames = [...(w.flagNames || []), 'secret_test'];
+  // 가장 먼 빈칸과 플레이어 옆 빈칸을 계단으로 연결
+  const far = open.reduce((a, b) => Math.abs(b[0] - P[0]) + Math.abs(b[1] - P[1]) > Math.abs(a[0] - P[0]) + Math.abs(a[1] - P[1]) ? b : a);
+  const near = dirs.map(([dx, dy]) => [P[0] + dx, P[1] + dy]).find(([x, y]) => rows[y] && rows[y][x] !== '#' && !npcAt.has(x + ',' + y));
+  M.links = [{ a: near, b: far, name: '계단' }];
+  let s = E.createWorld(w);
+  assert.equal(E.walkable(w, sx, sy, s), false);
+  s = E.dispatch(w, s, { type: 'MOVE_ONE', dx: d[0], dy: d[1] }); s = E.advance(w, s, 10);
+  assert.equal(s.flags.secret_test, true); assert.deepEqual([s.player.x, s.player.y], [sx, sy], '숨은 칸으로 들어가야 함');
+  assert.equal(C.unpack(w, C.pack(w, s)).flags.secret_test, true, '열린 숨은 공간은 상태 코드에 남아야 함');
+  // 계단: 한 걸음 들어가면 반대쪽까지
+  let t = E.createWorld(w);
+  t = E.dispatch(w, t, { type: 'MOVE_ONE', dx: near[0] - P[0], dy: near[1] - P[1] }); t = E.advance(w, t, 30);
+  assert.deepEqual([t.player.x, t.player.y], far, '계단 반대쪽으로 이어져야 함');
+});
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
 console.log(`${pass}/${tests.length} 통과`);
 process.exit(pass === tests.length ? 0 : 1);

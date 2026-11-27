@@ -603,7 +603,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const lm = TN_WORLD.map.landmarks.find(l => (l.x === x && l.y === y || (l.hit || []).some(h => h[0] === x && h[1] === y)) && TroemereiNPC.areaOf(TN_WORLD, l.x, l.y) === room);
     if (lm) { setPreview(null); setMenu({ kind: 'lm', id: lm.id }); return; }
     setMenu(null);
-    if (!TroemereiNPC.walkable(TN_WORLD, x, y)) { setPreview(null); return; }
+    if (!TroemereiNPC.walkable(TN_WORLD, x, y, state)) { setPreview(null); return; }
     const ta = TroemereiNPC.areaOf(TN_WORLD, x, y);
     // 다른 방(문 너머)도 눌러서 갈 수 있다. 그 방 사람은 들어가기 전까지 보이지 않는다.
     if (preview && preview.x === x && preview.y === y) { setPreview(null); act({ type: 'MOVE_TO', x, y }); return; }
@@ -986,7 +986,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       const g = tv.g, path = g.path || [ph.start], C = 11, M = TN_WORLD.map, last = path[path.length - 1];
       const tap = e => { if (g.ok) return; const r = e.currentTarget.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * M.width), y = Math.floor((e.clientY - r.top) / r.height * M.height);
         if (path.length > 1 && x === last[0] && y === last[1]) { setTv(v => ({ ...v, g: { ...v.g, path: path.slice(0, -1) } })); return; }
-        if (Math.abs(x - last[0]) + Math.abs(y - last[1]) !== 1 || !TroemereiNPC.walkable(TN_WORLD, x, y)) return;
+        if (Math.abs(x - last[0]) + Math.abs(y - last[1]) !== 1 || !TroemereiNPC.walkable(TN_WORLD, x, y, state)) return;
         setTv(v => ({ ...v, g: { ...v.g, path: [...path, [x, y]] } })); };
       const check = () => { let k = 0; for (const p2 of path) if (k < ph.via.length && p2[0] === ph.via[k][0] && p2[1] === ph.via[k][1]) k++; const end = path[path.length - 1];
         if (!(k === ph.via.length && Math.abs(end[0] - ph.end[0]) + Math.abs(end[1] - ph.end[1]) <= 1)) return false;

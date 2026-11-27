@@ -8,7 +8,12 @@ const TroemereiNPC = (() => {
   const secs = time => { const [h,m] = time.split(':').map(Number); return h*3600+m*60; };
   const random = s => {let x=s.rng|0; x^=x<<13; x^=x>>>17; x^=x<<5; s.rng=x>>>0;return (s.rng>>>0)/4294967296;};
   const inBounds = (w,x,y) => x>=0 && y>=0 && x<w.map.width && y<w.map.height;
-  const walkable = (w,x,y) => inBounds(w,x,y) && w.map.rows[y][x] !== '#';
+  // 숨은 공간: map.secrets의 칸은 벽('#')이지만, 그 플래그가 켜진 뒤에는(상태 s를 넘긴 경우) 지나갈 수 있다.
+  const secretAt = (w,x,y) => (w.map.secrets||[]).find(q=>q.x===x&&q.y===y);
+  const walkable = (w,x,y,s) => { if(!inBounds(w,x,y))return false; if(w.map.rows[y][x]!=='#')return true; const q=s&&secretAt(w,x,y); return !!(q&&s.flags&&s.flags[q.flag]); };
+  // 계단 등 연결 칸: map.links [{a:[x,y], b:[x,y], name}]. 한 칸에서 다른 칸으로 한 걸음에 이어진다(층 사이 이동).
+  const linkOf = (w,x,y) => { for(const L of w.map.links||[]){ if(L.a[0]===x&&L.a[1]===y)return {x:L.b[0],y:L.b[1],L}; if(L.b[0]===x&&L.b[1]===y)return {x:L.a[0],y:L.a[1],L}; } return null; };
+  const linked = (w,p,q) => { const o=linkOf(w,p.x,p.y); return !!o&&o.x===q.x&&o.y===q.y; };
   const node = (s,id) => s.npcs.find(n=>n.id===id);
   const landmark = (w,id) => w.map.landmarks.find(x=>x.id===id);
   const DAY=86400;
@@ -115,16 +120,17 @@ const TroemereiNPC = (() => {
     return s;
   }
   function route(w,s,from,to,{ignorePlayer=false,ignoreNpc=null}={}){
-    if (!walkable(w,to.x,to.y))return [];
+    if (!walkable(w,to.x,to.y,s))return [];
     const occupied=new Set(s.npcs.filter(n=>n.id!==ignoreNpc && !(n.id===from.id)).map(n=>posKey(n.x,n.y)));
     if(!ignorePlayer)occupied.add(posKey(s.player.x,s.player.y));
     const q=[{x:from.x,y:from.y}],prev=new Map([[posKey(from.x,from.y),null]]),v=new Map([[posKey(from.x,from.y),q[0]]]);
     for(let i=0;i<q.length;i++){
       const p=q[i], k=posKey(p.x,p.y);
       if(p.x===to.x&&p.y===to.y){const out=[];let curr=k;while(prev.get(curr)!==null){out.push(v.get(curr));curr=prev.get(curr);}return out.reverse();}
-      for(const [dx,dy] of [[1,0],[0,1],[-1,0],[0,-1]]){
-        const nx=p.x+dx,ny=p.y+dy,nk=posKey(nx,ny);
-        if(walkable(w,nx,ny)&&!prev.has(nk)&&(!occupied.has(nk)||(nx===from.x&&ny===from.y))){
+      const lk=linkOf(w,p.x,p.y), nb=[[1,0],[0,1],[-1,0],[0,-1]].map(([dx,dy])=>[p.x+dx,p.y+dy]); if(lk)nb.push([lk.x,lk.y]);
+      for(const [nx,ny] of nb){
+        const nk=posKey(nx,ny);
+        if(walkable(w,nx,ny,s)&&!prev.has(nk)&&(!occupied.has(nk)||(nx===from.x&&ny===from.y))){
           const point={x:nx,y:ny};prev.set(nk,k);v.set(nk,point);q.push(point);
         }
       }
@@ -259,7 +265,7 @@ const TroemereiNPC = (() => {
     if(playerBlocks(w,s,n.intent)){if(manhattan(n,s.player)===1){askMove(w,s,n,n.intent);return;}}
     else if(s.block&&s.block.npc===n.id)s.block=null;
     if(hasReached(w,s,n,n.intent)){arrive(w,s,n);return;}
-    if(!n.route.length || !isStepNext(n,n.route[0])){
+    if(!n.route.length || !isStepNext(w,n,n.route[0])){
       const r=routeFor(w,s,n,n.intent);n.route=r||[];
       if(!n.route.length){n.nextMoveAt=s.clock+12;return;}
     }
@@ -315,12 +321,12 @@ const TroemereiNPC = (() => {
   // 먼저 말 걸기 일정 끝내기(대화를 받았거나, 거절했거나, 기다리다 지침)
   function finishCall(s,n){const t=n.intent;if(t){n.completed.push(t.id);n.lastCompleted[t.id]=s.clock;n.lastTask=t.id;}n.mode='idle';n.intent=null;n.route=[];n.busyUntil=0;n.nextMoveAt=s.clock+5;}
   function caller(w,s){return s.npcs.find(n=>n.mode==='busy'&&n.intent&&n.intent.targetPlayer&&manhattan(n,s.player)===1)||null;}
-  const isStepNext=(n,to)=>manhattan(n,to)===1;
+  const isStepNext=(w,n,to)=>manhattan(n,to)===1||linked(w,n,to);
   function stepPlayer(w,s){
     if(!s.player.route.length)return;
     let next=s.player.route[0];
     const occupied=s.npcs.some(n=>n.x===next.x&&n.y===next.y);
-    if(!isStepNext(s.player,next)||occupied){
+    if(!isStepNext(w,s.player,next)||occupied){
       const dest=s.player.route[s.player.route.length-1];
       const reroute=route(w,s,s.player,dest,{ignorePlayer:true});
       s.player.route=reroute;
@@ -538,9 +544,14 @@ const TroemereiNPC = (() => {
     let s=clone(state);const player=s.player;
     if(action.type==='MOVE_TO'||action.type==='MOVE_ONE'){
       const target=action.type==='MOVE_ONE'?{x:player.x+action.dx,y:player.y+action.dy}:{x:action.x,y:action.y};
-      if(!walkable(w,target.x,target.y)){addLog(w,s,'그곳으로는 이동할 수 없다.','player');return s;}
+      // 숨은 공간: 정해진 칸(from)에서 그 벽 쪽으로 한 번 더 움직이면 열린다.
+      const sq=action.type==='MOVE_ONE'&&secretAt(w,target.x,target.y);
+      if(sq&&!s.flags[sq.flag]&&sq.from&&sq.from[0]===player.x&&sq.from[1]===player.y){s.flags[sq.flag]=true;addLog(w,s,sq.text||'벽 틈으로 들어갈 수 있을 것 같다.','player');}
+      if(!walkable(w,target.x,target.y,s)){addLog(w,s,'그곳으로는 이동할 수 없다.','player');return s;}
       const p=route(w,s,player,target,{ignorePlayer:true});
       if(!p.length&&manhattan(player,target)>0){addLog(w,s,'갈 수 있는 경로가 없다.','player');return s;}
+      // 계단 칸으로 한 걸음 들어가면 그대로 연결된 반대쪽(다른 층)까지 이어서 간다.
+      const lt=action.type==='MOVE_ONE'&&p.length===1&&linkOf(w,target.x,target.y); if(lt)p.push({x:lt.x,y:lt.y});
       player.route=p;player.nextMoveAt=s.clock+(w.player.moveSeconds||4);
       addLog(w,s,p.length?'목적지로 이동을 시작했다.':'이미 그곳에 있다.','player');
     }else if(action.type==='ACCOMPANY'){
@@ -636,7 +647,7 @@ const TroemereiNPC = (() => {
   }
   function validate(w,s){
     if(s.schema!=='TROEMEREI_NPC_V1'||s.worldId!==w.map.id)throw Error('Invalid checkpoint schema/world');
-    for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y))throw Error('Invalid position '+x.x+','+x.y);
+    for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y,s))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
   return {createWorld, nm, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
