@@ -1201,7 +1201,9 @@ const trStaticLayer = (() => {
   return () => {
     if (cache) return cache;
     const out = [];
-    TN_WORLD.map.rows.forEach((row, y) => row.split('').forEach((c, x) => { const i = TroemereiNPC.areaOf(TN_WORLD, x, y); out.push(<rect key={x + '-' + y} x={x * TR_CELL} y={y * TR_CELL} width={TR_CELL} height={TR_CELL} fill={c === '#' ? '#0f1a27' : TR_BG[Math.max(0, i)]} stroke="#5f7585" strokeOpacity=".09" />); }));
+    TN_WORLD.map.rows.forEach((row, y) => row.split('').forEach((c, x) => { const i = TroemereiNPC.areaOf(TN_WORLD, x, y); out.push(<rect key={x + '-' + y} x={x * TR_CELL} y={y * TR_CELL} width={TR_CELL} height={TR_CELL} fill={c === '#' ? '#0f1a27' : ((TN_WORLD.map.areas[i] || {}).color || TR_BG[Math.max(0, i) % TR_BG.length])} stroke="#5f7585" strokeOpacity=".09" />); }));
+    // 계단·정문 등 연결 칸 표시(양 끝 모두)
+    (TN_WORLD.map.links || []).forEach((L, i) => [L.a, L.b].forEach((p, j) => out.push(<g key={'k' + i + '-' + j}><rect x={p[0] * TR_CELL + 3} y={p[1] * TR_CELL + 3} width={TR_CELL - 6} height={TR_CELL - 6} rx="5" fill="#f2c46d" opacity=".28" stroke="#f2c46d" strokeOpacity=".7" /><text x={(p[0] + .5) * TR_CELL} y={(p[1] + .5) * TR_CELL + 5} fontSize="13" textAnchor="middle" fill="#f6e3b4">{/계단/.test(L.name) ? '⇅' : '⇳'}</text></g>)));
     TN_WORLD.map.landmarks.forEach(l => out.push(<g key={'l' + l.id}><rect x={l.x * TR_CELL + 6} y={l.y * TR_CELL + 6} width={TR_CELL - 12} height={TR_CELL - 12} rx="4" fill="#e0bc78" opacity=".22" /><text x={(l.x + .5) * TR_CELL} y={(l.y + .5) * TR_CELL + 6} fontSize="16" textAnchor="middle" fill="#eddbaf">{l.icon}</text></g>));
     cache = <g pointerEvents="none">{out}</g>;
     return cache;

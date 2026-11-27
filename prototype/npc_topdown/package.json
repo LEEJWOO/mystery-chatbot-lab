@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "node build.mjs",
-    "test": "node build.mjs && node test/test.cjs"
+    "test": "node build.mjs && WORLD=ch1 node build.mjs && node test/test.cjs"
   },
   "author": "",
   "license": "ISC",

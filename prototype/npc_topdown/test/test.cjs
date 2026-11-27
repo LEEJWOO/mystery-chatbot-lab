@@ -482,6 +482,23 @@ test('층 연결(계단)과 숨은 공간: 경로가 계단을 지나고, 정해
   t = E.dispatch(w, t, { type: 'MOVE_ONE', dx: near[0] - P[0], dy: near[1] - P[1] }); t = E.advance(w, t, 30);
   assert.deepEqual([t.player.x, t.player.y], far, '계단 반대쪽으로 이어져야 함');
 });
+
+test('1장 지도: 모든 방이 이어지고(잠긴 옥상·재판장·지배인실 제외), 계단으로 층을 넘고, 숨은 공간 2곳이 열림', () => {
+  const w = require('../src/world_ch1.json'); let s = E.createWorld(w);
+  const A = w.map.areas, cell = a => { for (let y = a.y0; y <= a.y1; y++) for (let x = a.x0; x <= a.x1; x++) if (E.walkable(w, x, y, s) && !s.npcs.some(n => n.x === x && n.y === y)) return { x, y }; };
+  for (const a of A) {
+    if (['옥상', '재판장', '지배인실'].includes(a.name)) continue;
+    const r = E.dispatch(w, s, { type: 'MOVE_TO', ...cell(a) });
+    assert.ok(r.player.route.length > 0 || (r.player.x === cell(a).x && r.player.y === cell(a).y), a.name + '(으)로 가는 길이 없음');
+  }
+  for (const nm of ['옥상', '재판장', '지배인실']) { const a = A.find(x => x.name === nm); assert.equal(E.dispatch(w, s, { type: 'MOVE_TO', ...cell(a) }).player.route.length, 0, nm + '은(는) 막혀 있어야 함'); }
+  for (const q of w.map.secrets) {
+    let t = JSON.parse(JSON.stringify(s)); t.player.x = q.from[0]; t.player.y = q.from[1]; t.player.route = [];
+    t = E.dispatch(w, t, { type: 'MOVE_ONE', dx: q.x - q.from[0], dy: q.y - q.from[1] }); t = E.advance(w, t, 10);
+    assert.equal(t.flags[q.flag], true, q.id); assert.deepEqual([t.player.x, t.player.y], [q.x, q.y], q.id + ' 안으로');
+  }
+  const lv = w.map.levels.map(l => l.name); assert.deepEqual(lv, ['외부', '1층', '2층', '옥상', '지하']);
+});
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
 console.log(`${pass}/${tests.length} 통과`);
 process.exit(pass === tests.length ? 0 : 1);
