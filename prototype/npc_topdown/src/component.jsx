@@ -21,7 +21,7 @@ const trFact = (id, role, who) => {
 // 대상 기억은 코드로만 보낸다(채팅에 비밀이 그대로 보이지 않게). 내용은 같은 코드를 키워드로 켜지는 로어북 항목에 있다.
 const trMemCode = (id, role) => TroemereiNPC.factCode(TN_WORLD, id) + (role === 0 ? '직' : role === 1 ? '목' : '들');
 // 공지(매일 반복) 중 (from, to] 사이의 것들. [{t: 절대 시각, n: 공지}]
-const trNotices = (from, to) => { const out = []; for (let d = Math.floor(from / 86400); d <= Math.floor(to / 86400); d++) for (const n of TN_WORLD.notices || []) { const t = d * 86400 + TroemereiNPC.absTime(n.time); if (t > from && t <= to) out.push({ t, n }); } return out.sort((a, b) => a.t - b.t); };
+const trNotices = (from, to) => { const out = []; for (let d = Math.floor(from / 86400); d <= Math.floor(to / 86400); d++) for (const n of TN_WORLD.notices || []) { if (n.day && d + 1 !== n.day) continue; const t = d * 86400 + TroemereiNPC.absTime(n.time); if (t > from && t <= to) out.push({ t, n }); } return out.sort((a, b) => a.t - b.t); };
 // 받침에 따라 조사 고르기(이/가, 을/를)
 // 받침: 0 없음 · 1 있음 · 2 ㄹ받침. 숫자는 읽는 소리로(0영 1일 3삼 6육 7칠 8팔).
 const trBat = w => { const s = String(w), ch = s[s.length - 1] || '', c = ch.charCodeAt(0) - 0xac00; if (c >= 0 && c < 11172) return c % 28 ? (c % 28 === 8 ? 2 : 1) : 0; return '013678'.includes(ch) && ch ? ('178'.includes(ch) ? 2 : 1) : 0; };

@@ -5,7 +5,7 @@
 """
 import json, os, copy, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import textmap
+import textmap, ch1_schedule as SCH
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 MAP, META = textmap.build(os.path.join(ROOT, 'maps', 'ch1'))
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     base = json.load(open(os.path.join(ROOT, 'src', 'world.json'), encoding='utf-8'))
     w = copy.deepcopy(base)
     w.update({'kind': 'troemerei-ch1', 'title': '몽환의 트로이메라이 1장 (뼈대)', 'chapter': 1, 'startTime': '18:00', 'map': MAP,
-              'notes': '1장 뼈대: 지도·계단·숨은 공간만. 사건·일정·재판 데이터는 비어 있음.',
+              'notes': '1장 뼈대: 지도·기본 루트 일정(tools/ch1_schedule.py)·임시 사건 대본. 재판은 시험용 X1.',
               'facts': [], 'events': {}, 'markers': [], 'items': [], 'notices': [], 'slots': [], 'branches': [], 'scenes': [],
               'trials': [], 'cases': [], 'debugTalk': [], 'onComplete': [], 'debugFlags': ['secret_linen', 'secret_wine', 'court_open', 'court_warn1', 'court_warn2', 'court_over', 'ladder_gone'],
               'device': {'cellSeconds': 43200, 'cells': 8, 'graceSeconds': 60, 'cost': {'photo': 300, 'callMin': 600, 'locate': 10800}}})
@@ -46,7 +46,8 @@ if __name__ == '__main__':
     for n in w['npcs']:
         x, y = center(spots.get(n['id'], '로비'))
         while (x, y) in used or rows[y][x] == '#' or (x, y) == (w['player']['x'], w['player']['y']): x += 1
-        used.add((x, y)); n.update({'x': x, 'y': y, 'agenda': [], 'notes': [], 'knows': []})
+        used.add((x, y)); n.update({'x': x, 'y': y, 'agenda': SCH.agenda(n['id'], {l['id'] for l in landmarks}), 'notes': [], 'knows': []})
+        if n['id'] in SCH.AVOID: n['avoid'] = SCH.AVOID[n['id']]
         if n['id'] == 'mei': n['short'] = '메이'   # 정체를 밝힌 뒤 이름표
     # 시험용 재판 틀(X1): 체험판 재판 T1을 가져와 쓴다. 구절 짝짓기는 빼고, 동선은 1장 지도 좌표로, 반론은 개편 흐름(연설 → 입력)으로.
     # 1장 재판 대본이 정해지면 이 X1을 바꿔 끼운다. 체험판 데이터(world.json)는 건드리지 않는다.
@@ -95,5 +96,13 @@ if __name__ == '__main__':
     w['items'] = [dict(it, at=None) for it in base['items'] if it['id'] in T['evidence']]
     w['items'].append({'id': 'band_log', 'name': '저스틴의 팔찌 기록', 'at': None, 'from': '2일 19:30', 'desc': '06:00 전지 교체 · 18:00 전지 교체 · 18:40 해제 감지 (그 뒤 기록 없음)'})
     w['flagNames'] = sorted(set(w['flagNames'] + ['x1_done']))
+    # 기본 루트 일정·공지·물건·사건(시간표 v2.1)
+    w['notices'] = SCH.NOTICES
+    w['items'] += SCH.ITEMS
+    w['cases'] = [SCH.CASE]
+    w['trials'] = [SCH.CASE_TRIAL] + w['trials']
+    for ev in w['events'].values(): ev['trial'] = 'X1'
+    fl = ['spares_taken', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'spares_hidden', 'suzune_told', 'j_top', 'j_checked', 'justin_fell', 'band_thrown', 'justin_dead']
+    w['flagNames'] = sorted(set(w['flagNames'] + fl)); w['debugFlags'] = w['debugFlags'] + fl
     json.dump(w, open(os.path.join(ROOT, 'src', 'world_ch1.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('world_ch1.json:', W_, 'x', H_, '방', len(areas), '조사 지점', len(landmarks), '계단', len(links), '숨은 공간', len(secrets))

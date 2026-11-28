@@ -133,6 +133,9 @@ const TroemereiNPC = (() => {
   }
   function route(w,s,from,to,{ignorePlayer=false,ignoreNpc=null}={}){
     if (!walkable(w,to.x,to.y,s))return [];
+    // 인물별로 피해 가는 방(avoid: ['이끼 비탈'] — 예: 자국을 남기지 않으려는 사람). 목적지가 그 방이면 상관없음.
+    const spec=from.id&&w.npcs.find(x=>x.id===from.id),av=spec&&spec.avoid?new Set(spec.avoid.map(nm=>w.map.areas.findIndex(a=>a.name===nm))):null;
+    if(av&&av.has(areaOf(w,to.x,to.y)))av.clear();
     const occupied=new Set(s.npcs.filter(n=>n.id!==ignoreNpc && !(n.id===from.id)).map(n=>posKey(n.x,n.y)));
     if(!ignorePlayer)occupied.add(posKey(s.player.x,s.player.y));
     const q=[{x:from.x,y:from.y}],prev=new Map([[posKey(from.x,from.y),null]]),v=new Map([[posKey(from.x,from.y),q[0]]]);
@@ -142,7 +145,7 @@ const TroemereiNPC = (() => {
       const lk=linkOf(w,p.x,p.y,s), nb=[[1,0],[0,1],[-1,0],[0,-1]].map(([dx,dy])=>[p.x+dx,p.y+dy]); if(lk)nb.push([lk.x,lk.y]);
       for(const [nx,ny] of nb){
         const nk=posKey(nx,ny);
-        if(walkable(w,nx,ny,s)&&!prev.has(nk)&&(!occupied.has(nk)||(nx===from.x&&ny===from.y))){
+        if(walkable(w,nx,ny,s)&&!prev.has(nk)&&(!occupied.has(nk)||(nx===from.x&&ny===from.y))&&!(av&&av.size&&av.has(areaOf(w,nx,ny)))){
           const point={x:nx,y:ny};prev.set(nk,k);v.set(nk,point);q.push(point);
         }
       }
@@ -152,8 +155,15 @@ const TroemereiNPC = (() => {
   function goalOf(w,s,task){
     if(task.targetPlayer)return {target:s.player,goal:{x:s.player.x,y:s.player.y}}; // 플레이어를 찾아가 먼저 말 걸기
     if(task.targetNpc){const n=node(s,task.targetNpc);return n?{target:n,goal:{x:n.x,y:n.y}}:null;}
+    if(task.area){const c=areaCell(w,task.area,task.spot||0);return c?{target:null,goal:c}:null;} // area: 그 방의 빈칸(spot번째로 가운데에 가까운 칸)
     const p=landmark(w,task.landmark);return p?{target:null,goal:{x:p.x,y:p.y}}:null;
   }
+  const cellCache=new WeakMap();
+  function areaCell(w,name,k){let m=cellCache.get(w);if(!m){m={};cellCache.set(w,m);}
+    if(!m[name]){const a=w.map.areas.find(a=>a.name===name);if(!a)return null;const cx=(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2,o=[];
+      for(let y=a.y0;y<=a.y1;y++)for(let x=a.x0;x<=a.x1;x++)if(walkable(w,x,y)&&!linkOf(w,x,y)&&!w.map.landmarks.some(l=>l.x===x&&l.y===y))o.push({x,y,d:Math.abs(x-cx)+Math.abs(y-cy)});
+      m[name]=o.sort((p,q)=>p.d-q.d||p.y-q.y||p.x-q.x);}
+    const o=m[name];return o.length?{x:o[k%o.length].x,y:o[k%o.length].y}:null;}
   function routeFor(w,s,n,task){
     const g=goalOf(w,s,task);if(!g)return null;
     if(g.target){
@@ -188,6 +198,7 @@ const TroemereiNPC = (() => {
     // ifFlag: 그 플래그(배열이면 그중 하나)가 켜졌을 때만 / unlessFlag: 켜져 있으면 안 함
     if(t.ifFlag&&![].concat(t.ifFlag).some(f=>s.flags[f]))return false;
     if(t.unlessFlag&&[].concat(t.unlessFlag).some(f=>s.flags[f]))return false;
+    if(t.day&&![].concat(t.day).includes(1+Math.floor(s.clock/DAY)))return false; // day: 그날(1일·2일…)에만
     const tod=s.clock%DAY; // 일정 시각은 '그날 기준'으로 비교한다(자정이 지나도 다음 날 다시 선택).
     if(tod<secs(t.from||'00:00') ||tod>=secs(t.until||'23:59'))return false;
     if(n.lastCompleted[t.id] && s.clock-n.lastCompleted[t.id]<(t.cooldownSeconds||0))return false;
@@ -258,7 +269,8 @@ const TroemereiNPC = (() => {
         if(r.fact)witness(w,s,n,r.fact,[n.id,r.when.targetNpc].filter(Boolean));
       }
     }
-    if(task.onCompleteFlag)s.flags[task.onCompleteFlag]=true;
+    if(task.onCompleteFlag)for(const f of [].concat(task.onCompleteFlag))s.flags[f]=true;
+    if(task.onCompleteWarp){const l=landmark(w,task.onCompleteWarp);if(l){n.x=l.x;n.y=l.y;n.route=[];}} // 길로는 못 가는 이동(맨손으로 오르기·추락)
     if(task.onCompleteFact)witness(w,s,n,task.onCompleteFact,[n.id]);
     n.mode='idle';n.intent=null;n.route=[];n.nextMoveAt=s.clock+5;n.busyUntil=0;
   }

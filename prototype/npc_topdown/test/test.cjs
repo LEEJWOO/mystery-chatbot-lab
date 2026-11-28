@@ -522,6 +522,22 @@ test('1장 물때·사다리: 갯바위는 썰물 때만, 밧줄 사다리는 �
     for (let y = a.y0; y <= a.y1; y++) for (let x = a.x0; x <= a.x1; x++) if (w.map.rows[y][x] !== '#') assert.ok(!E.lineOfSight(w, { x, y }, cr) && !E.lineOfSight(w, { x, y }, foot), nm + ' ' + x + ',' + y + '에서 바위틈·바위벽 밑이 보이면 안 됨'); }
 });
 
+test('1장 기본 루트 일정: 시간표 v2.1 순서대로 흘러가고, 20:10 전 비탈을 밟은 사람은 바룬 한 명', () => {
+  const w = require('../src/world_ch1.json'); let s = E.createWorld(w); s.player.x = 1; s.player.y = w.map.levels[1].y0 + 1;
+  const at = {}, slope = new Set(), J = () => s.npcs.find(n => n.id === 'justin'), slopeI = w.map.areas.findIndex(a => a.name === '이끼 비탈');
+  const until = E.absTime('2일 20:40'), t10 = E.absTime('2일 20:10');
+  while (s.clock < until) { s = E.advance(w, s, 60);
+    for (const f of Object.keys(s.flags)) if (s.flags[f] && at[f] === undefined) at[f] = s.clock;
+    if (s.clock < t10) for (const n of s.npcs) if (E.areaOf(w, n.x, n.y) === slopeI) slope.add(n.id);
+    if (s.cases && s.cases.J1 && at.case === undefined) at.case = s.clock; }
+  const T = v => E.absTime(v), inn = (f, a, b) => assert.ok(at[f] >= T(a) && at[f] <= T(b), f + ' 시각 ' + (at[f] === undefined ? '없음' : ((at[f] / 3600) % 24).toFixed(2)) + ' (기대 ' + a + '~' + b + ')');
+  inn('spares_taken', '1일 23:20', '2일 00:10'); inn('spares_hidden', '2일 02:20', '2일 04:40'); inn('suzune_told', '2일 09:40', '2일 10:10');
+  inn('ladder_gone', '2일 12:40', '2일 13:20'); inn('justin_fell', '2일 16:00', '2일 16:40'); inn('band_thrown', '2일 18:30', '2일 18:50');
+  inn('justin_dead', '2일 18:40', '2일 19:00'); inn('case', '2일 20:15', '2일 20:40');
+  assert.deepEqual([...slope], ['varun'], '20:10 전에 비탈을 밟은 사람: ' + [...slope].join(','));
+  assert.ok(['varun', 'suzune', 'killian'].includes(s.npcs[s.cases.J1[2] - 1].id), '발견자는 수색대(바위 끝)');
+});
+
 test('팔찌 전지: 시간·기능으로 줄고, 교체하면 새로, 0 뒤 1분이면 사망, 상태 코드에 남음', () => {
   const w = require('../src/world_ch1.json'); let s = E.createWorld(w);
   let b = E.battery(w, s); assert.equal(b.left, 43200); assert.equal(b.cells, 7);

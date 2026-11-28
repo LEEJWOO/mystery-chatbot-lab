@@ -29,7 +29,7 @@
 ~~~~~~~~~~DDD~~~~~~~~~~RRRRRRRRRRRRR^VVVVVVVVV~~
 ~~~~~~~~~~DDD~~~~~~~~~~~RRRRRRRRRRrR^VVxVVVlhV~~
 ~~~~~~~~~~DDD~~~~~~~~~~^^^^^^^RRRRRR^^^|^^^^^^~~
-~~~~~~~~~~DDD~~~~~~~~~~~~~~~~~~TTTTT^^TTTTTlTTT~
+~~~~~~~~~~DDD~~~~~~~~~~~~~~~~~~TTTTT^^TTTTwlTTT~
 ~~~~~~~~~~DDD~~~~~~~~~~~~~~~~~~~TTTTTTTcTTTTTT~~
 ~~~~~~~~~~DDD~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~DqD~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,6 +47,7 @@ M 이끼 비탈 #2f4a2f
 V 전망 바위 #3a3e3a
 T 갯바위 #34403c tide
 @marks
+w wall_foot 바위벽 밑 ⇡
 7 prop hedge
 6 prop lamp
 5 prop boulder

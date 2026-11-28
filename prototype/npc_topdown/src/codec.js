@@ -75,6 +75,9 @@ const TroemereiCodec = (() => {
   const putTime = (o, t, clock) => o.uint(!t ? 0 : (t - clock < 0 ? -2 * (t - clock) - 1 : 2 * (t - clock)) + 1);
   const getTime = (r, clock) => { const v = r.uint(); if (!v) return 0; const z = v - 1; return clock + (z % 2 ? -(z + 1) / 2 : z / 2); };
   function putRoute(o, from, route) {
+    // 계단·사다리처럼 한 걸음에 건너뛰는 칸이 있으면 그 앞까지만 저장한다(불러온 뒤 그 자리에서 길을 다시 찾는다).
+    let cut = 0, q = from; for (const p of route) { if (Math.abs(p.x - q.x) + Math.abs(p.y - q.y) !== 1) break; cut++; q = p; }
+    route = route.slice(0, cut);
     o.uint(route.length); let prev = from, acc = 0, k = 0;
     for (const p of route) {
       const d = DIRS.findIndex(([dx, dy]) => prev.x + dx === p.x && prev.y + dy === p.y);
