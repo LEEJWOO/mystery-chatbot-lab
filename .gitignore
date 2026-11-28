@@ -1,1 +1,3 @@
 prototype/npc_topdown/dist/*_Offline.html
+
+__pycache__/
