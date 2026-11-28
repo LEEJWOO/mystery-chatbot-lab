@@ -543,6 +543,17 @@ test('1장 기본 루트 일정: 시간표 v2.1 순서대로 흘러가고, 20:10
   s.player.batAt = s.clock; s.player.batUsed = 0;   // 시험용 플레이어는 내내 화장실에 있었으니 전지만 새로
   const loc = E.dispatch(w, s, { type: 'DEVICE', op: 'locate', npcId: 'justin' }).player.lastLocate, sl = w.map.landmarks.find(l => l.id === 'shore_ledge');
   assert.deepEqual([loc.x, loc.y], [sl.x, sl.y], '팔찌를 던진 뒤 위치 조회는 팔찌 자리(바위 해안)');
+  // 사건 → 집합 대본(J1) → 조사(22:55 마감, 필수 단서 지급) → 마감 대사 → 재판 K1
+  const re = w.map.landmarks.find(l => l.id === 'rock_edge'); s.player.x = re.x; s.player.y = re.y; s.player.route = [];
+  for (let k = 0; k < 15 && !s.trial; k++) s = E.advance(w, s, 60);
+  assert.ok(s.trial && w.trials[s.trial.i].code === 'J1', '바위 끝에 가면 집합 대본이 열림');
+  s = E.trialStep(w, s, 'NEXT'); assert.ok(E.inInvestigation(w, s), '집합 대사 뒤 조사');
+  assert.equal(E.clock(s.trial.sub).slice(0, 5), '22:55', '조사 마감 22:55');
+  const K1 = w.trials.find(t => t.code === 'K1'); for (const e of w.trials.find(t => t.code === 'J1').phases[1].grant) assert.ok(s.player.items[e] !== undefined, '조사 시작 때 지급: ' + e);
+  while (E.inInvestigation(w, s)) s = E.advance(w, s, 300);
+  assert.ok(E.clock(s.clock) >= '22:55', '마감 전에 조사가 끝나면 안 됨');
+  s = E.trialStep(w, s, 'NEXT'); assert.ok(s.trial && w.trials[s.trial.i].code === 'K1' && s.trial.phase === 0, '마감 대사 뒤 K1 개정');
+  for (const e of K1.evidence) assert.ok(s.player.items[e] !== undefined, 'K1 증거 보유: ' + e);
 });
 
 test('1장 재판(K1) 데이터: 인물·표정(36종)·증거·정답 위치·보기·동선·반론 연결이 맞음', () => {
