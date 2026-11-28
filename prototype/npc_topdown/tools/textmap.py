@@ -190,4 +190,9 @@ def build(folder, gap=2):
     MAP = {'width': W, 'height': len(rows), 'rows': rows, 'terrain': terrain, 'seeThrough': SEE_THROUGH, 'areas': areas, 'landmarks': landmarks,
            'props': [], 'floors': [], 'decor': [], 'links': links, 'secrets': secrets, 'levels': levels, 'guards': guards}
     if tide_cells: MAP['tide'] = {'cells': tide_cells, 'low': tides}
+    # 낮은 가구(소파·탁자·침대…)는 시야를 막지 않는다(엔진 map.props의 low). 키 큰 것만 막는다.
+    TALL = {'bookshelf', 'wardrobe', 'shelf', 'hedge', 'lockers', 'panel'}
+    MAP['props'] = [{'x': c[0], 'y': c[1], 'w': 1, 'h': 1, 'low': True, 't': p['name']} for p in props if p['name'] not in TALL for c in p['cells']]
+    TALL_LM = {'wine_rack', 'linen_shelf', 'lockers', 'water_tank', 'antenna', 'generator', 'stove', 'front', 'case'}   # 조사 지점 몸체 중 시야를 막는 것
+    MAP['props'] += [{'x': c[0], 'y': c[1], 'w': 1, 'h': 1, 'low': True, 't': l['id']} for l in landmarks if l['id'] not in TALL_LM for c in l['hit']]
     return MAP, {'sights': sights, 'notes': notes, 'levels': LV, 'props': props}

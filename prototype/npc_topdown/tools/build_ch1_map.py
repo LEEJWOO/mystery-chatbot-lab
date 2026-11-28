@@ -48,6 +48,7 @@ if __name__ == '__main__':
         while (x, y) in used or rows[y][x] == '#' or (x, y) == (w['player']['x'], w['player']['y']): x += 1
         used.add((x, y)); n.update({'x': x, 'y': y, 'agenda': SCH.agenda(n['id'], {l['id'] for l in landmarks}), 'notes': [], 'knows': []})
         if n['id'] in SCH.AVOID: n['avoid'] = SCH.AVOID[n['id']]
+        n['knows'] = SCH.KNOWS.get(n['id'], [])
         if n['id'] == 'justin': n['band'] = {'flag': 'band_thrown', 'at': 'shore_ledge'}   # 위치 조회는 팔찌 자리를 가리킨다
         if n['id'] == 'mei': n['short'] = '메이'   # 정체를 밝힌 뒤 이름표
     # 본편 1장 재판(초안) — tools/ch1_trial.py. 체험판 데이터(world.json)는 건드리지 않는다.
@@ -65,6 +66,7 @@ if __name__ == '__main__':
     w['items'] = [{'id': 'band_log', 'name': '저스틴의 팔찌 기록', 'at': None, 'desc': '06:00 전지 교체 · 18:00 전지 교체 · 18:40 해제 감지 (그 뒤 기록 없음)'}] + TRI.ITEMS
     # 기본 루트 일정·공지·물건·사건(시간표 v2.1)
     w['notices'] = SCH.NOTICES
+    w['facts'] = SCH.FACTS
     w['items'] += SCH.ITEMS
     w['cases'] = [SCH.CASE]
     w['trials'] = [SCH.CASE_TRIAL] + w['trials']

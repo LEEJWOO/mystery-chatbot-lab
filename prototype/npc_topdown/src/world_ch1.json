@@ -1261,7 +1261,1560 @@
     "hit": []
    }
   ],
-  "props": [],
+  "props": [
+   {
+    "x": 2,
+    "y": 10,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "palm"
+   },
+   {
+    "x": 4,
+    "y": 15,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "palm"
+   },
+   {
+    "x": 15,
+    "y": 16,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "palm"
+   },
+   {
+    "x": 3,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "palm"
+   },
+   {
+    "x": 1,
+    "y": 13,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "palm"
+   },
+   {
+    "x": 9,
+    "y": 11,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "palm"
+   },
+   {
+    "x": 31,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sunbed"
+   },
+   {
+    "x": 42,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sunbed"
+   },
+   {
+    "x": 31,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sunbed"
+   },
+   {
+    "x": 13,
+    "y": 18,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sunbed"
+   },
+   {
+    "x": 9,
+    "y": 17,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sunbed"
+   },
+   {
+    "x": 28,
+    "y": 12,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "flowers"
+   },
+   {
+    "x": 13,
+    "y": 12,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "flowers"
+   },
+   {
+    "x": 24,
+    "y": 14,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "lamp"
+   },
+   {
+    "x": 29,
+    "y": 16,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "lamp"
+   },
+   {
+    "x": 12,
+    "y": 18,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "parasol"
+   },
+   {
+    "x": 8,
+    "y": 17,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "parasol"
+   },
+   {
+    "x": 23,
+    "y": 19,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "boulder"
+   },
+   {
+    "x": 30,
+    "y": 21,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "boulder"
+   },
+   {
+    "x": 35,
+    "y": 17,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "boulder"
+   },
+   {
+    "x": 6,
+    "y": 33,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "toilet"
+   },
+   {
+    "x": 4,
+    "y": 33,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "toilet"
+   },
+   {
+    "x": 2,
+    "y": 33,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "toilet"
+   },
+   {
+    "x": 11,
+    "y": 35,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "desk"
+   },
+   {
+    "x": 10,
+    "y": 35,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "desk"
+   },
+   {
+    "x": 31,
+    "y": 37,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "counter"
+   },
+   {
+    "x": 32,
+    "y": 37,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "counter"
+   },
+   {
+    "x": 33,
+    "y": 37,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "counter"
+   },
+   {
+    "x": 34,
+    "y": 37,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "counter"
+   },
+   {
+    "x": 1,
+    "y": 38,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sink"
+   },
+   {
+    "x": 1,
+    "y": 39,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sink"
+   },
+   {
+    "x": 25,
+    "y": 39,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "plant"
+   },
+   {
+    "x": 15,
+    "y": 39,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "plant"
+   },
+   {
+    "x": 1,
+    "y": 42,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "plant"
+   },
+   {
+    "x": 38,
+    "y": 43,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "plant"
+   },
+   {
+    "x": 6,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "roundtable"
+   },
+   {
+    "x": 33,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "chair"
+   },
+   {
+    "x": 32,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "chair"
+   },
+   {
+    "x": 31,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "chair"
+   },
+   {
+    "x": 30,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "chair"
+   },
+   {
+    "x": 29,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "chair"
+   },
+   {
+    "x": 34,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "chair"
+   },
+   {
+    "x": 35,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "chair"
+   },
+   {
+    "x": 36,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "chair"
+   },
+   {
+    "x": 22,
+    "y": 50,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 21,
+    "y": 50,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 23,
+    "y": 50,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 5,
+    "y": 51,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 6,
+    "y": 51,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 7,
+    "y": 51,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 16,
+    "y": 50,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 15,
+    "y": 50,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 17,
+    "y": 50,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 29,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 29,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 28,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 28,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 14,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 14,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 13,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 13,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 22,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 22,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 23,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 23,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 34,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 34,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 35,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 35,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 5,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 5,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 4,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 4,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 2,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 2,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 1,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 1,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 25,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 25,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 26,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 26,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 11,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 11,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 10,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 10,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 7,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 7,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 8,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 8,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 16,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 16,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 17,
+    "y": 70,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 17,
+    "y": 69,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 20,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 20,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 19,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 19,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 31,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 31,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 32,
+    "y": 58,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 32,
+    "y": 57,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bed"
+   },
+   {
+    "x": 43,
+    "y": 67,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "plant"
+   },
+   {
+    "x": 40,
+    "y": 71,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 39,
+    "y": 71,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 38,
+    "y": 71,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "sofa"
+   },
+   {
+    "x": 1,
+    "y": 91,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 1,
+    "y": 90,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 2,
+    "y": 90,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 2,
+    "y": 91,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 37,
+    "y": 95,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 37,
+    "y": 94,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 36,
+    "y": 94,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 35,
+    "y": 94,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 35,
+    "y": 95,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 36,
+    "y": 95,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "barrel"
+   },
+   {
+    "x": 11,
+    "y": 90,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "crate"
+   },
+   {
+    "x": 10,
+    "y": 90,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "crate"
+   },
+   {
+    "x": 1,
+    "y": 95,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "crate"
+   },
+   {
+    "x": 12,
+    "y": 95,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "crate"
+   },
+   {
+    "x": 31,
+    "y": 100,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 33,
+    "y": 105,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 28,
+    "y": 105,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 29,
+    "y": 105,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 35,
+    "y": 105,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 37,
+    "y": 101,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 31,
+    "y": 105,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 37,
+    "y": 104,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 33,
+    "y": 100,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 28,
+    "y": 100,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 29,
+    "y": 100,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 35,
+    "y": 100,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "podium"
+   },
+   {
+    "x": 38,
+    "y": 102,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "hostseat"
+   },
+   {
+    "x": 42,
+    "y": 2,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "diving"
+   },
+   {
+    "x": 5,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "fountain"
+   },
+   {
+    "x": 5,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "fountain"
+   },
+   {
+    "x": 6,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "fountain"
+   },
+   {
+    "x": 7,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "fountain"
+   },
+   {
+    "x": 7,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "fountain"
+   },
+   {
+    "x": 6,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "fountain"
+   },
+   {
+    "x": 33,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 33,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 33,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 33,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 34,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 35,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 35,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 35,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 35,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 36,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 37,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 37,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 37,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 37,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 38,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 39,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 39,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 39,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 39,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 40,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 40,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 40,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 40,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 38,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 38,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 38,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 36,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 36,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 36,
+    "y": 6,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 34,
+    "y": 5,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 34,
+    "y": 4,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 34,
+    "y": 3,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "pool"
+   },
+   {
+    "x": 33,
+    "y": 14,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bench"
+   },
+   {
+    "x": 34,
+    "y": 14,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bench"
+   },
+   {
+    "x": 25,
+    "y": 17,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "tide_sign"
+   },
+   {
+    "x": 41,
+    "y": 20,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "view_site"
+   },
+   {
+    "x": 10,
+    "y": 41,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "office_door"
+   },
+   {
+    "x": 2,
+    "y": 46,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "piano"
+   },
+   {
+    "x": 2,
+    "y": 47,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "piano"
+   },
+   {
+    "x": 3,
+    "y": 47,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "piano"
+   },
+   {
+    "x": 4,
+    "y": 47,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "piano"
+   },
+   {
+    "x": 4,
+    "y": 46,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "piano"
+   },
+   {
+    "x": 3,
+    "y": 46,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "piano"
+   },
+   {
+    "x": 11,
+    "y": 46,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bar"
+   },
+   {
+    "x": 11,
+    "y": 47,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bar"
+   },
+   {
+    "x": 11,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bar"
+   },
+   {
+    "x": 11,
+    "y": 49,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "bar"
+   },
+   {
+    "x": 29,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "table"
+   },
+   {
+    "x": 30,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "table"
+   },
+   {
+    "x": 31,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "table"
+   },
+   {
+    "x": 32,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "table"
+   },
+   {
+    "x": 33,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "table"
+   },
+   {
+    "x": 34,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "table"
+   },
+   {
+    "x": 35,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "table"
+   },
+   {
+    "x": 36,
+    "y": 48,
+    "w": 1,
+    "h": 1,
+    "low": true,
+    "t": "table"
+   }
+  ],
   "floors": [],
   "decor": [],
   "links": [
@@ -1656,7 +3209,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -1685,7 +3238,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -1699,7 +3252,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -1713,7 +3266,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -1727,7 +3280,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -1750,7 +3303,25 @@
      "cooldownSeconds": 60
     },
     {
-     "id": "suzune_2_1100_15",
+     "id": "suzune_2_0955_15",
+     "kind": "visit",
+     "day": 2,
+     "from": "09:55",
+     "until": "10:05",
+     "durationSeconds": 480,
+     "priority": 72,
+     "weight": 1,
+     "interruptible": true,
+     "area": "해안 산책로",
+     "spot": 2,
+     "once": true,
+     "onCompleteFact": "suzune_shared",
+     "factWith": [
+      "varun"
+     ]
+    },
+    {
+     "id": "suzune_2_1100_16",
      "kind": "visit",
      "day": 2,
      "from": "11:00",
@@ -1764,7 +3335,7 @@
      "cooldownSeconds": 60
     },
     {
-     "id": "suzune_2_1310_16",
+     "id": "suzune_2_1310_17",
      "kind": "visit",
      "day": 2,
      "from": "13:10",
@@ -1774,14 +3345,15 @@
      "weight": 1,
      "interruptible": true,
      "landmark": "bench",
-     "cooldownSeconds": 60
+     "cooldownSeconds": 60,
+     "onCompleteFact": "suzune_sketch"
     },
     {
-     "id": "suzune_2_2000_17",
+     "id": "suzune_2_2010_18",
      "kind": "visit",
      "day": 2,
-     "from": "20:00",
-     "until": "20:30",
+     "from": "20:10",
+     "until": "20:40",
      "durationSeconds": 1200,
      "priority": 70,
      "weight": 1,
@@ -1984,7 +3556,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -2013,7 +3585,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2027,7 +3599,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2041,7 +3613,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2055,7 +3627,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2069,7 +3641,7 @@
      "day": 2,
      "from": "09:15",
      "until": "09:40",
-     "durationSeconds": 1200,
+     "durationSeconds": 1560,
      "priority": 70,
      "weight": 1,
      "interruptible": true,
@@ -2279,7 +3851,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -2308,7 +3880,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2322,7 +3894,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2336,7 +3908,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2350,7 +3922,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2364,7 +3936,7 @@
      "day": 2,
      "from": "10:05",
      "until": "10:30",
-     "durationSeconds": 1200,
+     "durationSeconds": 1560,
      "priority": 70,
      "weight": 1,
      "interruptible": true,
@@ -2559,7 +4131,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -2588,7 +4160,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2602,7 +4174,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2616,7 +4188,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2630,7 +4202,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2644,7 +4216,7 @@
      "day": 2,
      "from": "10:05",
      "until": "10:30",
-     "durationSeconds": 1200,
+     "durationSeconds": 1560,
      "priority": 70,
      "weight": 1,
      "interruptible": true,
@@ -2840,7 +4412,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -2869,7 +4441,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2883,7 +4455,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2897,7 +4469,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2911,7 +4483,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -2925,7 +4497,7 @@
      "day": 2,
      "from": "08:30",
      "until": "08:55",
-     "durationSeconds": 1200,
+     "durationSeconds": 1560,
      "priority": 70,
      "weight": 1,
      "interruptible": true,
@@ -3019,7 +4591,9 @@
     "trust": 45,
     "affection": 50
    },
-   "knows": [],
+   "knows": [
+    "odile_ladder"
+   ],
    "agenda": [
     {
      "id": "odile_1_1800_0",
@@ -3136,7 +4710,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -3165,7 +4739,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3179,7 +4753,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3193,7 +4767,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3207,7 +4781,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3221,7 +4795,7 @@
      "day": 2,
      "from": "08:55",
      "until": "09:15",
-     "durationSeconds": 1080,
+     "durationSeconds": 1440,
      "priority": 70,
      "weight": 1,
      "interruptible": true,
@@ -3401,7 +4975,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -3430,7 +5004,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3444,7 +5018,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3458,7 +5032,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3472,7 +5046,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3519,7 +5093,8 @@
      "interruptible": false,
      "landmark": "rope_spot",
      "once": true,
-     "onCompleteFlag": "ladder_gone"
+     "onCompleteFlag": "ladder_gone",
+     "onCompleteFact": "varun_ladder"
     },
     {
      "id": "varun_2_1310_17",
@@ -3532,14 +5107,15 @@
      "weight": 1,
      "interruptible": true,
      "landmark": "bench",
-     "cooldownSeconds": 60
+     "cooldownSeconds": 60,
+     "onCompleteFact": "varun_watch"
     },
     {
-     "id": "varun_2_2000_18",
+     "id": "varun_2_2010_18",
      "kind": "visit",
      "day": 2,
-     "from": "20:00",
-     "until": "20:30",
+     "from": "20:10",
+     "until": "20:40",
      "durationSeconds": 1500,
      "priority": 70,
      "weight": 1,
@@ -3707,7 +5283,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -3736,7 +5312,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3750,7 +5326,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3764,7 +5340,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3778,7 +5354,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -3917,7 +5493,11 @@
      "interruptible": false,
      "area": "로비",
      "spot": 40,
-     "once": true
+     "once": true,
+     "onCompleteFact": "tell_clara",
+     "factWith": [
+      "clara"
+     ]
     },
     {
      "id": "iv2",
@@ -3931,7 +5511,11 @@
      "interruptible": false,
      "area": "로비",
      "spot": 40,
-     "once": true
+     "once": true,
+     "onCompleteFact": "tell_killian",
+     "factWith": [
+      "killian"
+     ]
     },
     {
      "id": "iv3",
@@ -3945,7 +5529,11 @@
      "interruptible": false,
      "area": "정원",
      "spot": 5,
-     "once": true
+     "once": true,
+     "onCompleteFact": "tell_freddie",
+     "factWith": [
+      "freddie"
+     ]
     },
     {
      "id": "iv4",
@@ -3960,7 +5548,11 @@
      "area": "로비",
      "spot": 40,
      "once": true,
-     "onCompleteFlag": "suzune_told"
+     "onCompleteFlag": "suzune_told",
+     "onCompleteFact": "tell_suzune",
+     "factWith": [
+      "suzune"
+     ]
     },
     {
      "id": "iv5",
@@ -3974,7 +5566,11 @@
      "interruptible": false,
      "area": "휴게 코너",
      "spot": 5,
-     "once": true
+     "once": true,
+     "onCompleteFact": "tell_seoha",
+     "factWith": [
+      "seoha"
+     ]
     },
     {
      "id": "chk_eaves",
@@ -4079,9 +5675,23 @@
      "kind": "visit",
      "day": 2,
      "from": "16:00",
-     "until": "23:59",
-     "durationSeconds": 8820,
+     "until": "18:40",
+     "durationSeconds": 120,
      "priority": 98,
+     "weight": 1,
+     "interruptible": false,
+     "landmark": "crevice",
+     "cooldownSeconds": 0,
+     "ifFlag": "justin_fell"
+    },
+    {
+     "id": "throw",
+     "kind": "visit",
+     "day": 2,
+     "from": "18:40",
+     "until": "18:55",
+     "durationSeconds": 60,
+     "priority": 99,
      "weight": 1,
      "interruptible": false,
      "landmark": "crevice",
@@ -4093,9 +5703,9 @@
      "id": "drown",
      "kind": "visit",
      "day": 2,
-     "from": "16:00",
-     "until": "23:59",
-     "durationSeconds": 420,
+     "from": "18:41",
+     "until": "19:10",
+     "durationSeconds": 360,
      "priority": 99,
      "weight": 1,
      "interruptible": false,
@@ -4115,7 +5725,7 @@
      "weight": 1,
      "interruptible": false,
      "landmark": "crevice",
-     "cooldownSeconds": 60,
+     "cooldownSeconds": 0,
      "ifFlag": "justin_dead"
     },
     {
@@ -4299,7 +5909,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -4328,7 +5938,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4342,7 +5952,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4356,7 +5966,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4370,7 +5980,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4384,13 +5994,28 @@
      "day": 2,
      "from": "09:15",
      "until": "09:40",
-     "durationSeconds": 1200,
+     "durationSeconds": 1560,
      "priority": 70,
      "weight": 1,
      "interruptible": true,
      "area": "정원",
      "spot": 1,
      "cooldownSeconds": 60
+    },
+    {
+     "id": "freddie_2_1600_15",
+     "kind": "visit",
+     "day": 2,
+     "from": "16:00",
+     "until": "16:10",
+     "durationSeconds": 360,
+     "priority": 85,
+     "weight": 1,
+     "interruptible": false,
+     "area": "정원",
+     "spot": 1,
+     "once": true,
+     "onCompleteFact": "freddie_locate"
     }
    ],
    "notes": [],
@@ -4552,7 +6177,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -4581,7 +6206,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4595,7 +6220,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4609,7 +6234,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4623,7 +6248,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4637,7 +6262,7 @@
      "day": 2,
      "from": "08:55",
      "until": "09:15",
-     "durationSeconds": 1080,
+     "durationSeconds": 1440,
      "priority": 70,
      "weight": 1,
      "interruptible": true,
@@ -4646,11 +6271,11 @@
      "cooldownSeconds": 60
     },
     {
-     "id": "killian_2_2000_15",
+     "id": "killian_2_2010_15",
      "kind": "visit",
      "day": 2,
-     "from": "20:00",
-     "until": "20:30",
+     "from": "20:10",
+     "until": "20:40",
      "durationSeconds": 1200,
      "priority": 65,
      "weight": 1,
@@ -4819,7 +6444,7 @@
      "kind": "visit",
      "day": 2,
      "from": "19:40",
-     "until": "20:20",
+     "until": "20:10",
      "durationSeconds": 900,
      "priority": 60,
      "weight": 1,
@@ -4848,7 +6473,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4862,7 +6487,7 @@
      "day": 1,
      "from": "20:30",
      "until": "22:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4876,7 +6501,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4890,7 +6515,7 @@
      "day": 2,
      "from": "08:00",
      "until": "19:00",
-     "durationSeconds": 1500,
+     "durationSeconds": 600,
      "priority": 20,
      "weight": 1,
      "interruptible": true,
@@ -4904,7 +6529,7 @@
      "day": 2,
      "from": "08:30",
      "until": "08:55",
-     "durationSeconds": 1200,
+     "durationSeconds": 1560,
      "priority": 70,
      "weight": 1,
      "interruptible": true,
@@ -4992,7 +6617,108 @@
   "band_thrown",
   "justin_dead"
  ],
- "facts": [],
+ "facts": [
+  {
+   "id": "tell_clara",
+   "code": "K1C1",
+   "self": {
+    "clara": "2일 08:30 로비에서 저스틴이 \"앞마당에서 올려다봐. 외벽 처마에 예비 전지가 있어. 내가 한 번 더 확인할 때까진 우리끼리만\"이라고 했다"
+   },
+   "seen": "2일 08:30쯤 로비에서 클라라가 저스틴과 단둘이 이야기하는 걸 봤다(내용은 못 들음)",
+   "player": "로비에서 저스틴이 클라라와 단둘이 이야기했다"
+  },
+  {
+   "id": "tell_killian",
+   "code": "K1C2",
+   "self": {
+    "killian": "2일 08:55 로비에서 저스틴이 와인 저장고 헐거운 벽돌 뒤에 예비 전지가 있다고, 우리끼리만 알자고 했다"
+   },
+   "seen": "2일 08:55쯤 로비에서 킬리언이 저스틴과 단둘이 이야기하는 걸 봤다(내용은 못 들음)",
+   "player": "로비에서 저스틴이 킬리언과 단둘이 이야기했다"
+  },
+  {
+   "id": "tell_freddie",
+   "code": "K1C3",
+   "self": {
+    "freddie": "2일 09:15 정원에서 저스틴이 리넨실 선반 뒤 틈에 예비 전지가 있다고, \"내가 한 번 더 확인할 때까진 우리끼리만\"이라고 했다"
+   },
+   "seen": "2일 09:15쯤 정원에서 프레디가 저스틴과 단둘이 이야기하는 걸 봤다(내용은 못 들음)",
+   "player": "정원에서 저스틴이 프레디와 단둘이 이야기했다"
+  },
+  {
+   "id": "tell_suzune",
+   "code": "K1C4",
+   "self": {
+    "suzune": "2일 09:40 로비에서 저스틴이 \"전망 바위 위에서 예비 전지를 봤다. 내가 한 번 더 확인할 때까진 우리끼리만\"이라고 했다"
+   },
+   "seen": "2일 09:40쯤 로비에서 스즈네가 저스틴과 단둘이 이야기하는 걸 몇 걸음 떨어져 봤다(내용은 못 들음)",
+   "player": "로비에서 저스틴이 스즈네와 단둘이 이야기했다"
+  },
+  {
+   "id": "tell_seoha",
+   "code": "K1C5",
+   "self": {
+    "seoha": "2일 10:05 휴게 코너에서 저스틴이 다이빙대 꼭대기에 예비 전지가 있다고, 우리끼리만 알자고 했다"
+   },
+   "seen": "2일 10:05쯤 2층 휴게 코너에서 서하가 저스틴과 단둘이 이야기하는 걸 봤다(내용은 못 들음)",
+   "player": "2층 휴게 코너에서 저스틴이 서하와 단둘이 이야기했다"
+  },
+  {
+   "id": "suzune_shared",
+   "code": "K1C6",
+   "self": {
+    "suzune": "2일 09:55 걸으며 바룬 씨에게 저스틴이 전망 바위 위에서 전지를 봤다고 한 말을 전했다(같이 다니는 파트너라서)",
+    "varun": "2일 09:55 스즈네에게서, 저스틴이 전망 바위 위에서 예비 전지를 봤다고 했다는 말을 들었다"
+   },
+   "seen": "2일 아침 스즈네와 바룬이 산책로를 걸으며 무언가 이야기했다",
+   "player": "스즈네와 바룬이 산책로를 걸으며 이야기했다"
+  },
+  {
+   "id": "varun_ladder",
+   "code": "K1C7",
+   "self": {
+    "varun": "2일 12:50 비탈로 전망 바위에 올라가 바다 쪽 바위벽의 밧줄 사다리를 끌어 올려 걷었다. 가지러 오는 사람이 비탈로, 내 앞으로 오게 하려고(재판 전에는 말하지 않는다)"
+   },
+   "seen": "2일 점심 무렵 바룬이 전망 바위 위에서 바다 쪽을 내려다보고 있었다",
+   "player": "바룬이 전망 바위 위에서 바다 쪽을 내려다보고 있었다"
+  },
+  {
+   "id": "varun_watch",
+   "code": "K1C8",
+   "self": {
+    "varun": "2일 13:10부터 19:00까지 산책로 벤치에서 이끼 비탈 입구를 지켜봤다. 내려온 사람은 없었다"
+   },
+   "seen": "2일 오후 내내 바룬이 산책로 벤치에 앉아 비탈 쪽을 보고 있었다",
+   "player": "바룬이 오후 내내 산책로 벤치에서 비탈 쪽을 보고 있었다"
+  },
+  {
+   "id": "suzune_sketch",
+   "code": "K1C9",
+   "self": {
+    "suzune": "2일 오후 바룬 씨 옆에서 비탈 쪽을 그리며 그림마다 시각을 적었다. 그리는 동안 지나간 사람을 다 봤다고는 못 한다"
+   },
+   "seen": "2일 오후 스즈네가 벤치에서 그림을 그리고 있었다",
+   "player": "스즈네가 벤치에서 그림을 그리고 있었다"
+  },
+  {
+   "id": "freddie_locate",
+   "code": "K1D1",
+   "self": {
+    "freddie": "2일 16:04 전지를 일찍 갈아 끼우고(남은 1시간 55분은 버림) 16:05 저스틴 위치를 조회했다. 리넨실이 아니라 외부, 전망 바위 위였다"
+   },
+   "seen": "2일 오후 4시쯤 프레디가 정원에서 팔찌를 만지작거렸다",
+   "player": "프레디가 정원에서 팔찌를 만지작거렸다"
+  },
+  {
+   "id": "odile_ladder",
+   "code": "K1D2",
+   "self": {
+    "odile": "1일 17:30 배에서 내려 선착장 끝에 섰을 때, 바다 건너 전망 바위 바위벽에 밧줄 사다리가 걸려 있는 걸 봤다"
+   },
+   "seen": "오딜이 선착장 끝에서 바다 건너를 한참 봤다",
+   "player": "오딜이 선착장 끝에서 바다 건너를 봤다"
+  }
+ ],
  "events": {
   "K1_R1": {
    "kinds": [

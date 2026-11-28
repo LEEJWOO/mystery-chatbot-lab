@@ -1264,9 +1264,11 @@ const trNPC = /* @__PURE__ */ (() => {
       m.nextMoveAt = m.busyUntil;
       m.route = [];
     }
+    const day0 = Math.floor(s.clock / DAY) * DAY, uAbs = task.until ? day0 + secs(task.until) : 0;
     n.mode = "busy";
     n.route = [];
     n.busyUntil = s.clock + (task.durationSeconds || 30);
+    if (uAbs > s.clock && !task.targetNpc && !task.targetPlayer) n.busyUntil = Math.min(n.busyUntil, uAbs);
     n.nextMoveAt = n.busyUntil;
     if (task.targetPlayer) {
       addLog(w, s, nm(w, s, spec.id) + "\uC774(\uAC00) \uB2E4\uAC00\uC640 \uB9D0\uC744 \uAC78\uC5C8\uB2E4.", "call", n);
@@ -1319,7 +1321,7 @@ const trNPC = /* @__PURE__ */ (() => {
         n.route = [];
       }
     }
-    if (task.onCompleteFact) witness(w, s, n, task.onCompleteFact, [n.id]);
+    if (task.onCompleteFact) witness(w, s, n, task.onCompleteFact, [n.id, ...task.factWith || []]);
     n.mode = "idle";
     n.intent = null;
     n.route = [];

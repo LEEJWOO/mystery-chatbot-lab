@@ -248,7 +248,9 @@ const trNPC = (() => {
       // 상대도 만남이 끝날 때까지 붙잡아 둔다(멈춤). 일정은 유지되므로 끝나면 하던 일을 계속한다.
       m.mode='paused';m.busyUntil=Math.max(m.busyUntil||0,s.clock+(task.durationSeconds||30));m.nextMoveAt=m.busyUntil;m.route=[];
     }
-    n.mode='busy';n.route=[];n.busyUntil=s.clock+(task.durationSeconds||30);n.nextMoveAt=n.busyUntil;
+    // 머무는 시간은 그 일의 끝 시각(until)을 넘기지 않는다 — 다음 일정(식사·면담 등)에 늦지 않게
+    const day0=Math.floor(s.clock/DAY)*DAY,uAbs=task.until?day0+secs(task.until):0;
+    n.mode='busy';n.route=[];n.busyUntil=s.clock+(task.durationSeconds||30);if(uAbs>s.clock&&!task.targetNpc&&!task.targetPlayer)n.busyUntil=Math.min(n.busyUntil,uAbs);n.nextMoveAt=n.busyUntil;
     if(task.targetPlayer){addLog(w,s,nm(w,s,spec.id)+'이(가) 다가와 말을 걸었다.','call',n);return;}
     addLog(w,s,nm(w,s,spec.id)+'이(가) '+(task.kind==='meet'?'다른 인물과 대화를 시작했다.':'목적지에서 행동을 시작했다.'),'npc',n);
   }
@@ -277,7 +279,7 @@ const trNPC = (() => {
     }
     if(task.onCompleteFlag)for(const f of [].concat(task.onCompleteFlag))s.flags[f]=true;
     if(task.onCompleteWarp){const l=landmark(w,task.onCompleteWarp);if(l){n.x=l.x;n.y=l.y;n.route=[];}} // 길로는 못 가는 이동(맨손으로 오르기·추락)
-    if(task.onCompleteFact)witness(w,s,n,task.onCompleteFact,[n.id]);
+    if(task.onCompleteFact)witness(w,s,n,task.onCompleteFact,[n.id,...(task.factWith||[])]); // factWith: 함께 직접 겪은 사람(예: 면담 상대)
     n.mode='idle';n.intent=null;n.route=[];n.nextMoveAt=s.clock+5;n.busyUntil=0;
   }
   function npcStep(w,s,n){
