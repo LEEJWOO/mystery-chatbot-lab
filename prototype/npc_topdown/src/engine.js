@@ -581,7 +581,8 @@ const TroemereiNPC = (() => {
       if(b.empty){addLog(w,s,'전지가 다 됐다. 전지부터 갈아야 한다.','player');return s;}
       const cost=action.op==='photo'?(C.photo||300):action.op==='call'?(C.callMin||600)*Math.max(1,action.minutes|0):action.op==='locate'?(C.locate||10800):0;
       batUse(w,s,cost);
-      if(action.op==='locate'){const n=node(s,action.npcId);s.player.lastLocate=n?{id:n.id,x:n.x,y:n.y,at:s.clock}:null;addLog(w,s,(n?nm(w,s,n.id):'?')+'의 위치를 조회했다.','player');}
+      if(action.op==='locate'){const n=node(s,action.npcId),sp=n&&w.npcs.find(x=>x.id===n.id),ba=sp&&sp.band&&s.flags[sp.band.flag]&&landmark(w,sp.band.at); // 팔찌를 풀어 둔 뒤에는 팔찌 자리가 나온다
+        s.player.lastLocate=n?{id:n.id,x:ba?ba.x:n.x,y:ba?ba.y:n.y,at:s.clock}:null;addLog(w,s,(n?nm(w,s,n.id):'?')+'의 위치를 조회했다.','player');}
       else addLog(w,s,action.op==='photo'?'사진을 찍었다.':'통화를 했다.','player');
       return s;
     }

@@ -536,6 +536,9 @@ test('1장 기본 루트 일정: 시간표 v2.1 순서대로 흘러가고, 20:10
   inn('justin_dead', '2일 18:40', '2일 19:00'); inn('case', '2일 20:15', '2일 20:40');
   assert.deepEqual([...slope], ['varun'], '20:10 전에 비탈을 밟은 사람: ' + [...slope].join(','));
   assert.ok(['varun', 'suzune', 'killian'].includes(s.npcs[s.cases.J1[2] - 1].id), '발견자는 수색대(바위 끝)');
+  s.player.batAt = s.clock; s.player.batUsed = 0;   // 시험용 플레이어는 내내 화장실에 있었으니 전지만 새로
+  const loc = E.dispatch(w, s, { type: 'DEVICE', op: 'locate', npcId: 'justin' }).player.lastLocate, sl = w.map.landmarks.find(l => l.id === 'shore_ledge');
+  assert.deepEqual([loc.x, loc.y], [sl.x, sl.y], '팔찌를 던진 뒤 위치 조회는 팔찌 자리(바위 해안)');
 });
 
 test('팔찌 전지: 시간·기능으로 줄고, 교체하면 새로, 0 뒤 1분이면 사망, 상태 코드에 남음', () => {

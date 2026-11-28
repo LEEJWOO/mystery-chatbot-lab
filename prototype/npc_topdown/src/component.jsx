@@ -420,7 +420,7 @@ function trActor(id, expr, pose, onBad, bad) {
   const f = (P.faces || {})[pick.face]; // 빈 얼굴 방식이면 기본 표정도 조각으로 덮는다
   const pct = (a, b) => (a / b * 100) + '%', layer = (L, k) => L && !bad[trUrl(L.src)] ? <img key={k} src={trUrl(L.src)} alt="" onError={() => onBad(trUrl(L.src))} style={{ position: 'absolute', left: pct(L.x, P.w), top: pct(L.y, P.h), width: pct(L.w, P.w), height: pct(L.h, P.h) }} /> : null;
   // 하라구로: 그림에는 그림자를 넣지 않고, 눈 위쪽에 어두운 그늘을 인물 윤곽 안에만 덮는다.
-  const E = P.eye, D = P.ed || P.w * .12, shade = pick.face === '하라구로' && E ? <div className="tr-shade" style={{ WebkitMaskImage: `url(${trUrl(P.src)})`, maskImage: `url(${trUrl(P.src)})`,
+  const E = P.eye, D = P.ed || P.w * .12, shade = pick.face === '하라구로' && E && !P.noShade ? <div className="tr-shade" style={{ WebkitMaskImage: `url(${trUrl(P.src)})`, maskImage: `url(${trUrl(P.src)})`,
     background: `radial-gradient(ellipse ${D * 1.7 / P.w * 100}% ${D * 1.05 / P.h * 100}% at ${E[0] / P.w * 100}% ${(E[1] - D * .42) / P.h * 100}%, rgba(28,8,44,.62), rgba(28,8,44,.42) 55%, rgba(28,8,44,0) 100%)` }} /> : null;
   return <div style={{ position: 'absolute', left, top, width: W, height: H }}>
     <img src={trUrl(P.src)} alt="" onError={() => onBad(trUrl(P.src))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />

@@ -4157,7 +4157,11 @@
    "knows": [],
    "avoid": [
     "이끼 비탈"
-   ]
+   ],
+   "band": {
+    "flag": "band_thrown",
+    "at": "shore_ledge"
+   }
   },
   {
    "id": "freddie",
