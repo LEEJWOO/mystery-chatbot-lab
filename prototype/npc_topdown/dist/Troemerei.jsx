@@ -2172,8 +2172,11 @@ function trDebugBox(state, onDbg, onGal) {
     <div className="tr-dbgrw">
       <button onClick={() => onDbg(x => { for (const it of W.items || []) if (x.player.items[it.id] === undefined) x.player.items[it.id] = x.clock; }, '증거 전부 획득')}>증거 전부</button>
       <button onClick={() => onDbg(x => { for (const sc of W.scenes || []) if (x.player.scenes[sc.id] === undefined) x.player.scenes[sc.id] = x.clock; }, '앨범 전부 획득')}>앨범 전부</button>
-      <button onClick={() => onDbg(x => { const have = new Set(x.player.mem.map(m => m[0])); for (const f of W.facts || []) if (!have.has(f.id)) x.player.mem.push([f.id, 0, x.clock]); }, '기억 전부 획득')}>기억 전부</button>
+      <button onClick={() => onDbg(x => { const have = new Set(x.player.mem.map(m => m[0])); for (const f of W.facts || []) if (!have.has(f.id) && (f.player || f.seen)) x.player.mem.push([f.id, 0, x.clock]); }, '기억 전부 획득(플레이어가 알 수 있는 것만)')}>기억 전부</button>
       <button onClick={() => onDbg(x => { x.player.items = {}; x.player.given = {}; x.player.scenes = {}; }, '증거·앨범 비움')}>비우기</button>
+      <button onClick={() => onDbg(x => { const P = x.player; P.talked = P.talked || {}; P.seen = P.seen || {}; P.scenes = P.scenes || {}; const have = new Set((P.mem || []).map(m => m[0]));
+        for (const n of W.npcs) { if (P.talked[n.id] === undefined) P.talked[n.id] = x.clock; if (!P.seen[n.id]) P.seen[n.id] = [0, x.clock];
+          for (const nt of n.notes || []) { const u = nt.unlock || {}; if (u.fact && !have.has(u.fact)) { P.mem.push([u.fact, 0, x.clock]); have.add(u.fact); } if (u.scene && P.scenes[u.scene] === undefined) P.scenes[u.scene] = x.clock; if (u.flag) x.flags[u.flag] = true; } } }, '수첩 전부 채움')}>수첩 전부</button>
       <button onClick={onGal}>표정·자세 갤러리</button>
       {TN_WORLD.device ? <button onClick={() => onDbg(x => { x.player.batAt = x.clock; x.player.batUsed = 0; }, '팔찌 전지 완충')}>전지 완충</button> : null}
       {TN_WORLD.device ? <button onClick={() => onDbg(x => { x.player.cells = (TN_WORLD.device.cells || 8) - 1; }, '예비 전지 채움')}>예비 전지 채움</button> : null}
@@ -2266,7 +2269,7 @@ function trSheet({ onDev, onDbg, onGal, ev, heard, free, tab, setTab, state, deb
           <div className="tr-mut">{t.phases.map((ph, i) => (i + 1) + '.' + ({ talk: '대사', debate: '증거 제시', pairs: '엇갈린 증언', combine: '구절 짝짓기', rebut: 'AI 반론', develop: '기억 현상', route: '동선 재현', strings: '실 엮기', dream: '꿈 조각', crystal: '진상 결정', vote: '투표' }[ph.type] || ph.type)).join(' · ')}</div></div>)}
         <button onClick={onLook}>외형 다시 고르기(체크인 카드)</button>
         <div className="tr-mut">관계 조절(시험용 · ±10점, 20점마다 한 단계)</div>
-        {TN_WORLD.npcs.map(n => <div key={n.id} className="tr-relbox"><b>{n.name}</b>{trRelBars(state, n.id, onRel)}</div>)}
+        {TN_WORLD.npcs.map(n => <div key={n.id} className="tr-relbox"><b>{trNpc(n.id).name}</b>{trRelBars(state, n.id, onRel)}</div>)}
         <div className="tr-mut">최근 기록</div>
         <div style={{ maxHeight: 130, overflowY: 'auto' }}>{state.logs.filter(e => debug || e.visible).slice(-20).reverse().map((e, i) => <div className="tr-row" key={i} style={{ fontSize: 12 }}><time>{trHM(e.time)}</time>{e.text}</div>)}</div>
         <label className="tr-mut"><input type="checkbox" checked={debug} onChange={e => setDebug(e.target.checked)} /> 디버그 (숨은 인물·기록 표시)</label>
@@ -2335,13 +2338,13 @@ function trNotebook(st, pick, setPick, onRel) {
     return <div className="tr-nb-detail">
       <button className="tr-back" onClick={() => setPick(null)}>‹ 수첩</button>
       <div style={{ display: 'flex', gap: 8 }}><div style={{ filter: known ? 'none' : 'brightness(0) opacity(.55)' }}>{trPortrait(n.id, 120, 170)}</div>
-        <div className="tr-slip" style={{ flex: 1 }}><b style={{ color: '#8a3b2b' }}>{known ? n.name : '???'}</b><div>{known ? n.profile : '아직 만나지 못했다'}</div>{known ? trRelBars(st, n.id, onRel) : null}</div></div>
+        <div className="tr-slip" style={{ flex: 1 }}><b style={{ color: '#8a3b2b' }}>{known ? trNpc(n.id).name : '???'}</b><div>{known ? n.profile : '아직 만나지 못했다'}</div>{known ? trRelBars(st, n.id, onRel) : null}</div></div>
       <div className="tr-slips">{(n.notes || []).map((x, i) => trNoteOpen(st, n.id, x.unlock) ? <div key={i} className="tr-slip">· {x.text}</div> : <div key={i} className="tr-slip lock"><b>? ? ?</b></div>)}</div>
     </div>;
   }
   return <div className="tr-cards">{TN_WORLD.npcs.map(n => { const open = (n.notes || []).filter(x => trNoteOpen(st, n.id, x.unlock)).length, known = met(n);
     return <button key={n.id} className="tr-card2" onClick={() => setPick({ note: n.id })}><div style={{ filter: known ? 'none' : 'brightness(0) opacity(.55)' }}>{trPortrait(n.id, 70, 92)}</div>
-      <div style={{ flex: 1, minWidth: 0 }}><b>{known ? n.name : '???'}</b><div className="tr-mut2">{known ? n.profile : '아직 만나지 못했다'}</div><div className="tr-mut2">메모 {open} / {(n.notes || []).length}</div>{known ? trRelBars(st, n.id) : null}</div></button>; })}</div>;
+      <div style={{ flex: 1, minWidth: 0 }}><b>{known ? trNpc(n.id).name : '???'}</b><div className="tr-mut2">{known ? n.profile : '아직 만나지 못했다'}</div><div className="tr-mut2">메모 {open} / {(n.notes || []).length}</div>{known ? trRelBars(st, n.id) : null}</div></button>; })}</div>;
 }
 function trScenes(st, pick, setPick) {
   const got = st.player.scenes || {}, list = TN_WORLD.scenes || [];
