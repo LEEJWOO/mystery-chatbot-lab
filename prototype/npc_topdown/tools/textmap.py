@@ -19,6 +19,7 @@
   x link 이름 [off=플래그] [on=플래그]   연결 칸. 같은 이름의 표시 두 개가 서로 이어진다(계단·정문·사다리)
   x secret id flag=플래그 | 문장        숨은 공간 벽. 방 쪽 칸에서 그 벽으로 한 번 더 걸으면 열림. 반대편 칸이 틈
   x guard id open=… warn=a,b over=… who=… area=… | 대사1 | 대사2 | 대사3   막는 칸(같은 글자 칸 모두)
+  1 prop 이름                           장식 가구(막힌 칸). 이어진 덩어리마다 그림 하나(theme.txt의 object 이름)
 """
 import os, re, glob
 
@@ -58,7 +59,9 @@ def parse_level(path):
             ch, rest = line[0], line[2:]
             body, *texts = [p.strip() for p in rest.split('|')]
             kind, _, tail = body.partition(' ')
-            if kind in ('link', 'secret', 'guard'):
+            if kind == 'prop':
+                L['marks'][ch] = {'kind': 'prop', 'name': tail.strip()}
+            elif kind in ('link', 'secret', 'guard'):
                 kv = _kv(tail); first = re.split(r'\s+\w+=', ' ' + tail)[0].strip()
                 L['marks'][ch] = {'kind': kind, 'name': first, 'kv': kv, 'texts': texts}
             else:
@@ -69,11 +72,11 @@ def parse_level(path):
 
 
 def build(folder, gap=2):
-    files = sorted(glob.glob(os.path.join(folder, '*.txt')))
+    files = sorted(f for f in glob.glob(os.path.join(folder, '*.txt')) if os.path.basename(f)[0].isdigit())  # 층 파일만(숫자로 시작)
     LV = [parse_level(f) for f in files]
     W = max(max(len(r) for r in L['grid']) for L in LV)
     rows, terrain, areas, landmarks, levels, secrets, guards, tide_rooms, tides = [], [], [], [], [], [], [], [], []
-    ends, sights, notes, errs = {}, [], [], []
+    ends, sights, notes, errs, props = {}, [], [], [], []
     y = 0
     for L in LV:
         H = len(L['grid']); G = [list(r.ljust(W, L['pad'])) for r in L['grid']]
@@ -147,13 +150,26 @@ def build(folder, gap=2):
                 kv = M['kv']; cells = [[xx, y + yy] for xx, yy in ps]
                 guards.append({'id': M['name'], 'cells': cells, 'stand': cells[0], 'area': kv.get('area', ''), 'open': kv.get('open', M['name'] + '_open'),
                                'warn': [s for s in kv.get('warn', '').split(',') if s], 'over': kv.get('over', M['name'] + '_over'), 'who': kv.get('who', ''), 'lines': M['texts']})
+        for c, ps in pos.items():
+            M = L['marks'].get(c)
+            if not M or M['kind'] != 'prop': continue
+            left = set(ps)
+            while left:
+                st = [left.pop()]; comp = []
+                while st:
+                    p = st.pop(); comp.append([p[0], y + p[1]])
+                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        q = (p[0] + dx, p[1] + dy)
+                        if q in left: left.remove(q); st.append(q)
+                props.append({'name': M['name'], 'cells': comp})
         for a, b, d in L['sights']:
             if a in pos and b in pos: sights.append({'a': [pos[a][0][0], y + pos[a][0][1]], 'b': [pos[b][0][0], y + pos[b][0][1]], 'text': d, 'level': L['name']})
             else: errs.append('%s: @sight %s %s — 표시를 찾을 수 없음' % (L['file'], a, b))
         notes += [(L['name'], n) for n in L['notes']]
         for r in G:
-            rows.append(''.join('#' if (c in BLOCK or (L['marks'].get(c, {}).get('kind') == 'secret')) else '.' for c in r))
-            terrain.append(''.join(c if c in TERRAIN else '.' for c in r))
+            kind = lambda c: L['marks'].get(c, {}).get('kind')
+            rows.append(''.join('#' if (c in BLOCK or kind(c) in ('secret', 'prop')) else '.' for c in r))
+            terrain.append(''.join(c if c in TERRAIN else '*' if kind(c) == 'prop' else '.' for c in r))
         y += H
         if L is not LV[-1]:
             for _ in range(gap): rows.append('#' * W); terrain.append('#' * W)
@@ -174,4 +190,4 @@ def build(folder, gap=2):
     MAP = {'width': W, 'height': len(rows), 'rows': rows, 'terrain': terrain, 'seeThrough': SEE_THROUGH, 'areas': areas, 'landmarks': landmarks,
            'props': [], 'floors': [], 'decor': [], 'links': links, 'secrets': secrets, 'levels': levels, 'guards': guards}
     if tide_cells: MAP['tide'] = {'cells': tide_cells, 'low': tides}
-    return MAP, {'sights': sights, 'notes': notes, 'levels': LV}
+    return MAP, {'sights': sights, 'notes': notes, 'levels': LV, 'props': props}

@@ -10,8 +10,9 @@ const world = JSON.parse(read('./src/world' + SUF + '.json'));
 // 그림 주소 표(tools/assets.py가 만든다). ASSET_URL을 주면 주소 앞부분만 바꾼다(브라우저 시험용 로컬 경로 등).
 const assets = JSON.parse(read('./src/assets.' + (process.env.ASSETS || 'web') + '.json'));
 if (process.env.ASSET_URL) assets.url = process.env.ASSET_URL;
-// 본편 세계는 시험판 지도 그림·방 배경을 쓰지 않는다(지도 그림이 나올 때까지 칸 색으로 그림).
-if (WN) { delete assets.map; assets.bgExtra = assets.bg; assets.bg = assets.bgCh1 || {}; }  // 시험판 배경은 갤러리 미리보기용으로만
+// 본편 세계는 시험판 지도 그림·방 배경을 쓰지 않는다(1장 지도 그림 mapCh1이 있으면 그것을 씀).
+if (WN) { if (assets.mapCh1) assets.map = assets.mapCh1; else delete assets.map; assets.bgExtra = assets.bg; assets.bg = assets.bgCh1 || {}; }  // 1장 지도 그림(대략판) · 시험판 배경은 갤러리 미리보기용으로만
+delete assets.mapCh1;
 const makeJsx = assets => [
   '// 몽환의 트로이메라이 · 탑다운 시험판 v2.0 (TRM1) — UUMMAI에 컴포넌트 1개로 등록: 이름 Troemerei',
   '// import·fetch·브라우저 저장소 없음. 그림은 아래 TN_ASSETS의 외부 이미지 주소(<img>·CSS 배경)로만 불러온다. useState/useEffect/useRef/useMemo/sendMessage는 호스트 제공.',

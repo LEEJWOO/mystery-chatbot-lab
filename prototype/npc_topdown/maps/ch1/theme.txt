@@ -1,0 +1,117 @@
+# 1장 맵 그림 테마 — tools/bake_textmap.py가 읽는다. 타일셋 원본은 저장소 밖(TILESET_DIR)에 둔다.
+# 조각 쓰는 법 (좌표는 48px 칸 단위, 시트 이름은 파일 이름에서 .png 뺀 것)
+#   in 시트 x y          자동 타일(A1·A2) 블록의 '속'(가장자리 없는 칸). x y = 블록 왼쪽 위 칸
+#   a3 시트 x y          A3(지붕) 블록의 속
+#   face 시트 x y        A4 벽면(위·아래 가장자리 붙임). x y = 벽면 블록 왼쪽 위 칸
+#   tile 시트 x y [w h]  그대로 잘라 쓰기
+#   color #rrggbb        단색
+#   여러 개를 + 로 이으면 차례로 겹친다(바닥 + 덧그림)
+# object 줄 끝 옵션: fit(덩어리 폭에 맞춰 늘이고 줄임) · repeat(덩어리의 칸마다 반복) · span(왼쪽 끝·가운데 반복·오른쪽 끝으로 늘임) · up=N(위로 N칸 솟음) · draw 이름(직접 그림)
+
+# ── 바닥: floor 방이름 = 조각  (* = 기본)
+floor * = in Ilmare_Inside_A2 4 3
+floor 정원 = in Ilmare_Outside_A2 0 0
+floor 앞마당 = in Ilmare_Outside_A2 0 3
+floor 수영장 = in Ilmare_Outside_A2 10 6
+floor 탈의실 = in Ilmare_Inside_A2 0 3
+floor 해변 = in Ilmare_Outside_A2 6 0
+floor 해안 산책로 = in Ilmare_Outside_A2 0 6
+floor 선착장 = in Ilmare_Outside_A2 2 0
+floor 바위 해안 = in Ilmare_Outside_A2 6 0 + in Ilmare_Outside_A2 12 3
+floor 이끼 비탈 = in Ilmare_Outside_A2 4 3
+floor 전망 바위 = in Ilmare_Outside_A2 2 6
+floor 갯바위 = in Ilmare_Outside_A2 2 6 + in Ilmare_Outside_A2 12 3
+floor 화장실 = in Ilmare_Inside_A2 0 3
+floor 지배인실 = in Ilmare_Inside_A2 6 6
+floor 계단홀 = in Ilmare_Inside_A2 6 0
+floor 주방 = in Ilmare_Inside_A2 0 6
+floor 1층 복도 = in Ilmare_Inside_A2 4 3
+floor 라운지 바 = in Ilmare_Inside_A2 4 6
+floor 로비 = in Ilmare_Inside_A2 0 0
+floor 연회장 = in Ilmare_Inside_A2 6 3
+floor 2층 복도 = in Ilmare_Inside_A2 4 3
+floor 객실 = in Ilmare_Inside_A2 2 0
+floor 리넨실 = in Ilmare_Inside_A2 6 9
+floor 휴게 코너 = in Ilmare_Inside_A2 6 6
+floor 옥상 = in Ilmare_Outside_A2 2 6
+floor 식료품 창고 = in Ilmare_Inside_A2 2 3
+floor 기관실 = in Ilmare_Inside_A2 2 9
+floor 와인 저장고 = in Ilmare_Inside_A2 2 3
+floor 지하 복도 = in Ilmare_Inside_A2 2 9
+floor 재판장 앞 = in Ilmare_Inside_A2 12 9
+floor 재판장 = in Ilmare_Inside_A2 12 9
+
+# ── 지형
+terrain ~ = in Ilmare_Outside_A1 8 6
+terrain % = in Ilmare_Outside_A1 8 9
+terrain ^ = in Ilmare_Outside_A2 6 0 + tile Ilmare_Outside_C 12 10
+terrain | = face Ilmare_Outside_A4 0 13
+terrain = = a3 Ilmare_Outside_A3 2 0
+building_face = face Ilmare_Outside_A4 0 3
+building_window = tile Ilmare_Outside_E 10 12
+building_door = tile Ilmare_Outside_E 14 2 2 2
+
+# ── 벽: wall 층 = 벽면 조각 ; 윗면은 어두운 천장색
+wall * = face Ilmare_Inside_A4 0 3
+wall 외부 = face Ilmare_Outside_A4 4 3
+wall 지하 = face Ilmare_Inside_A4 0 13
+wall_top = color #17121e
+
+# ── 조사 지점 몸체 (object 아이디 = …)
+object fountain = tile Tuscan_B 8 12 4 3 fit
+object diving = draw diving
+object lockers = tile Ilmare_Inside_D 2 8 1 2 repeat up=1
+object bench = tile Ilmare_Outside_C 4 9 2 1 fit
+object tide_sign = tile Ilmare_Outside_C 0 11
+object view_site = tile Ilmare_Outside_C 8 0 2 1 fit
+object office_door = draw door
+object case = tile Ilmare_Inside_E 5 8 repeat
+object front = tile Ilmare_Inside_B 1 4 repeat
+object piano = draw piano
+object bar = tile Ilmare_Inside_B 1 4 repeat
+object table = tile Ilmare_Inside_C 0 4 3 2 span
+object stove = tile Ilmare_Inside_E 12 3 2 1 span
+object linen_shelf = tile Ilmare_Inside_D 4 8 1 2 repeat up=1
+object water_tank = draw tank
+object antenna = draw antenna
+object generator = draw generator
+object wine_rack = tile Ilmare_Inside_D 2 6 1 2 repeat up=1
+object pool = none
+
+# ── 장식 가구 (prop 이름 = …)
+object palm = tile Ilmare_Outside_B 8 13 2 3 up=2
+object parasol = tile Ilmare_Outside_C 14 8 2 3 up=2
+object sunbed = tile Ilmare_Outside_C 12 12 1 2 up=1
+object boulder = tile Ilmare_Outside_C 12 11
+object flowers = tile Ilmare_Outside_E 0 12
+object lamp = tile Ilmare_Outside_C 6 6 1 2 up=1
+object hedge = face Ilmare_Outside_A4 12 8 repeat
+object toilet = tile Ilmare_Inside_D 10 5
+object sink = tile Ilmare_Inside_D 9 5
+object desk = tile Ilmare_Inside_C 2 2 2 2 fit
+object bookshelf = tile Ilmare_Inside_D 6 6 1 2 repeat up=1
+object plant = tile Ilmare_Inside_B 14 3 1 2 up=1
+object counter = tile Ilmare_Inside_E 8 2 2 1 span
+object sofa = tile Ilmare_Inside_C 0 8 3 2 fit
+object roundtable = tile Ilmare_Inside_C 0 6
+object chair = tile Ilmare_Inside_C 0 13 repeat
+object bed = tile Ilmare_Inside_E 0 0 2 3 fit
+object wardrobe = tile Ilmare_Inside_D 2 8 1 2 up=1
+object shelf = tile Ilmare_Inside_D 4 8 1 2 repeat up=1
+object barrel = tile Ilmare_Outside_E 8 0 1 1 repeat
+object crate = tile Ilmare_Outside_E 10 1
+object podium = draw podium
+object hostseat = draw hostseat
+
+# ── 연결(계단·사다리) 칸
+link 계단 = draw stairs
+link 정문 = none
+link 밧줄 사다리 = none
+
+# ── 몸체 없는 조사 지점에 덧그림
+object crevice = draw crack
+object dock_end = draw posts
+object rope_spot = draw anchor
+
+# ── 막는 칸(재판장 문)
+guard court = tile Ilmare_Inside_A4 8 8 2 2

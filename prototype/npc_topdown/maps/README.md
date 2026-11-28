@@ -1,7 +1,8 @@
 # 글자 지도 (maps/)
 
 장마다 폴더 하나(`maps/ch1/`), 층마다 파일 하나. 파일 이름 앞 숫자 순서대로 위에서 아래로 쌓인다(층 사이 벽 2줄).
-고친 뒤: `python3 tools/build_ch1_map.py` → `src/world_ch1.json`, `python3 tools/render_map_preview.py` → `docs/plan/maps/*.png`.
+고친 뒤: `python3 tools/build_ch1_map.py` → `src/world_ch1.json`, `python3 tools/render_map_preview.py` → `docs/plan/maps/*.png`(칸 미리보기),
+`TILESET_DIR=… python3 tools/bake_textmap.py ch1 out.png [미리보기 폴더]` → 타일 그림 지도(그림 바꾸기는 `maps/ch1/theme.txt`). 타일셋 원본은 저장소에 두지 않는다.
 오류(방 사각형 겹침·짝 없는 계단·모르는 글자 등)는 빌드할 때 줄 번호 대신 좌표로 알려 준다.
 
 ## 칸 글자
@@ -35,6 +36,8 @@
 - `u link 계단(1층↔2층)` — 연결. 같은 이름이 두 칸(다른 층이어도 됨)에 있어야 한다. `off=플래그`면 그 플래그가 켜질 때 끊긴다(밧줄 사다리).
 - `x secret wine_gap flag=secret_wine | 문장` — 숨은 공간 벽. 한쪽은 방, 반대쪽은 틈 칸(조사 지점 등)이어야 한다.
 - `g guard court open=… warn=a,b over=… who=지배인 area=재판장 앞 | 대사1 | 대사2 | 대사3` — 막는 칸(같은 글자 칸 모두).
+- `1 prop bed` — 장식 가구(막힌 칸). 이어진 덩어리마다 그림 하나(theme.txt의 `object bed`). 같은 글자를 여러 방에 써도 된다.
+- 층 파일은 이름이 숫자로 시작해야 한다(theme.txt 같은 다른 파일은 무시).
 
 ## 시야 약속 (test/test.cjs가 확인)
 - 선착장 끝 → 바다 건너 바위벽 밑이 보인다(오딜의 사다리 목격).
