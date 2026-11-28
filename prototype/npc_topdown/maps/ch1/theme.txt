@@ -5,6 +5,7 @@
 #   a3 시트 x y          A3(지붕) 블록의 속
 #   face 시트 x y        A4 벽면(위·아래 가장자리 붙임). x y = 벽면 블록 왼쪽 위 칸
 #   tile 시트 x y [w h]  그대로 잘라 쓰기
+#   cliff 시트 x y       A4 벼랑(지형 ^ |): 윗면은 자동 타일, 아래가 낮은 땅이면 바위 면
 #   color #rrggbb        단색
 #   여러 개를 + 로 이으면 차례로 겹친다(바닥 + 덧그림)
 # object 줄 끝 옵션: fit(덩어리 폭에 맞춰 늘이고 줄임) · repeat(덩어리의 칸마다 반복) · span(왼쪽 끝·가운데 반복·오른쪽 끝으로 늘임) · up=N(위로 N칸 솟음) · draw 이름(직접 그림)
@@ -19,8 +20,8 @@ floor 해변 = in Ilmare_Outside_A2 6 0
 floor 해안 산책로 = in Ilmare_Outside_A2 0 6
 floor 선착장 = in Ilmare_Outside_A2 2 0
 floor 바위 해안 = in Ilmare_Outside_A2 6 0 + in Ilmare_Outside_A2 12 3
-floor 이끼 비탈 = in Ilmare_Outside_A2 4 3
-floor 전망 바위 = in Ilmare_Outside_A2 2 6
+floor 이끼 비탈 = tile fsm_Forest01_A5 4 13
+floor 전망 바위 = in fsm_Forest01_A4 2 0
 floor 갯바위 = in World_A1 6 6
 floor 화장실 = in Ilmare_Inside_A2 0 3
 floor 지배인실 = in Ilmare_Inside_A2 6 6
@@ -45,8 +46,8 @@ floor 재판장 = in Ilmare_Inside_A2 12 9
 # ── 지형
 terrain ~ = auto World_A1 0 3
 terrain % = auto Ilmare_Outside_A1 8 9
-terrain ^ = in Ilmare_Outside_A2 6 0 + tile Ilmare_Outside_C 12 10
-terrain | = face Ilmare_Outside_A4 0 13
+terrain ^ = cliff fsm_Forest01_A4 2 0
+terrain | = cliff fsm_Forest01_A4 2 0
 terrain = = a3 Ilmare_Outside_A3 2 0
 building_face = face Ilmare_Outside_A4 0 3
 building_window = tile Ilmare_Outside_E 10 12
@@ -71,7 +72,7 @@ object view_site = tile Ilmare_Outside_C 8 0 2 1 fit
 object office_door = draw door
 object case = tile Ilmare_Inside_E 5 8 repeat
 object front = tile Ilmare_Inside_B 1 4 repeat
-object piano = draw piano
+object piano = tile SF_Inside_C 11 3 3 2 fit
 object bar = tile Ilmare_Inside_B 1 4 repeat
 object table = tile Ilmare_Inside_C 0 4 3 2 span
 object stove = tile Ilmare_Inside_E 12 3 2 1 span
@@ -86,7 +87,7 @@ object pool = none
 object palm = tile Ilmare_Outside_B 8 13 2 3 up=2
 object parasol = tile Ilmare_Outside_C 14 8 2 3 up=2
 object sunbed = tile Ilmare_Outside_C 12 12 1 2 up=1
-object boulder = tile Ilmare_Outside_C 12 11
+object boulder = tile fsm_Dungeon01_B 2 1
 object flowers = tile Ilmare_Outside_E 0 12
 object lamp = tile Ilmare_Outside_C 6 6 1 2 up=1
 object hedge = face Ilmare_Outside_A4 12 8 repeat
@@ -120,3 +121,6 @@ object rope_spot = draw anchor
 # ── 막는 칸(재판장 문)
 guard court = tile Ilmare_Inside_A4 8 8 2 2
 object panel = tile SF_Inside_C 2 12 2 2 fit
+
+# ── 깃발에 따라 보였다 사라지는 덧그림(연결 이름 = 조각). 연결의 off 깃발이 켜지면 숨김
+overlay 밧줄 사다리 = tile fsm_Dungeon01_B 15 8 1 4

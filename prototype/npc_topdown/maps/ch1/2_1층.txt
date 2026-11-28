@@ -45,7 +45,7 @@ H 연회장 #3a2a2a
 a office_door 지배인실 문(잠김) 🔒
 b case 진열장 ▣
 c front 프런트 ☎
-d piano 그랜드 피아노 ♪
+d piano 피아노 ♪
 e bar 바 카운터 🍸
 f table 연회 테이블 🍽
 g stove 조리대 🔥

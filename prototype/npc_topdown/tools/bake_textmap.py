@@ -53,6 +53,7 @@ def spec(s):
     if s in ('none', ''): return None
     if s.startswith('draw '): return {'draw': s.split()[1]}
     if s.startswith('auto '): t = s.split(); return {'auto': (t[1], int(t[2]), int(t[3])), 'under': ' '.join(t[4:]) == 'under'}
+    if s.startswith('cliff '): t = s.split(); return {'cliff': (t[1], int(t[2]), int(t[3]))}   # A4 벼랑: 윗면 자동 타일 + 아래가 낮으면 바위 면
     opts = {}
     parts = []
     for seg in s.split('+'):
@@ -69,7 +70,7 @@ def spec(s):
         else: im.alpha_composite(p, (0, im.height - p.height))
     return {'im': im, **opts}
 
-TH = {'floor': {}, 'terrain': {}, 'wall': {}, 'object': {}, 'link': {}, 'guard': {}, 'misc': {}}
+TH = {'floor': {}, 'terrain': {}, 'wall': {}, 'object': {}, 'link': {}, 'guard': {}, 'overlay': {}, 'misc': {}}
 for line in open(os.path.join(ROOT, 'maps', CH, 'theme.txt'), encoding='utf-8'):
     line = line.strip()
     if not line or line.startswith('#') or '=' not in line: continue
@@ -125,7 +126,12 @@ for y in range(H):
         t = TER[y][x]
         if t in '~%|=' or t == '^':
             v = TH['terrain'].get(t)
-            if v and 'auto' in v:
+            if v and 'cliff' in v:
+                nm_, bx, by = v['cliff']; f = floor_im(near_area(x, y)); put(f['im'], x, y) if f else None
+                low = y + 1 < H and TER[y + 1][x] not in '^|' and inlevel(y + 1)
+                if low: put(piece(['face', nm_, bx, by + 3]), x, y)
+                else: put(autotile(nm_, bx, by, lambda dx, dy, x=x, y=y: not (0 <= x + dx < W and 0 <= y + dy < H) or TER[y + dy][x + dx] in '^|'), x, y)
+            elif v and 'auto' in v:
                 if t == '~':          # 바다 가장자리 밑에는 이웃 땅의 바닥을 깐다
                     f = floor_im(near_area(x, y)); put(f['im'], x, y) if f else None
                 same = lambda dx, dy, t=t, x=x, y=y: not (0 <= x + dx < W and 0 <= y + dy < H) or TER[y + dy][x + dx] == t or not inlevel(y + dy)
@@ -221,6 +227,17 @@ for g in MAP['guards']:
     if v: jobs.append((max(c[1] for c in g['cells']), v, g['cells']))
 for _, v, cells in sorted(jobs, key=lambda j: j[0]): place(v, cells)
 
+# 깃발에 따라 보였다 사라지는 덧그림(예: 밧줄 사다리 — ladder_gone이면 숨김). 따로 저장하고 위치는 json으로.
+OVER = []
+for name, v in TH['overlay'].items():
+    L_ = next((l for l in MAP['links'] if l['name'] == name), None)
+    if not (v and L_): continue
+    x0, y0, y1 = L_['a'][0], min(L_['a'][1], L_['b'][1]), max(L_['a'][1], L_['b'][1])
+    hcell = y1 - y0 + 1; im = v['im'].resize((CELL, hcell * CELL), Image.LANCZOS)
+    p = OUT.rsplit('.', 1)[0] + '_ov_%d.png' % len(OVER); im.save(p)
+    OVER.append({'file': p, 'x': x0, 'y': y0, 'w': 1, 'h': hcell, 'unless': L_.get('off')})
+import json as _j
+_j.dump(OVER, open(OUT.rsplit('.', 1)[0] + '_overlays.json', 'w'), ensure_ascii=False)
 small = img.resize((W * CELL, H * CELL), Image.LANCZOS).convert('RGB')
 small.save(OUT); print('맵', OUT, small.size)
 if PREV:

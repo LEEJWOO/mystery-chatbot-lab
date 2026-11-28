@@ -2175,6 +2175,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       <div ref={svgRef} className="tr-map" onClick={tapMap}>
         <div className="tr-world" style={{ width: TN_WORLD.map.width * TR_CELL, height: TN_WORLD.map.height * TR_CELL, transform: `translate(${-camX}px,${-camY}px)`, transition: roomChanged ? 'none' : undefined,
           clipPath: 'none' }}>
+          {(TR_A.mapOverlays || []).filter(o => !(o.unless && state.flags[o.unless]) && !(o.if && !state.flags[o.if])).map(o => <img key={o.src} className="tr-px" src={trUrl(o.src)} alt="" style={{ position: 'absolute', left: o.x * TR_CELL, top: o.y * TR_CELL, width: o.w * TR_CELL, height: o.h * TR_CELL, zIndex: 1, pointerEvents: 'none' }} />)}
           {TR_A.map && !badImg[trUrl(TR_A.map.src)] ? <img className="tr-px" src={trUrl(TR_A.map.src)} alt="" onError={() => setBadImg(v => ({ ...v, [trUrl(TR_A.map.src)]: true }))} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }} />
             : <svg style={{ position: 'absolute', inset: 0 }} width="100%" height="100%">{trStaticLayer()}</svg>}
           {TN_WORLD.map.areas.map((a, i) => i === room ? null : <div key={'f' + i} className="tr-fog" style={{ left: a.x0 * TR_CELL, top: a.y0 * TR_CELL - 18, width: (a.x1 - a.x0 + 1) * TR_CELL, height: (a.y1 - a.y0 + 1) * TR_CELL + 18, opacity: debug ? .3 : .74 }} />)}

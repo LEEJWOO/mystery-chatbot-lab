@@ -2135,8 +2135,18 @@
   "freddie": "110e9d6e877c.webp"
  },
  "mapCh1": {
-  "src": "c47777753e92.webp",
+  "src": "9b294556fe7d.webp",
   "w": 1728,
   "h": 3888
- }
+ },
+ "overlaysCh1": [
+  {
+   "src": "06e8a870350a.webp",
+   "x": 43,
+   "y": 23,
+   "w": 1,
+   "h": 3,
+   "unless": "ladder_gone"
+  }
+ ]
 }
