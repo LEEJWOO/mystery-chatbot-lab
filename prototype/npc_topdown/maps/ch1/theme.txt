@@ -1,6 +1,7 @@
 # 1장 맵 그림 테마 — tools/bake_textmap.py가 읽는다. 타일셋 원본은 저장소 밖(TILESET_DIR)에 둔다.
 # 조각 쓰는 법 (좌표는 48px 칸 단위, 시트 이름은 파일 이름에서 .png 뺀 것)
 #   in 시트 x y          자동 타일(A1·A2) 블록의 '속'(가장자리 없는 칸). x y = 블록 왼쪽 위 칸
+#   auto 시트 x y        자동 타일을 이웃에 맞춰 가장자리까지(지형 줄에서만)
 #   a3 시트 x y          A3(지붕) 블록의 속
 #   face 시트 x y        A4 벽면(위·아래 가장자리 붙임). x y = 벽면 블록 왼쪽 위 칸
 #   tile 시트 x y [w h]  그대로 잘라 쓰기
@@ -20,7 +21,7 @@ floor 선착장 = in Ilmare_Outside_A2 2 0
 floor 바위 해안 = in Ilmare_Outside_A2 6 0 + in Ilmare_Outside_A2 12 3
 floor 이끼 비탈 = in Ilmare_Outside_A2 4 3
 floor 전망 바위 = in Ilmare_Outside_A2 2 6
-floor 갯바위 = in Ilmare_Outside_A2 2 6 + in Ilmare_Outside_A2 12 3
+floor 갯바위 = in World_A1 6 6
 floor 화장실 = in Ilmare_Inside_A2 0 3
 floor 지배인실 = in Ilmare_Inside_A2 6 6
 floor 계단홀 = in Ilmare_Inside_A2 6 0
@@ -42,8 +43,8 @@ floor 재판장 앞 = in Ilmare_Inside_A2 12 9
 floor 재판장 = in Ilmare_Inside_A2 12 9
 
 # ── 지형
-terrain ~ = in Ilmare_Outside_A1 8 6
-terrain % = in Ilmare_Outside_A1 8 9
+terrain ~ = auto World_A1 0 3
+terrain % = auto Ilmare_Outside_A1 8 9
 terrain ^ = in Ilmare_Outside_A2 6 0 + tile Ilmare_Outside_C 12 10
 terrain | = face Ilmare_Outside_A4 0 13
 terrain = = a3 Ilmare_Outside_A3 2 0
@@ -51,16 +52,19 @@ building_face = face Ilmare_Outside_A4 0 3
 building_window = tile Ilmare_Outside_E 10 12
 building_door = tile Ilmare_Outside_E 14 2 2 2
 
-# ── 벽: wall 층 = 벽면 조각 ; 윗면은 어두운 천장색
+# ── 벽: wall 방이름 또는 층 = 벽면 조각(벽 아래 방 기준이 먼저) ; 윗면은 어두운 천장색
 wall * = face Ilmare_Inside_A4 0 3
 wall 외부 = face Ilmare_Outside_A4 4 3
 wall 지하 = face Ilmare_Inside_A4 0 13
+wall 기관실 = face SF_Inside_A4 8 3
+wall 재판장 = face SF_Inside_A4 0 3
+wall 재판장 앞 = face SF_Inside_A4 0 3
 wall_top = color #17121e
 
 # ── 조사 지점 몸체 (object 아이디 = …)
 object fountain = tile Tuscan_B 8 12 4 3 fit
 object diving = draw diving
-object lockers = tile Ilmare_Inside_D 2 8 1 2 repeat up=1
+object lockers = tile SF_Inside_B 12 6 1 2 repeat up=1
 object bench = tile Ilmare_Outside_C 4 9 2 1 fit
 object tide_sign = tile Ilmare_Outside_C 0 11
 object view_site = tile Ilmare_Outside_C 8 0 2 1 fit
@@ -74,7 +78,7 @@ object stove = tile Ilmare_Inside_E 12 3 2 1 span
 object linen_shelf = tile Ilmare_Inside_D 4 8 1 2 repeat up=1
 object water_tank = draw tank
 object antenna = draw antenna
-object generator = draw generator
+object generator = tile SF_Inside_C 12 14 4 2 fit
 object wine_rack = tile Ilmare_Inside_D 2 6 1 2 repeat up=1
 object pool = none
 
@@ -109,9 +113,10 @@ link 정문 = none
 link 밧줄 사다리 = none
 
 # ── 몸체 없는 조사 지점에 덧그림
-object crevice = draw crack
+object crevice = draw pit
 object dock_end = draw posts
 object rope_spot = draw anchor
 
 # ── 막는 칸(재판장 문)
 guard court = tile Ilmare_Inside_A4 8 8 2 2
+object panel = tile SF_Inside_C 2 12 2 2 fit

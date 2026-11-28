@@ -93,7 +93,7 @@ if __name__ == '__main__':
     w['events'].update({'X1_R2': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'X1', 'phase': ri + 1}, 'X1_R2H': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'X1', 'phase': ri + 1, 'hold': True}})
     T['evidence'] = T['evidence'] + ['band_log']
     w['items'] = [dict(it, at=None) for it in base['items'] if it['id'] in T['evidence']]
-    w['items'].append({'id': 'band_log', 'name': '저스틴의 팔찌 기록', 'at': None, 'from': '2일 19:30', 'desc': '18:00 전지 교체 · 18:40 해제 감지 (그 뒤 기록 없음)'})
+    w['items'].append({'id': 'band_log', 'name': '저스틴의 팔찌 기록', 'at': None, 'from': '2일 19:30', 'desc': '06:00 전지 교체 · 18:00 전지 교체 · 18:40 해제 감지 (그 뒤 기록 없음)'})
     w['flagNames'] = sorted(set(w['flagNames'] + ['x1_done']))
     json.dump(w, open(os.path.join(ROOT, 'src', 'world_ch1.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('world_ch1.json:', W_, 'x', H_, '방', len(areas), '조사 지점', len(landmarks), '계단', len(links), '숨은 공간', len(secrets))

@@ -34,10 +34,25 @@ def piece(tok):
         w, h = (int(tok[4]), int(tok[5])) if len(tok) > 5 else (1, 1)
         return S.crop((x * T, y * T, (x + w) * T, (y + h) * T))
     raise ValueError(tok)
+def autotile(name, bx, by, same):
+    """RPG Maker A1·A2 자동 타일 한 칸. same(dx,dy) = 이웃이 같은 종류인가. 반 칸(24px) 넷을 골라 붙인다."""
+    S, X, Y, h = sheet(name), bx * T, by * T, 24
+    q = lambda cx, cy: S.crop((X + cx * h, Y + cy * h, X + cx * h + h, Y + cy * h + h))
+    out = Image.new('RGBA', (T, T))
+    for qx, qy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+        sx, sy = (1 if qx else -1), (1 if qy else -1)
+        hh, vv, dd = same(sx, 0), same(0, sy), same(sx, sy)
+        if hh and vv: src = ({(0, 0): (2, 4), (1, 0): (1, 4), (0, 1): (2, 3), (1, 1): (1, 3)} if dd else {(0, 0): (2, 0), (1, 0): (3, 0), (0, 1): (2, 1), (1, 1): (3, 1)})[(qx, qy)]
+        elif vv: src = {(0, 0): (0, 4), (1, 0): (3, 4), (0, 1): (0, 3), (1, 1): (3, 3)}[(qx, qy)]
+        elif hh: src = {(0, 0): (2, 2), (1, 0): (1, 2), (0, 1): (2, 5), (1, 1): (1, 5)}[(qx, qy)]
+        else: src = {(0, 0): (0, 2), (1, 0): (3, 2), (0, 1): (0, 5), (1, 1): (3, 5)}[(qx, qy)]
+        out.alpha_composite(q(*src), (qx * h, qy * h))
+    return out
 def spec(s):
     s = s.strip()
     if s in ('none', ''): return None
     if s.startswith('draw '): return {'draw': s.split()[1]}
+    if s.startswith('auto '): t = s.split(); return {'auto': (t[1], int(t[2]), int(t[3])), 'under': ' '.join(t[4:]) == 'under'}
     opts = {}
     parts = []
     for seg in s.split('+'):
@@ -87,6 +102,7 @@ def floor_im(a):
         if key in TH['floor']: return TH['floor'][key]
     return TH['floor'].get('*')
 
+ROCKY = {'바위 해안', '갯바위', '전망 바위', '이끼 비탈'}   # 이 방에 붙은 바다 칸에는 바위를 띄엄띄엄 놓는다
 walk = lambda x, y: 0 <= x < W and 0 <= y < H and ROWS[y][x] != '#'
 img = Image.new('RGBA', (W * T, H * T), (12, 10, 18, 255))
 def put(im, x, y): img.alpha_composite(im, (int(round(x * T)), int(round(y * T))))
@@ -109,13 +125,20 @@ for y in range(H):
         t = TER[y][x]
         if t in '~%|=' or t == '^':
             v = TH['terrain'].get(t)
-            if v: put(v['im'], x, y)
+            if v and 'auto' in v:
+                if t == '~':          # 바다 가장자리 밑에는 이웃 땅의 바닥을 깐다
+                    f = floor_im(near_area(x, y)); put(f['im'], x, y) if f else None
+                same = lambda dx, dy, t=t, x=x, y=y: not (0 <= x + dx < W and 0 <= y + dy < H) or TER[y + dy][x + dx] == t or not inlevel(y + dy)
+                put(autotile(*v['auto'], same), x, y)
+            elif v: put(v['im'], x, y)
+            if t == '~' and TH['misc'].get('sea_rocks') and any(0 <= x + dx < W and 0 <= y + dy < H and (TER[y + dy][x + dx] in '^|' or (area_at(x + dx, y + dy) or {}).get('name') in ROCKY) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))) and (x * 7 + y * 3) % 3 == 0:
+                put(TH['misc']['sea_rocks']['im'], x, y)
             if t == '=' and not (y + 1 < H and TER[y + 1][x] == '='):
                 put(TH['misc']['building_face']['im'], x, y)
                 if x % 3 == 1: put(TH['misc']['building_window']['im'], x, y)
         elif t == '#' or (x, y) in secret:
             below = y + 1 < H and (walk(x, y + 1) or TER[y + 1][x] == '*') and level_at(y + 1) == lv
-            if below: put((TH['wall'].get(lv) or TH['wall']['*'])['im'], x, y)
+            if below: rb = (near_area(x, y + 1) or {}).get('name'); put((TH['wall'].get(rb) or TH['wall'].get(lv) or TH['wall']['*'])['im'], x, y)
             else: put(TH['misc']['wall_top']['im'], x, y)
 # 정문: 건물 아랫줄 가운데 문
 for L_ in MAP['links']:
@@ -154,6 +177,8 @@ def draw(kind, x0, y0, x1, y1):
     elif kind == 'stairs':
         D.rectangle([X0 + 2, Y0 + 2, X1 - 2, Y1 - 2], fill=(120, 96, 70, 255))
         for k in range(5): D.line([X0 + 4, Y0 + 6 + k * 9, X1 - 4, Y0 + 6 + k * 9], fill=(70, 52, 36, 255), width=3)
+    elif kind == 'pit':
+        D.ellipse([X0 + 8, Y0 + 8, X1 - 8, Y1 - 8], fill=(8, 10, 14, 255)); put(autotile('World_A1', 8, 6, lambda dx, dy: False), x0, y0)
     elif kind == 'crack':
         D.polygon([(X0 + 10, Y0 + 6), (X0 + 30, Y0 + 14), (X0 + 40, Y0 + 30), (X0 + 26, Y1 - 6), (X0 + 14, Y0 + 30)], fill=(10, 14, 18, 255))
     elif kind == 'posts':
