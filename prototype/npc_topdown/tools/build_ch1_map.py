@@ -184,5 +184,23 @@ if __name__ == '__main__':
         x, y = center(spots.get(n['id'], '로비'))
         while (x, y) in used or rows[y][x] == '#' or (x, y) == (w['player']['x'], w['player']['y']): x += 1
         used.add((x, y)); n.update({'x': x, 'y': y, 'agenda': [], 'notes': [], 'knows': []})
+    # 시험용 재판 틀(X1): 체험판 재판 T1을 가져와 쓴다. 구절 짝짓기는 빼고, 동선은 1장 지도 좌표로, 반론은 개편 흐름(연설 → 입력)으로.
+    # 1장 재판 대본이 정해지면 이 X1을 바꿔 끼운다. 체험판 데이터(world.json)는 건드리지 않는다.
+    T = copy.deepcopy(base['trials'][0]); T.update({'code': 'X1', 'id': 'trial_x1', 'title': '(시험용) 재판 틀 — 체험판 대본 차용', 'flag': 'x1_done'})
+    T['phases'] = [ph for ph in T['phases'] if ph['type'] != 'combine']
+    for ph in T['phases']:
+        if ph['type'] == 'route': ph.update({'start': [3, F1 + 16], 'end': [16, F1 + 14], 'via': [[13, F1 + 16]]})
+        if ph['type'] == 'rebut':
+            ph.update({'event': 'X1_R1', 'holdEvent': 'X1_R1H', 'title': '반론', 'guide': '반론자의 말에서 빈틈을 찾아 증거를 쏜다 — 맞히면 내 말로 반론한다',
+                       'lines': [{'who': 'mei', 'text': '{마술사라면} {바에 있는 척하면서} 진열장까지 다녀올 수 있어요.', 'face': '격노', 'pose': 'point'},
+                                 {'who': 'mei', 'text': '{손재주가 좋으니} {브로치쯤은 눈 깜짝할 새}랍니다.', 'face': '의심'},
+                                 {'who': 'mei', 'text': '{바 장부에 이름이 있다고 해도} {그것부터 속임수}일지 모르죠!', 'face': '하라구로'}],
+                       'answers': [{'at': [0, 1], 'ev': ['bar_log']}],
+                       'miss': next(p2['miss'] for p2 in T['phases'] if p2['type'] == 'nonstop')})
+    ri = next(i for i, ph in enumerate(T['phases']) if ph['type'] == 'rebut')
+    w['trials'] = [T]
+    w['events'] = {'X1_R1': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'X1', 'phase': ri}, 'X1_R1H': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'X1', 'phase': ri, 'hold': True}}
+    w['items'] = [dict(it, at=None) for it in base['items'] if it['id'] in T['evidence']]
+    w['flagNames'] = sorted(set(w['flagNames'] + ['x1_done']))
     json.dump(w, open(os.path.join(ROOT, 'src', 'world_ch1.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('world_ch1.json:', W_, 'x', H_, '방', len(areas), '조사 지점', len(landmarks), '계단', len(links), '숨은 공간', len(secrets))

@@ -1270,7 +1270,16 @@ const TR_MISS = [
   { if: { rel: { trust: [4, 5] } }, text: '음…… 그건 좀 아닌 것 같아요. 제 말을 한 번만 더 들어 봐 주실래요?', face: '' },
   { if: { rel: { trust: [1, 2] } }, text: '하, 엉뚱한 데를 찌르시네. 똑바로 좀 들어요.', face: '불만' },
   { text: '에? 그게 지금 이 얘기랑 무슨 상관인데요?', face: '놀람' }];
-const TR_MONO = ['……아니야, 그게 아니야. 다시 생각해 보자.', '엉뚱한 곳을 찔렀다. 증언 어딘가에 진짜 모순이 숨어 있을 거야…….', '침착하자. 누가 무슨 말을 했는지, 처음부터 다시 듣자.'];
+const TR_MONO = ['……아니야, 그게 아니야. 다시 생각해 보자.', '엉뚱한 곳을 찔렀다. 증언 어딘가에 진짜 모순이 숨어 있을 거야…….', '침착하자. 누가 무슨 말을 했는지, 처음부터 다시 듣자.',
+  '조급했다. 증거가 정말 말하는 게 뭔지부터 다시 보자.', '그 말이 아니었어. 어디가 걸렸는지 다시 짚어야 해.', '……숨 고르자. 아직 끝난 게 아니야.',
+  '틀렸다. 하지만 어디가 틀렸는지는 알았어.', '내 말이 엇나갔다. 상대의 말 한 마디 한 마디를 다시 떠올려 보자.', '이대로는 안 된다. 증거와 증언, 어디가 맞물리지 않지?', '……다시. 이번엔 정확하게.'];
+// 반론(자유 입력)이 받아들여지지 않았을 때의 독백
+const TR_MONO_RB = ['……설명이 모자랐다. 증거가 무엇을 말하는지 더 정확히 짚어야 해.', '빈틈은 맞아. 그런데 내 말이 거기까지 닿지 못했다.', '그 증거로 무엇이 틀렸는지, 한 문장으로 말해 보자.',
+  '상대의 주장 중 정확히 어디가 무너지는지부터 말해야 해.', '……흥분했다. 차분하게, 사실만으로.', '내 말엔 근거가 빠져 있었다. 증거를 붙여서 다시.',
+  '다시 하자. 무엇이, 언제, 왜 맞지 않는지.', '아직이야. 이 빈틈은 확실히 있어.'];
+// 독백 고르기: 이 재판에서 깎인 체력 수로 고른다(같은 체력 줄 안에서는 겹치지 않고, 새 화면이 떠도 같은 결과).
+function trMono(st, ph, kind) { const T = st.trial, TR = T ? TN_WORLD.trials[T.i] : null, pool = kind === 'rb' ? ((ph && ph.monoRb) || (TR && TR.monoRb) || TR_MONO_RB) : ((ph && ph.mono) || (TR && TR.mono) || TR_MONO);
+  const hits = TR ? Math.max(1, (TR.hp || 5) - T.hp) : 1; return pool[(hits - 1 + (T ? T.i * 3 : 0)) % pool.length]; }
 function trMissLine(st, ph, who) {
   const own = (ph.miss || {})[who];
   if (own) return trLineOf(st, { who, ...own });
@@ -1745,7 +1754,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   }
   // ---------- 논스톱 증언(엇갈린 증언) ----------
   // 증언이 돌아가며 흐르고, 빛나는 구절(약점)에 탄환을 쏜다. absorb면 남의 구절을 '회수'해 말 탄환으로 쓸 수 있다.
-  function trNonstop(ph, evid) {
+  function trNonstop(ph, evid, onOk) {
     const g = tv.g || {}, li = g.li || 0, sh = g.sh || 0, lines = ph.lines.map(L => trNsParse(L.text)), mode = g.mode || 'fire', words = g.words || [];
     const lens = lines.map(P => P.reduce((n, x) => n + Array.from(x.t).length, 0));
     nsRef.current = g.shot || g.pause || g.miss || tv.fx ? null : { lens, hold: 26, ms: 80 };
@@ -1766,9 +1775,9 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       const ok = hit(sel, l, x);
       setG({ shot: { kind: 'fire', x0: q.x, y0: q.y, x1: p.x, y1: p.y, t: sel.t, ok } });
       setTimeout(() => {
-        if (ok) { setG({ broke: l + '.' + x }); if (sel.k === 'ev') setTv(v => ({ ...v, ev: sel.id })); trialRight('모순!', 1500); }
+        if (ok) { setG({ broke: l + '.' + x }); if (sel.k === 'ev') setTv(v => ({ ...v, ev: sel.id })); if (onOk) onOk(sel); else trialRight('모순!', 1500); }
         else { setG(o => ({ shot: { ...o.shot, back: true }, hint: '' })); trialWrong();
-          setTimeout(() => setG(o => ({ shot: null, miss: { step: 0, who: ph.lines[l].who, n: o.nmiss || 0 }, nmiss: (o.nmiss || 0) + 1 })), 560); }
+          setTimeout(() => setG(o => ({ shot: null, miss: { step: 0, who: ph.lines[l].who, n: o.nmiss || 0, mono: trMono(stRef.current || state, ph) }, nmiss: (o.nmiss || 0) + 1 })), 560); }
       }, 300);
     };
     let n = 0;
@@ -1778,7 +1787,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       return <span key={i} className={'tr-nseg' + (now ? ' now' : '') + (mode === 'take' ? ' take' : '') + (held ? ' held' : '') + (g.broke === id ? ' broke' : '')} onClick={e => onSeg(li, x.s, x.t, e)}>{part}</span>; });
     const S = g.shot, M = g.miss;
     if (M) { // 빗나간 뒤: 인물의 한마디 → 내 혼잣말 → 다시 증언 처음부터
-      const L = M.step === 0 ? trMissLine(state, ph, M.who) : null, mono = (ph.mono || TR_MONO)[M.n % (ph.mono || TR_MONO).length], me = state.player.look ? state.player.look.name : '나';
+      const L = M.step === 0 ? trMissLine(state, ph, M.who) : null, mono = M.mono || trMono(state, ph), me = state.player.look ? state.player.look.name : '나';
       return <div className="tr-ns" ref={nsBox} onClick={() => setG(o => o.miss.step === 0 ? { miss: { ...o.miss, step: 1 } } : { miss: null, sh: 0 })}>
         <div className="tr-ns-top"><b>NONSTOP</b><span>{ph.title}</span></div>
         <div key={M.step} className="tr-vn tr-ns-missbox"><div className="tr-vn-name" style={{ '--c': L ? trNpc(L.who).color : '#3a6a8a' }}>{L ? trNpc(L.who).name : me}</div>
@@ -1840,7 +1849,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   }
   // ---------- 반론: 비주얼 노벨식. 상대가 말하는 도중 끊고 들어간다 ----------
   function trRebut(ph, evid, step) {
-    const g = tv.g || {}, c = trNpc(ph.npc), segs = trSegs(ph.claim), len = segs.reduce((n, x) => n + Array.from(x.t).length, 0);
+    const g = tv.g || {}, c = trNpc(ph.npc), segs = trSegs(ph.claim || (ph.lines || []).map(L => String(L.text).replace(/[{}]/g, '')).join(' ')), len = segs.reduce((n, x) => n + Array.from(x.t).length, 0);
     const cut = Math.max(8, Math.floor(len * .7)); // 주장의 7할쯤에서 끊는다
     rbRef.current = step === 2 ? null : { len, cut: cut + 5, ms: 42, rb: step };
     // 주장 글은 끝까지 다 나오지 않고 끊긴다(컷인이 끼어든다). 입력 단계에서는 전체를 다시 보여 준다.
@@ -1849,6 +1858,9 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       <div className="tr-vn-name" style={{ '--c': c.color }}>{c.name}</div><div className="tr-ttext">{trTyped(segs, shown)}{step < 2 && shown >= cut ? '—' : ''}</div></div>;
     if (step < 2) return box;
     const on = it && tv.ev === it.id;
+    if (g.mono) { const me = state.player.look ? state.player.look.name : '나';
+      return <div className="tr-rb"><div className="tr-vn tr-ns-missbox" data-adv="1" onClick={() => setTv(v => ({ ...v, g: { ...v.g, mono: '' } }))}><div className="tr-vn-name" style={{ '--c': '#3a6a8a' }}>{me}</div>
+        <div className="tr-ttext mono">{trTyped(trSegs(g.mono), 999)}</div><i className="tr-vn-next">▼</i></div></div>; }
     return <div className="tr-rb">{box}
       {it ? <div className={'tr-evc' + (on ? ' on' : '')}>
         <button className="tr-evc-nav" disabled={evid.length < 2} onClick={() => setTv(v => ({ ...v, g: { ...v.g, ei: (k + evid.length - 1) % evid.length } }))}>‹</button>
@@ -1869,7 +1881,10 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     if (tv.reply && lines.length) {
       const L = lines[Math.min(tv.idx, lines.length - 1)]; total = lines.length;
       cur = { who: L.narration ? '' : trIdByName(L.speaker), name: L.speaker, face: L.expression, pose: L.pose || '', text: L.text };
-      onEnd = () => { const fl = boot.tres === 'ok' ? flyFor(state, state.trial.phase - 1) : null; setTv(v => ({ ...v, reply: false, ...resetTv, fx: boot.tres || '', fly: flyGo(fl) })); if (boot.tres === 'hit' || boot.tres === 'ok') setTimeout(() => setTv(v => ({ ...v, fx: v.fx === boot.tres ? '' : v.fx })), 1000); };
+      onEnd = () => { const fl = boot.tres === 'ok' ? flyFor(state, state.trial.phase - 1) : null, P0 = (TN_WORLD.trials[state.trial.i].phases || [])[state.trial.phase];
+        // 반론 개편: 자유 입력이 조건을 못 맞추면(hit) 같은 입력 창으로 — 그 전에 내 독백 한 줄(겹치지 않게)
+        const g2 = boot.tres === 'hit' && P0 && P0.type === 'rebut' && P0.lines && P0.lines.length ? { rb: 2, mono: trMono(state, P0, 'rb') } : {};
+        setTv(v => ({ ...v, reply: false, ...resetTv, g: g2, fx: boot.tres || '', fly: flyGo(fl) })); if (boot.tres === 'hit' || boot.tres === 'ok') setTimeout(() => setTv(v => ({ ...v, fx: v.fx === boot.tres ? '' : v.fx })), 1000); };
     } else if (ph.type === 'talk') {
       const all = ph.lines.filter(x => !(x.here && x.who && !trHere(state, x.who))).map(x => trLineOf(state, x)); total = all.length; cur = all[Math.min(tv.idx, total - 1)]; onEnd = trialNext;
     }
@@ -1878,7 +1893,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const tapLine = () => { if (!cur) return; if (!done) { setTv(v => ({ ...v, shown: len })); return; } if (tv.idx + 1 < total) setTv(v => ({ ...v, idx: v.idx + 1, shown: 0 })); else onEnd && onEnd(); };
     const issues = TR.issues || [], solvedUntil = id => { let last = -1; TR.phases.forEach((p, i) => { if (p.issue === id) last = i; }); return last; };
     const issueOf = TR.phases.slice(0, T.phase + 1).reduce((a, p) => p.issue || a, '');
-    const ns = !cur && !sent && ph.type === 'nonstop', rb = !cur && !sent && ph.type === 'rebut', rbStep = rb ? ((tv.g || {}).rb || 0) : -1;
+    const rb2 = ph.type === 'rebut' && !!(ph.lines && ph.lines.length), rb2Talk = rb2 && !(T.sub > 0); // 반론 개편: 먼저 반론자의 연설(논스톱) → 맞히면 입력
+    const ns = !cur && !sent && (ph.type === 'nonstop' || rb2Talk), rb = !cur && !sent && ph.type === 'rebut' && !rb2Talk, rbStep = rb ? ((tv.g || {}).rb || (rb2 ? 2 : 0)) : -1;
     const split = rbStep === 1, stageFx = cur && cur.fx ? cur.fx : '', mini = !cur && ph.type !== 'trans' && !rb && !ns;
     const nsMiss = ns && (tv.g || {}).miss, nsMissL = nsMiss && nsMiss.step === 0 ? trMissLine(state, ph, nsMiss.who) : null;
     const nsL = ns && !nsMissL ? trLineOf(state, ph.lines[(tv.g || {}).li || 0]) : null; // 논스톱 지금 줄(표정·자세)
@@ -1902,7 +1918,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
           <button className="tr-tbtn" onClick={() => setTv(v => ({ ...v, stmt: (v.stmt + 1) % ph.lines.length, drawer: false }))}>다음 ›</button></div>
         {tv.drawer ? <div className="tr-drawer">{evid.map(it => <button key={it.id} className="tr-evi" onClick={() => ([].concat(st.answers || st.answer).includes(it.id) ? (setTv(v => ({ ...v, ev: it.id })), trialRight('모순!', 1400)) : trialWrong())}><b>{it.name}</b><span>{it.desc}</span></button>)}</div> : null}
       </div>;
-    } else if (ns) body = trNonstop(ph, evid);
+    } else if (ns) body = trNonstop(ph, evid, rb2Talk ? sel => { const key = trKey(state); if (!key || trLock.current === key) return; trLock.current = key; setTv(v => ({ ...v, fx: '모순!' }));
+      setTimeout(() => { setState(v => trKey(v) === key ? trNPC.trialStep(TN_WORLD, v, 'SUB') : v); trLock.current = ''; setTv(v => ({ ...v, fx: '', g: { rb: 2, ei: Math.max(0, evid.findIndex(x => sel && x.id === sel.id)) }, ev: sel && sel.k === 'ev' ? sel.id : '' })); }, 1400); } : null);
     else if (rb) body = trRebut(ph, evid, rbStep);
     else if (ph.type === 'pairs') {
       // 엇갈린 증언: 여러 사람의 증언에서 서로 부딪치는 두 문장(다른 사람끼리)을 고른다
@@ -1928,8 +1945,12 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div className="tr-facts">{got.map(k => <div key={k} className={'tr-fact' + (g.fresh === k ? ' fresh' : '')}>◆ {ph.combos[k].fact}</div>)}{Array.from({ length: ph.combos.length - got.length }, (_, i) => <div key={'x' + i} className="tr-fact lock">? ? ?</div>)}</div>
         <button className="tr-tbtn gold" disabled={sel.length < 2} onClick={tryIt}>맞대 보기</button></div>;
     } else if (ph.type === 'route') {
-      const g = tv.g, path = g.path || [ph.start], C = 11, M = TN_WORLD.map, last = path[path.length - 1];
-      const tap = e => { if (g.ok) return; const r = e.currentTarget.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * M.width), y = Math.floor((e.clientY - r.top) / r.height * M.height);
+      // 동선 재현: 시작·경유·도착 칸 둘레만 잘라 보여 준다(층이 큰 본편 지도에서도 칸이 커 보이게). 지도 그림이 없으면 칸 색으로 그린다.
+      const g = tv.g, path = g.path || [ph.start], M = TN_WORLD.map, last = path[path.length - 1], pad = ph.pad === undefined ? 3 : ph.pad;
+      const ps = [ph.start, ph.end, ...(ph.via || [])], bx0 = Math.max(0, Math.min(...ps.map(q => q[0])) - pad), by0 = Math.max(0, Math.min(...ps.map(q => q[1])) - pad);
+      const bx1 = Math.min(M.width - 1, Math.max(...ps.map(q => q[0])) + pad), by1 = Math.min(M.height - 1, Math.max(...ps.map(q => q[1])) + pad), bw = bx1 - bx0 + 1, bh = by1 - by0 + 1;
+      const C = Math.max(8, Math.min(30, Math.floor(Math.min(340 / bw, 300 / bh))));
+      const tap = e => { if (g.ok) return; const r = e.currentTarget.getBoundingClientRect(), x = bx0 + Math.floor((e.clientX - r.left) / r.width * bw), y = by0 + Math.floor((e.clientY - r.top) / r.height * bh);
         if (path.length > 1 && x === last[0] && y === last[1]) { setTv(v => ({ ...v, g: { ...v.g, path: path.slice(0, -1) } })); return; }
         if (Math.abs(x - last[0]) + Math.abs(y - last[1]) !== 1 || !trNPC.walkable(TN_WORLD, x, y, state)) return;
         setTv(v => ({ ...v, g: { ...v.g, path: [...path, [x, y]] } })); };
@@ -1937,14 +1958,16 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         if (!(k === ph.via.length && Math.abs(end[0] - ph.end[0]) + Math.abs(end[1] - ph.end[1]) <= 1)) return false;
         // ph.slack: 최단 경로(꼭 지날 칸을 차례로 거쳐 도착 칸 옆까지)보다 몇 칸까지 더 걸어도 되는가. 없으면 길이는 보지 않는다.
         return ph.slack === undefined || path.length - 1 <= trShortest([ph.start, ...ph.via], ph.end) + ph.slack; };
-      const pts = path.map(p2 => `${(p2[0] + .5) * C},${(p2[1] + .5) * C}`).join(' ');
+      const X = q => (q[0] - bx0 + .5) * C, Y = q => (q[1] - by0 + .5) * C, pts = path.map(p2 => X(p2) + ',' + Y(p2)).join(' '), cells = [];
+      if (!TR_A.map) for (let yy = by0; yy <= by1; yy++) for (let xx = bx0; xx <= bx1; xx++) { const wall = M.rows[yy][xx] === '#', ai = trNPC.areaOf(TN_WORLD, xx, yy);
+        cells.push(<rect key={xx + '-' + yy} x={(xx - bx0) * C} y={(yy - by0) * C} width={C} height={C} fill={wall ? '#0f1a27' : ((M.areas[ai] || {}).color || '#3a4656')} stroke="#5f7585" strokeOpacity=".25" />); }
       body = <div className="tr-debate"><div className="tr-mut" style={{ textAlign: 'center' }}>{ph.title} · {ph.guide}</div>
-        <div className="tr-mini" style={{ width: M.width * C, height: M.height * C }} onClick={tap}>
-          {TR_A.map ? <img className="tr-px" src={trUrl(TR_A.map.src)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: .85 }} /> : null}
-          <svg style={{ position: 'absolute', inset: 0 }} width="100%" height="100%"><polyline points={pts} fill="none" stroke="#f2c46d" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" opacity={g.ok ? .35 : 1} />
+        <div className="tr-mini" style={{ width: bw * C, height: bh * C, margin: '0 auto' }} onClick={tap}>
+          {TR_A.map ? <div className="tr-px" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${trUrl(TR_A.map.src)})`, backgroundSize: `${M.width * C}px ${M.height * C}px`, backgroundPosition: `${-bx0 * C}px ${-by0 * C}px`, opacity: .85 }} /> : null}
+          <svg style={{ position: 'absolute', inset: 0 }} width="100%" height="100%">{cells}<polyline points={pts} fill="none" stroke="#f2c46d" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" opacity={g.ok ? .35 : 1} />
             {g.ok ? <polyline className="tr-draw" points={pts} fill="none" stroke="#fff6d0" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" pathLength="1" /> : null}
-            <circle cx={(ph.start[0] + .5) * C} cy={(ph.start[1] + .5) * C} r="5" fill="#9ad87a" /><rect x={ph.end[0] * C - 2} y={ph.end[1] * C - 2} width={C + 4} height={C + 4} fill="none" stroke="#ff9a8a" strokeWidth="2" />
-            <circle cx={(last[0] + .5) * C} cy={(last[1] + .5) * C} r="5" fill="#fff" stroke="#3a2a14" /></svg></div>
+            <circle cx={X(ph.start)} cy={Y(ph.start)} r="5" fill="#9ad87a" /><rect x={(ph.end[0] - bx0) * C - 2} y={(ph.end[1] - by0) * C - 2} width={C + 4} height={C + 4} fill="none" stroke="#ff9a8a" strokeWidth="2" />
+            <circle cx={X(last)} cy={Y(last)} r="5" fill="#fff" stroke="#3a2a14" /></svg></div>
         <div className="tr-mut" style={{ textAlign: 'center' }}>{path.length - 1}칸 · 이웃 칸을 눌러 잇고, 끝 칸을 다시 누르면 지운다</div>
         <div style={{ display: 'flex', gap: 5 }}><button className="tr-tbtn" disabled={g.ok} onClick={() => setTv(v => ({ ...v, g: { ...v.g, path: [ph.start] } }))}>처음부터</button>
           <button className="tr-tbtn gold" style={{ flex: 2 }} disabled={path.length < 3 || g.ok} onClick={() => { if (check()) { setTv(v => ({ ...v, g: { ...v.g, ok: true } })); setTimeout(() => trialRight('동선 일치'), 1000); } else trialWrong(); }}>이 길이었다</button></div></div>;
