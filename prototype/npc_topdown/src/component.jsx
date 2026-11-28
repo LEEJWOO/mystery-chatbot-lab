@@ -909,6 +909,23 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       {M ? <div className="tr-chs-miss" key={g.sel}>{say(M)}</div> : null}
     </div>;
   }
+  // 팔찌 기록 대조: 여러 사람의 팔찌 기록을 시각순으로 늘어놓고, 주장(claim)과 어긋나는 한 줄을 찍는다.
+  // ph = { title, guide, claim:{who,text}, logs:[{who, t:'16:05', kind:'조회'|'교체'|'사진'|'통화'|'해제', text}], answer: 줄 번호(배열이면 그중 하나), miss:{who,text} }
+  function trLogs(ph) {
+    const g = tv.g || {}, me = state.player.look ? state.player.look.name : '나', ans = [].concat(ph.answer);
+    const rows = ph.logs.map((L, i) => ({ ...L, i })).sort((a, b) => a.t.localeCompare(b.t));
+    const icon = { 교체: '🔋', 사진: '📷', 통화: '📞', 조회: '📍', 해제: '⚠' };
+    const submit = () => { if (g.sel === undefined || tv.fx) return; if (ans.includes(g.sel)) trialRight(ph.okLabel || '이 기록이다', 1300); else { setTv(v => ({ ...v, g: { ...v.g, bad: (v.g.bad || 0) + 1, sel: undefined, miss: true } })); trialWrong(); } };
+    const c = ph.claim && (ph.claim.who === 'me' ? { name: me, color: '#3a6a8a' } : trNpc(ph.claim.who));
+    return <div className="tr-debate tr-logs">
+      <div className="tr-dv-head"><b>{ph.title || '팔찌 기록 대조'}</b><span>{ph.guide || '주장과 어긋나는 기록 한 줄을 찍는다'}</span></div>
+      {ph.claim ? <div className="tr-chs-say">{ph.claim.who !== 'me' ? <div className="tr-tpor sm">{trPortrait(ph.claim.who, 44, 54)}</div> : null}<div><b style={{ color: c.color }}>{c.name}</b><div className="tr-ttext">「{ph.claim.text}」</div></div></div> : null}
+      <div className="tr-log-list">{rows.map(L => <button key={L.i} className={'tr-log' + (g.sel === L.i ? ' on' : '')} onClick={() => setTv(v => ({ ...v, g: { ...v.g, sel: L.i, miss: false } }))}>
+        <span className="tr-log-t">{L.t}</span><span className="tr-log-who" style={{ color: trNpc(L.who).color }}>{trShort(L.who)}</span><span className="tr-log-k">{icon[L.kind] || '·'} {L.kind}</span><span className="tr-log-x">{L.text}</span></button>)}</div>
+      {g.miss && ph.miss ? <div className="tr-chs-miss" key={g.bad}><div className="tr-chs-say"><div><b style={{ color: trNpc(ph.miss.who).color }}>{trNpc(ph.miss.who).name}</b><div className="tr-ttext">{ph.miss.text}</div></div></div></div> : null}
+      <button className="tr-tbtn gold" disabled={g.sel === undefined || !!tv.fx} onClick={submit}>이 기록과 어긋난다</button>
+    </div>;
+  }
   function trDreamSentence(ph, R, ri, pick, ask, OPT, NAME, label, dtab) {
     const g = tv.g || {}, DEF = { a: [['who', '가'], ['time', '에'], ['at', '의'], ['obj', '을'], ['to', '에게'], ['act', '']], b: [['who', '가'], ['obj', '을'], ['at', '에'], ['to', '에게'], ['act', '']] };
     const setPick = (k, x) => { const nx = { ...pick, [k]: x }, next = ask.find(a => a.startsWith(dtab + '.') && nx[a] === undefined) || '';
@@ -1095,6 +1112,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
           <button className="tr-tbtn gold" style={{ flex: 2 }} disabled={path.length < 3 || g.ok} onClick={() => { if (check()) { setTv(v => ({ ...v, g: { ...v.g, ok: true } })); setTimeout(() => trialRight('동선 일치'), 1000); } else trialWrong(); }}>이 길이었다</button></div></div>;
     } else if (ph.type === 'dream') body = trDream(ph);
     else if (ph.type === 'choice') body = trChoice(ph);
+    else if (ph.type === 'logs') body = trLogs(ph);
     else if (ph.type === 'crystal') {
       // 진상 결정: 모서리를 누르면 그 자리 단서 다섯 장이 부채꼴로 펼쳐진다
       const g = tv.g, put = g.put || {}, open = g.open, R2 = 88, cx = 174, cy = 118;
