@@ -184,6 +184,7 @@ if __name__ == '__main__':
         x, y = center(spots.get(n['id'], '로비'))
         while (x, y) in used or rows[y][x] == '#' or (x, y) == (w['player']['x'], w['player']['y']): x += 1
         used.add((x, y)); n.update({'x': x, 'y': y, 'agenda': [], 'notes': [], 'knows': []})
+        if n['id'] == 'mei': n['short'] = '메이'   # 정체를 밝힌 뒤 이름표
     # 시험용 재판 틀(X1): 체험판 재판 T1을 가져와 쓴다. 구절 짝짓기는 빼고, 동선은 1장 지도 좌표로, 반론은 개편 흐름(연설 → 입력)으로.
     # 1장 재판 대본이 정해지면 이 X1을 바꿔 끼운다. 체험판 데이터(world.json)는 건드리지 않는다.
     T = copy.deepcopy(base['trials'][0]); T.update({'code': 'X1', 'id': 'trial_x1', 'title': '(시험용) 재판 틀 — 체험판 대본 차용', 'flag': 'x1_done'})

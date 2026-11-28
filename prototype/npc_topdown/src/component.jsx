@@ -6,6 +6,8 @@ const TR_BG = ['#25344a', '#2d3a30', '#283a4a', '#2c3550'];
 let TR_FLAGS = {};
 const trNpcRaw = id => TN_WORLD.npcs.find(n => n.id === id);
 const trNpc = id => { const n = trNpcRaw(id); if (!n) { const c = (TR_A.chars || {})[id]; return { name: (c && c.label) || id, color: '#999', symbol: '?' }; } return n.alias && !TR_FLAGS[n.alias.until] ? { ...n, name: n.alias.name, real: n.name } : n; };
+// 탐색 지도 이름표: 이름만(가명이 살아 있으면 가명, 아니면 short 또는 부르는 이름 첫째).
+const trShort = id => { const n = trNpcRaw(id); if (!n) return trNpc(id).name; if (n.alias && !TR_FLAGS[n.alias.until]) return n.alias.name; return n.short || (n.call || [])[0] || n.name; };
 // 대사의 화자 이름 → 인물 id. 본명·가명·부르는 이름(call) 모두 받는다.
 const trNameIs = (n, name) => n.name === name || (n.alias && n.alias.name === name) || (n.call || []).includes(name);
 const trArea = (x, y) => { const i = TroemereiNPC.areaOf(TN_WORLD, x, y); return i < 0 ? '통로' : TN_WORLD.map.areas[i].name; };
@@ -223,7 +225,7 @@ function trCharSprite(c, animRef, movedRef, sel, bad, look) {
   const df = c.n ? trNpc(c.id) : { name: '나', color: '#f6dfab', symbol: '나' };
   const pos = { transform: `translate(${c.x * TR_CELL}px,${c.y * TR_CELL}px)` };
   // 이름표: 옆 칸 인물과 겹치지 않게 홀수 열은 한 줄 위로 엇갈린다.
-  const tag = c.n ? <div className="tr-tag" style={{ borderColor: df.color, ...(c.x % 2 ? { transform: 'translate(-50%, -15px)' } : null) }}>{df.name}{c.n.mode === 'accompany' ? ' ★' : ''}</div> : null;
+  const tag = c.n ? <div className="tr-tag" style={{ borderColor: df.color, ...(c.x % 2 ? { transform: 'translate(-50%, -15px)' } : null) }}>{trShort(c.id)}{c.n.mode === 'accompany' ? ' ★' : ''}</div> : null;
   if (c.n) { const raw = trNpcRaw(c.id); look = raw && raw.look && !(sp && row >= 0 && !bad[trUrl(sp.src)]) ? raw.look : null; } // 보행 도트 시트에 없는 인물만 조립 도트(체크인 부품)로
   if ((c.id === 'player' || (c.n && trNpcRaw(c.id) && trNpcRaw(c.id).look)) && look && TR_A.avatar) { const ac = TR_A.avatar.dirs[a.dir] || TR_A.avatar.dirs.down; let k = ac.idle;
     if (walking) { const per = Math.max(1, Math.ceil(ac.walk.length / 2)); k = ac.walk[((a.step - 1) * per + Math.min(per - 1, Math.floor(el / (TR_STEP_MS / per)))) % ac.walk.length]; }
@@ -712,7 +714,9 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     if (busy) return;
     const start = TroemereiNPC.dispatch(TN_WORLD, state, { type: 'CLEAR_ROUTE' });
     // 시각 지정(exact)은 공지에서 멈추지 않고 그 시각까지 간다(지나간 공지는 알림으로만). 다른 쉬기는 공지 시각에서 멈춘다.
-    const passed = trNotices(start.clock, target), note = exact ? null : passed[0], end = note ? note.t : target;
+    const passed = trNotices(start.clock, target), note = exact ? null : passed[0]; let end = note ? note.t : target;
+    // 쉬는 동안 팔찌 전지가 1분 남는 시각이 오면 거기서 멈춘다.
+    const b0 = TroemereiNPC.battery(TN_WORLD, start), batStop = b0 && b0.left > 60 && start.clock + b0.left - 60 < end ? start.clock + b0.left - 60 : 0; if (batStop) end = batStop;
     // 지나가는 사람(이동 중)은 무시하고, 누군가 내 곁(1칸)에 멈춰 서면 멈춘다.
     const near = x => x.npcs.filter(n => n.mode !== 'accompany' && n.mode !== 'moving' && Math.abs(n.x - x.player.x) + Math.abs(n.y - x.player.y) <= 1 && trVisible(x, n)).map(n => n.id);
     const seen0 = new Set(near(start));
@@ -721,6 +725,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const lg = s2.logs.filter(l => l.visible && l.type === 'world' && l.time > start.clock).slice(-1)[0];
     setState(s2); setSheet(''); setPreview(null); setMenu(null);
     const cl = TroemereiNPC.caller(TN_WORLD, s2); setWokeBy(r.stopped && cl ? cl.id : '');
+    if (batStop && !r.stopped && s2.clock >= batStop) { setToast('팔찌 전지가 1분 남아 쉬던 것을 멈췄다'); return; }
     setToast(r.stopped ? (who.length ? trJosa(who.join('·'), '이', '가') + ' 다가와서 쉬던 것을 멈췄다' : lg ? lg.text : '무슨 일이 생겨 멈췄다') : note ? '공지 · ' + trHM(note.t) + ' ' + note.n.text + (note.n.place ? ' (' + note.n.place + ')' : '') : TroemereiNPC.clock(s2.clock).slice(0, 5) + '까지 쉬었다');
   }
   stRef.current = state;
@@ -1206,6 +1211,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       {guardMsg ? <div className="tr-over" {...(guardMsg.over ? {} : { 'data-adv': '1' })} onClick={() => { if (!guardMsg.over) setGuardMsg(null); }}><div className="tr-guard"><div className="tr-guard-sil">{trHostSil()}</div><b>{guardMsg.who}</b><p>{guardMsg.text}</p>
         {guardMsg.over ? <><div className="tr-mut" style={{ marginBottom: 10 }}>게임 오버 — 규칙을 어겼다.</div><button onClick={() => { setGuardMsg(null); setState(TroemereiNPC.createWorld(TN_WORLD)); }}>처음부터</button></> : <div className="tr-mut">눌러서 닫기</div>}</div></div> : null}
       <div className="tr-batrow">{trBatPill(state, () => setSheet('dev'))}</div>
+      {(() => { const b = TroemereiNPC.battery(TN_WORLD, state); if (!b || b.dead || b.left > 60) return null;
+        return <button className="tr-batwarn" onClick={() => setSheet('dev')}>{b.left > 0 ? '⚠ 팔찌 전지가 1분도 남지 않았다 (' + b.left + '초) — 눌러서 교체' : '⚠ 전지가 다 됐다! ' + Math.max(0, 60 + b.left) + '초 안에 갈아 끼우지 않으면 위험하다 — 눌러서 교체'}</button>; })()}
       <div className="tr-hud"><span className="tr-pill tr-area"><i />{RM.name}</span><span className="tr-pill tr-time">{state.day}일 {TroemereiNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
         <button className="tr-hbtn" disabled={busy} title="10초 진행" onClick={() => { setPreview(null); setState(v => TroemereiNPC.dispatch(TN_WORLD, v, { type: 'WAIT', seconds: 10 })); }}>+10초</button><button className="tr-hbtn" onClick={() => setSheet('rest')}>휴식</button><button className="tr-hbtn" onClick={() => setSheet('note')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>
       {investigating ? (() => { const ph = TN_WORLD.trials[state.trial.i].phases[state.trial.phase]; return <div className="tr-inv"><b>조사 중</b><span>마감 {trHM(state.trial.sub)}</span>
@@ -1274,6 +1281,7 @@ function trDebugBox(state, onDbg, onGal) {
       <button onClick={onGal}>표정·자세 갤러리</button>
       {TN_WORLD.device ? <button onClick={() => onDbg(x => { x.player.batAt = x.clock; x.player.batUsed = 0; }, '팔찌 전지 완충')}>전지 완충</button> : null}
       {TN_WORLD.device ? <button onClick={() => onDbg(x => { x.player.cells = (TN_WORLD.device.cells || 8) - 1; }, '예비 전지 채움')}>예비 전지 채움</button> : null}
+      {TN_WORLD.device ? <button onClick={() => onDbg(x => { const b = TroemereiNPC.battery(TN_WORLD, x); x.player.batUsed = (x.player.batUsed || 0) + b.left - 50; }, '전지 50초 남김(시험)')}>전지 50초 남김</button> : null}
     </div>
     <div className="tr-mut">증거 하나씩</div>
     <div className="tr-dbgrw">{(W.items || []).map(it => <button key={it.id} className={state.player.items[it.id] !== undefined ? 'on' : ''} onClick={() => onDbg(x => { if (x.player.items[it.id] === undefined) x.player.items[it.id] = x.clock; else delete x.player.items[it.id]; })}>{it.name}</button>)}</div>
