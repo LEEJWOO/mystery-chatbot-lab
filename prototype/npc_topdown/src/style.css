@@ -496,3 +496,14 @@
 @keyframes trWmDot{0%{box-shadow:0 0 0 2px #fff,0 0 0 2px #ff3b3b88}100%{box-shadow:0 0 0 2px #fff,0 0 0 14px #ff3b3b00}}
 /* 메뉴 탭이 많아져도 글자가 세로로 꺾이지 않게 */
 .tr-tabs button{white-space:nowrap;padding-left:2px;padding-right:2px;font-size:12px;min-width:0}
+
+/* 고르기 단계 */
+.tr-chs-show{display:grid;gap:6px;max-height:190px;overflow:auto;padding:2px}
+.tr-chs-say{display:flex;gap:8px;align-items:flex-start;background:#120f1e;border:1px solid #ffffff14;border-radius:9px;padding:6px 8px}
+.tr-chs-say .tr-ttext{font-size:13px;line-height:1.45}
+.tr-chs-q{font-weight:700;color:#ffd36a;text-align:center;font-size:14px;padding:4px 2px}
+.tr-chs-opts{display:grid;gap:6px}
+.tr-chs-opts.num{grid-template-columns:repeat(4,1fr)}
+.tr-chs-opts .tr-tbtn.bad{border-color:#e05a6a;color:#ffb3bd}
+.tr-chs-miss{animation:trin .25s}
+.tr-chs-miss .tr-chs-say{border-color:#e05a6a66}

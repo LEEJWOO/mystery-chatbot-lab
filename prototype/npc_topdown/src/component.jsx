@@ -894,6 +894,21 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   // 장면 = { bg, who, pose, obj, at }. rounds[i].ask = [['a'|'b', 칸], ...]
   // 문장형 편집: 왼쪽 전/후 탭 + 칸·조사로 된 문장. 「?」 칸을 누르면 아래에 고를 말이 뜬다.
   // 조각마다 칸 순서를 R.sa / R.sb = [[칸, 조사], ...] 로 정할 수 있다(없으면 기본 순서).
+  // 고르기(문장·숫자·부분): 앞 증언(show)을 띄워 두고 질문 하나에 보기 여럿. 틀리면 그 보기의 반응(miss)과 체력 감소, 다시 같은 질문.
+  // ph = { title, guide, show:[{who,text}], question, options:[{t, ok} | {t, miss:{who,text,face}}], num(숫자 보기면 큰 버튼) }
+  function trChoice(ph) {
+    const g = tv.g || {}, M = g.miss, me = state.player.look ? state.player.look.name : '나';
+    const say = L => { const c = L.who === 'me' ? { name: me, color: '#3a6a8a' } : L.who === 'host' ? { name: TR_HOST.name, color: '#e9c98c' } : trNpc(L.who); return <div className="tr-chs-say">{L.who && L.who !== 'me' && L.who !== 'host' ? <div className="tr-tpor sm">{trPortrait(L.who, 44, 54)}</div> : null}<div><b style={{ color: c.color }}>{c.name}</b><div className="tr-ttext">{trTyped(trSegs(String(L.text)), 999)}</div></div></div>; };
+    const pick = (o, i) => { if (tv.fx) return; if (o.ok) { setTv(v => ({ ...v, g: { ...v.g, miss: null, sel: i } })); trialRight(ph.okLabel || '그거다', 1300); }
+      else { setTv(v => ({ ...v, g: { ...v.g, miss: o.miss || null, sel: i } })); trialWrong(); } };
+    return <div className="tr-debate tr-chs">
+      <div className="tr-dv-head"><b>{ph.title || '고르기'}</b><span>{ph.guide || ''}</span></div>
+      {(ph.show || []).length ? <div className="tr-chs-show">{ph.show.map((L, i) => <div key={i}>{say(L)}</div>)}</div> : null}
+      <div className="tr-chs-q">{ph.question}</div>
+      <div className={'tr-chs-opts' + (ph.num ? ' num' : '')}>{ph.options.map((o, i) => <button key={i} className={'tr-tbtn' + (g.sel === i ? (M ? ' bad' : ' gold') : '')} onClick={() => pick(o, i)}>{o.t}</button>)}</div>
+      {M ? <div className="tr-chs-miss" key={g.sel}>{say(M)}</div> : null}
+    </div>;
+  }
   function trDreamSentence(ph, R, ri, pick, ask, OPT, NAME, label, dtab) {
     const g = tv.g || {}, DEF = { a: [['who', '가'], ['time', '에'], ['at', '의'], ['obj', '을'], ['to', '에게'], ['act', '']], b: [['who', '가'], ['obj', '을'], ['at', '에'], ['to', '에게'], ['act', '']] };
     const setPick = (k, x) => { const nx = { ...pick, [k]: x }, next = ask.find(a => a.startsWith(dtab + '.') && nx[a] === undefined) || '';
@@ -1059,7 +1074,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       const C = Math.max(8, Math.min(30, Math.floor(Math.min(340 / bw, 300 / bh))));
       const tap = e => { if (g.ok) return; const r = e.currentTarget.getBoundingClientRect(), x = bx0 + Math.floor((e.clientX - r.left) / r.width * bw), y = by0 + Math.floor((e.clientY - r.top) / r.height * bh);
         if (path.length > 1 && x === last[0] && y === last[1]) { setTv(v => ({ ...v, g: { ...v.g, path: path.slice(0, -1) } })); return; }
-        if (Math.abs(x - last[0]) + Math.abs(y - last[1]) !== 1 || !TroemereiNPC.walkable(TN_WORLD, x, y, state)) return;
+        if (Math.abs(x - last[0]) + Math.abs(y - last[1]) !== 1 || !TroemereiNPC.walkable(TN_WORLD, x, y)) return; // 지난 일을 되짚는 것이라 지금 시각의 물때는 보지 않는다
         setTv(v => ({ ...v, g: { ...v.g, path: [...path, [x, y]] } })); };
       const check = () => { let k = 0; for (const p2 of path) if (k < ph.via.length && p2[0] === ph.via[k][0] && p2[1] === ph.via[k][1]) k++; const end = path[path.length - 1];
         if (!(k === ph.via.length && Math.abs(end[0] - ph.end[0]) + Math.abs(end[1] - ph.end[1]) <= 1)) return false;
@@ -1079,6 +1094,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div style={{ display: 'flex', gap: 5 }}><button className="tr-tbtn" disabled={g.ok} onClick={() => setTv(v => ({ ...v, g: { ...v.g, path: [ph.start] } }))}>처음부터</button>
           <button className="tr-tbtn gold" style={{ flex: 2 }} disabled={path.length < 3 || g.ok} onClick={() => { if (check()) { setTv(v => ({ ...v, g: { ...v.g, ok: true } })); setTimeout(() => trialRight('동선 일치'), 1000); } else trialWrong(); }}>이 길이었다</button></div></div>;
     } else if (ph.type === 'dream') body = trDream(ph);
+    else if (ph.type === 'choice') body = trChoice(ph);
     else if (ph.type === 'crystal') {
       // 진상 결정: 모서리를 누르면 그 자리 단서 다섯 장이 부채꼴로 펼쳐진다
       const g = tv.g, put = g.put || {}, open = g.open, R2 = 88, cx = 174, cy = 118;

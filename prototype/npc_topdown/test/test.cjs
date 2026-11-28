@@ -541,6 +541,32 @@ test('1장 기본 루트 일정: 시간표 v2.1 순서대로 흘러가고, 20:10
   assert.deepEqual([loc.x, loc.y], [sl.x, sl.y], '팔찌를 던진 뒤 위치 조회는 팔찌 자리(바위 해안)');
 });
 
+test('1장 재판(K1) 데이터: 인물·표정(36종)·증거·정답 위치·보기·동선·반론 연결이 맞음', () => {
+  const w = require('../src/world_ch1.json'), T = w.trials.find(t => t.code === 'K1'); assert.ok(T, 'K1 재판');
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../src/component.jsx'), 'utf8');
+  const core = src.match(/const TR_FACES = \[([^\]]+)\]/)[1].match(/'([^']+)'/g).map(x => x.slice(1, -1));
+  const fb = src.match(/const TR_FB = \{([\s\S]+?)\};/)[1].match(/'?([가-힣 ]+)'?:/g).map(x => x.replace(/[':]/g, '').trim());
+  const FACES = new Set([...core, ...fb]), ids = new Set(w.npcs.map(n => n.id)), items = new Set(w.items.map(i => i.id)), iss = new Set(T.issues.map(i => i.id));
+  const see = (l, where) => { if (!l) return; if (l.face) assert.ok(FACES.has(l.face), where + ' 표정 ' + l.face); if (l.who && !['host', 'me'].includes(l.who)) assert.ok(ids.has(l.who), where + ' 인물 ' + l.who); (l.alt || []).forEach(a => see(a, where)); if (l.if && l.if.item) assert.ok(items.has(l.if.item), where + ' 물건 ' + l.if.item); };
+  T.evidence.forEach(e => assert.ok(items.has(e), '증거 ' + e));
+  T.phases.forEach((ph, k) => { const at = 'K1 ' + k + ' ' + ph.type;
+    if (ph.issue) assert.ok(iss.has(ph.issue), at + ' 쟁점');
+    (ph.lines || []).forEach(l => see(l, at)); Object.values(ph.miss || {}).forEach(l => see(l, at)); (ph.show || []).forEach(l => see(l, at));
+    if (ph.type === 'nonstop' || (ph.type === 'rebut' && ph.lines)) { const segs = ph.lines.map(l => (l.text.match(/\{[^}]+\}/g) || []).length);
+      ph.answers.forEach(a => { assert.ok(a.at[1] < segs[a.at[0]], at + ' 구절 위치'); (a.ev || []).forEach(e => assert.ok(T.evidence.includes(e), at + ' 증거 ' + e)); }); }
+    if (ph.type === 'choice') { assert.equal(ph.options.filter(o => o.ok).length, 1, at + ' 정답 하나'); ph.options.forEach(o => see(o.miss, at)); }
+    if (ph.type === 'crystal') ph.slots.forEach(sl => assert.ok(sl.options.includes(sl.answer), at + ' ' + sl.label));
+    if (ph.type === 'vote') assert.ok(ph.options.includes(ph.answer) && ph.options.every(o => ids.has(o)), at);
+    if (ph.type === 'dream') ph.rounds.forEach((r, ri) => r.ask.forEach(([sd, f]) => { const v = r[sd][f], opt = { who: [...ph.cast, ''], obj: [...ph.objs, ''], at: ph.ats, time: ph.times, act: ph.acts, to: ph.cast }[f];
+      assert.ok(opt && opt.includes(v), at + ' 조각 ' + ri + ' ' + sd + '.' + f + '=' + v); (ph.objs || []).forEach(o => assert.ok(items.has(o), at + ' 물건 ' + o)); }));
+    if (ph.type === 'route') { assert.ok(E.walkable(w, ...ph.start) && E.walkable(w, ...ph.end) && ph.via.every(v => E.walkable(w, ...v)), at + ' 동선 칸');
+      let s = E.createWorld(w); s.clock = E.absTime('2일 15:50'); s.player.x = ph.start[0]; s.player.y = ph.start[1]; assert.ok(E.dispatch(w, s, { type: 'MOVE_TO', x: ph.end[0], y: ph.end[1] }).player.route.length > 0, at + ' 길이 이어짐'); }
+  });
+  T.issues.filter(i => i.confirmAt !== undefined).forEach(i => assert.equal(T.phases[i.confirmAt].type, 'crystal'));
+  for (const [k, ev] of Object.entries(w.events)) { const TT = w.trials.find(t => t.code === ev.trial); assert.equal(TT.phases[ev.phase].type, 'rebut', k); }
+  const C = w.trials.find(t => t.code === 'J1'); assert.deepEqual(C.then, [{ code: 'K1' }]); C.phases.find(p => p.type === 'investigate').grant.forEach(g => assert.ok(items.has(g), '조사 지급 ' + g));
+});
+
 test('팔찌 전지: 시간·기능으로 줄고, 교체하면 새로, 0 뒤 1분이면 사망, 상태 코드에 남음', () => {
   const w = require('../src/world_ch1.json'); let s = E.createWorld(w);
   let b = E.battery(w, s); assert.equal(b.left, 43200); assert.equal(b.cells, 7);
