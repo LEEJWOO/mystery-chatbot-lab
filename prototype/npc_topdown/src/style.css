@@ -464,3 +464,4 @@
 .tr-guard-sil{width:64px;height:100px;margin:0 auto}.tr-guard-sil svg{width:100%;height:100%}
 .tr-hosttok{position:absolute;left:4px;bottom:2px;width:28px;height:46px}.tr-hosttok svg{width:100%;height:100%}
 .tr-guard-sil .tr-host-sil,.tr-hosttok .tr-host-sil{position:static;inset:auto;left:auto;top:auto;bottom:auto;transform:none;width:100%;height:100%;max-width:none;filter:none}
+.tr-fbub.sd{background:#fff;border-radius:50%;padding:2px}.tr-fbub.sd:after{left:12px}

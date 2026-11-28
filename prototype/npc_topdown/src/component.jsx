@@ -1246,6 +1246,8 @@ function trDebugBox(state, onDbg, onGal) {
       <button onClick={() => onDbg(x => { const have = new Set(x.player.mem.map(m => m[0])); for (const f of W.facts || []) if (!have.has(f.id)) x.player.mem.push([f.id, 0, x.clock]); }, '기억 전부 획득')}>기억 전부</button>
       <button onClick={() => onDbg(x => { x.player.items = {}; x.player.given = {}; x.player.scenes = {}; }, '증거·앨범 비움')}>비우기</button>
       <button onClick={onGal}>표정·자세 갤러리</button>
+      {TN_WORLD.device ? <button onClick={() => onDbg(x => { x.player.batAt = x.clock; x.player.batUsed = 0; }, '팔찌 전지 완충')}>전지 완충</button> : null}
+      {TN_WORLD.device ? <button onClick={() => onDbg(x => { x.player.cells = (TN_WORLD.device.cells || 8) - 1; }, '예비 전지 채움')}>예비 전지 채움</button> : null}
     </div>
     <div className="tr-mut">증거 하나씩</div>
     <div className="tr-dbgrw">{(W.items || []).map(it => <button key={it.id} className={state.player.items[it.id] !== undefined ? 'on' : ''} onClick={() => onDbg(x => { if (x.player.items[it.id] === undefined) x.player.items[it.id] = x.clock; else delete x.player.items[it.id]; })}>{it.name}</button>)}</div>
@@ -1281,6 +1283,8 @@ function trBatPill(state, onClick) {
   return <button className={'tr-pill tr-bat' + (low ? ' low' : '')} onClick={onClick} title="팔찌 전지">
     <span className="tr-batbar"><i style={{ width: (pct * 100).toFixed(0) + '%' }} /></span>{b.left > 0 ? Math.floor(b.left / 3600) + ':' + String(Math.floor(b.left % 3600 / 60)).padStart(2, '0') : '0:00'}<small>×{b.cells}</small></button>;
 }
+// SD(데포르메) 얼굴 아이콘. 없으면 스탠딩 그림에서 잘라 낸 얼굴로 대신한다.
+function trSd(id, size) { const s = (TR_A.sd || {})[id]; return s ? <img src={trUrl(s)} alt="" width={size} height={size} style={{ display: 'block', width: size, height: size }} /> : trPortrait(id, size, size); }
 // 층 축약 지도: 그 층의 칸을 줄여서 그리고, 대상 위치에 빛나는 빨간 점 + 얼굴 말풍선.
 function trFloorMap(x, y, id, W0) {
   const M = TN_WORLD.map, L = (M.levels || []).find(l => x >= l.x0 && x <= l.x1 && y >= l.y0 && y <= l.y1) || { name: '', x0: 0, y0: 0, x1: M.width - 1, y1: M.height - 1 };
@@ -1292,7 +1296,7 @@ function trFloorMap(x, y, id, W0) {
     <div style={{ position: 'relative', width: cols * k, height: rows * k, margin: '4px auto' }}>
       <svg width={cols * k} height={rows * k} style={{ display: 'block', background: '#0f1a27', borderRadius: 4 }}>{cells}
         <circle cx={px} cy={py} r={k * 1.6 + 3} fill="#ff3b3b" opacity=".25" className="tr-ping" /><circle cx={px} cy={py} r={Math.max(3, k * .7)} fill="#ff3b3b" stroke="#fff" strokeWidth="1" /></svg>
-      <div className="tr-fbub" style={{ left: px + 8, top: py - 52 }}>{trPortrait(id, 34, 40)}</div></div></div>;
+      <div className={'tr-fbub' + ((TR_A.sd || {})[id] ? ' sd' : '')} style={{ left: px + 8, top: py - 54 }}>{trSd(id, 42)}</div></div></div>;
 }
 function trDevice(state, busy, onDev, pick, setPick) {
   const b = TroemereiNPC.battery(TN_WORLD, state), C = (TN_WORLD.device || {}).cost || {}; if (!b) return <div className="tr-mut">팔찌가 없다.</div>;
