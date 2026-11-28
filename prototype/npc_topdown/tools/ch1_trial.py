@@ -37,9 +37,7 @@ def trial(L):
     # ── 0 개정
     P.append({'type': 'talk', 'lines': [
         {'who': 'host', 'text': '손님 여러분, 모이셨군요. 지금부터 [[저스틴 트루먼 님]]의 죽음에 대한 재판을 시작하겠습니다.', 'fx': 'flash'},
-        {'who': 'host', 'text': '찾으셔야 할 것은 단 하나. 그 죽음을 일으킨 행동을 한 분입니다. 마음이 어떠했는지는 묻지 않습니다.', 'speed': 0.85},
-        {'who': 'karim', 'text': '행동을 한 사람……. 일부러가 아니어도 된다는 거야?', 'face': '곤란'},
-        {'who': 'host', 'text': '그렇습니다, 손님.'},
+        {'who': 'host', 'text': '이 섬에서 살인이 일어났습니다. 범인은 여러분 가운데 있습니다. 이 재판에서 범인을 찾아내 주십시오.', 'speed': 0.85},
         {'who': 'seoha', 'text': '그럼 시작은 하나야. 저스틴은 어떻게 죽었어?', 'face': '진지'},
         {'who': 'odile', 'text': '……관객 없이 끝난 쇼는 처음이야.', 'face': '슬픔'},
     ]})
@@ -260,12 +258,12 @@ def trial(L):
         {'label': '무엇을', 'answer': '밧줄 사다리를 걷었다', 'options': ['밧줄 사다리를 걷었다', '저스틴을 밀었다', '전지를 숨겼다', '팔찌를 벗겼다', '비탈을 막았다']},
         {'label': '언제', 'answer': '2일 12:50', 'options': ['1일 23:30', '2일 03:20', '2일 09:40', '2일 12:50', '2일 16:20']},
         {'label': '왜', 'answer': '가지러 오는 사람을 비탈 아래에서 세우려고', 'options': ['가지러 오는 사람을 비탈 아래에서 세우려고', '저스틴을 죽이려고', '전지를 독차지하려고', '스즈네를 지키려고', '실수로']},
-        {'label': '그 결과', 'answer': '저스틴이 맨손으로 바위벽을 오르다 바위틈에 떨어졌다', 'options': ['저스틴이 맨손으로 바위벽을 오르다 바위틈에 떨어졌다', '저스틴이 비탈에서 미끄러졌다', '저스틴이 처형됐다', '저스틴이 바다로 헤엄쳐 나갔다', '아무 일도 없었다']}]})
-    P.append({'type': 'vote', 'question': '저스틴의 죽음을 일으킨 행동을 한 사람은?', 'answer': 'varun',
+        {'label': '그 결과', 'answer': '저스틴이 사다리 없이 바위벽을 오갔다가 바위틈에 떨어졌다', 'options': ['저스틴이 사다리 없이 바위벽을 오갔다가 바위틈에 떨어졌다', '저스틴이 비탈에서 미끄러졌다', '저스틴이 처형됐다', '저스틴이 바다로 헤엄쳐 나갔다', '아무 일도 없었다']}]})
+    P.append({'type': 'vote', 'question': '저스틴 사건의 범인은?', 'answer': 'varun',
               'options': ['suzune', 'mei', 'ruoxi', 'seoha', 'clara', 'odile', 'varun', 'freddie', 'killian', 'karim'], 'follow': 4,
               'beliefs': {'suzune': 'varun', 'mei': 'varun', 'ruoxi': 'varun', 'seoha': 'varun', 'clara': 'varun', 'odile': 'varun', 'varun': 'varun', 'freddie': 'varun', 'killian': 'varun', 'karim': 'varun'}})
     P.append({'type': 'talk', 'lines': [
-        {'who': 'host', 'text': '정답입니다. 저스틴 트루먼 님의 죽음을 일으킨 행동을 한 분은, [[바룬 가스파르 님]]이었습니다.', 'fx': 'flash'},
+        {'who': 'host', 'text': '정답입니다. 저스틴 트루먼 님 사건의 범인은, [[바룬 가스파르 님]]이었습니다.', 'fx': 'flash'},
         {'who': 'varun', 'text': '(초안) ……규정대로 했다고 생각했다. 그날도, 오늘도.', 'face': '눈 감음'},
         {'who': 'suzune', 'text': '(초안) 제가 말하지 않았다면…….', 'face': '눈물 참기',
          'alt': [{'if': {'rel': {'affection': [4, 5]}}, 'text': '(초안) ……저, 괜찮아요. 괜찮지 않은데, 괜찮아요. 옆에 있어 주셔서요.', 'face': '눈물 참기'}]},
@@ -277,6 +275,6 @@ def trial(L):
               {'id': 'i2', 'q': '저스틴은 다섯 사람에게 무엇을 말했나?', 'a': '같은 로비에서 사람마다 다른 자리'},
               {'id': 'i3', 'q': '저스틴은 무엇을 하려 했나?', 'a': '자기 몫까지 보탠 다섯 곳의 미끼'},
               {'id': 'i4', 'q': '저스틴은 오후에 어떻게 올랐나?', 'a': '썰물 때 갯바위로 — 사다리 없이'},
-              {'id': 'i5', 'q': '그 죽음을 일으킨 행동은?', 'a': '바룬이 밧줄 사다리를 걷었다', 'confirmAt': next(i for i, p in enumerate(P) if p['type'] == 'crystal')}]
+              {'id': 'i5', 'q': '범인은 무엇을 했나?', 'a': '바룬이 밧줄 사다리를 걷었다', 'confirmAt': next(i for i, p in enumerate(P) if p['type'] == 'crystal')}]
     return {'id': 'trial_k1', 'code': 'K1', 'title': '(초안) 1장 재판 · 바위틈의 저스틴', 'stage': '재판장', 'hp': 5, 'flag': 'k1_done',
             'evidence': EVIDENCE, 'issues': issues, 'phases': P}
