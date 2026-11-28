@@ -25,14 +25,14 @@ floor 전망 바위 = in fsm_Forest01_A4 2 0
 floor 갯바위 = in World_A1 6 6
 floor 화장실 = in Ilmare_Inside_A2 0 3
 floor 지배인실 = in Ilmare_Inside_A2 6 6
-floor 계단홀 = in Ilmare_Inside_A2 6 0
+floor 계단홀 = in Ilmare_Inside_A2 2 6
 floor 주방 = in Ilmare_Inside_A2 0 6
 floor 1층 복도 = in Ilmare_Inside_A2 4 3
-floor 라운지 바 = in Ilmare_Inside_A2 4 6
-floor 로비 = in Ilmare_Inside_A2 0 0
+floor 라운지 바 = in Ilmare_Inside_A2 2 0
+floor 로비 = in Ilmare_Inside_A2 6 0
 floor 연회장 = in Ilmare_Inside_A2 6 3
 floor 2층 복도 = in Ilmare_Inside_A2 4 3
-floor 객실 = in Ilmare_Inside_A2 2 0
+floor 객실 = in Ilmare_Inside_A2 14 9
 floor 리넨실 = in Ilmare_Inside_A2 6 9
 floor 휴게 코너 = in Ilmare_Inside_A2 6 6
 floor 옥상 = in Ilmare_Outside_A2 2 6
@@ -51,7 +51,7 @@ terrain | = cliff fsm_Forest01_A4 2 0
 terrain = = a3 Ilmare_Outside_A3 2 0
 building_face = face Ilmare_Outside_A4 0 3
 building_window = tile Ilmare_Outside_E 10 12
-building_door = tile Ilmare_Outside_E 14 2 2 2
+building_door = tile Ilmare_Outside_E 14 4 2 2
 
 # ── 벽: wall 방이름 또는 층 = 벽면 조각(벽 아래 방 기준이 먼저) ; 윗면은 어두운 천장색
 wall * = face Ilmare_Inside_A4 0 3
@@ -124,3 +124,18 @@ object panel = tile SF_Inside_C 2 12 2 2 fit
 
 # ── 깃발에 따라 보였다 사라지는 덧그림(연결 이름 = 조각). 연결의 off 깃발이 켜지면 숨김
 overlay 밧줄 사다리 = tile fsm_Dungeon01_B 15 8 1 4
+
+# ── 깔개: rug 방이름 dx dy 폭 높이 = auto 시트 x y  (방 사각형 왼쪽 위 기준, 걷는 칸에만 깔림)
+rug 로비 3 2 6 4 = auto Ilmare_Inside_A2 10 0
+rug 1층 복도 0 0 38 2 = auto Ilmare_Inside_A2 8 3
+rug 2층 복도 0 0 44 3 = auto Ilmare_Inside_A2 8 3
+rug 라운지 바 3 3 6 4 = auto Ilmare_Inside_A2 10 3
+rug 연회장 1 1 10 6 = auto Ilmare_Inside_A2 10 3
+rug 휴게 코너 1 1 5 3 = auto Ilmare_Inside_A2 8 6
+# ── 벽 장식: wallart 방이름 간격 = 조각 (벽면 칸에 간격마다)
+wallart 로비 4 = tile Ilmare_Inside_E 4 14
+wallart 연회장 4 = tile Ilmare_Inside_E 4 14
+wallart 라운지 바 4 = tile Ilmare_Inside_E 6 12
+wallart 1층 복도 6 = tile Ilmare_Inside_E 6 12
+wallart 2층 복도 6 = tile Ilmare_Inside_E 6 13
+wallart 객실 5 = tile Ilmare_Inside_E 0 14

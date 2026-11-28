@@ -70,7 +70,7 @@ def spec(s):
         else: im.alpha_composite(p, (0, im.height - p.height))
     return {'im': im, **opts}
 
-TH = {'floor': {}, 'terrain': {}, 'wall': {}, 'object': {}, 'link': {}, 'guard': {}, 'overlay': {}, 'misc': {}}
+TH = {'floor': {}, 'terrain': {}, 'wall': {}, 'object': {}, 'link': {}, 'guard': {}, 'overlay': {}, 'misc': {}, 'rug': {}, 'wallart': {}}
 for line in open(os.path.join(ROOT, 'maps', CH, 'theme.txt'), encoding='utf-8'):
     line = line.strip()
     if not line or line.startswith('#') or '=' not in line: continue
@@ -79,7 +79,11 @@ for line in open(os.path.join(ROOT, 'maps', CH, 'theme.txt'), encoding='utf-8'):
     elif rest.startswith('= '): name, right = '', rest[2:]        # building_face = …
     else: i = rest.find(' = ', 1); name, right = rest[:i], rest[i + 3:]
     v = spec(right)
-    if kind in TH and name: TH[kind][name.strip()] = v
+    if kind == 'rug':
+        t = name.split(); TH['rug'][' '.join(t[:-4])] = TH['rug'].get(' '.join(t[:-4]), []) + [(tuple(int(q) for q in t[-4:]), v)]
+    elif kind == 'wallart':
+        t = name.split(); TH['wallart'][' '.join(t[:-1])] = (int(t[-1]), v)    # wallart 방이름 간격 = 조각
+    elif kind in TH and name: TH[kind][name.strip()] = v
     else: TH['misc'][kind] = v
 
 areas = MAP['areas']
@@ -118,6 +122,16 @@ for y in range(H):
         if walk(x, y) or t == '*' or t == '^':
             f = floor_im(near_area(x, y))
             if f: put(f['im'], x, y)
+# 1b) 깔개(방 사각형 기준 위치·크기, 자동 타일 가장자리)
+for a in areas:
+    for (dx, dy, rw, rh), v in TH['rug'].get(a['name'], []):
+        if not v or 'auto' not in v: continue
+        X0, Y0 = a['x0'] + dx, a['y0'] + dy
+        inside = lambda xx, yy: X0 <= xx < X0 + rw and Y0 <= yy < Y0 + rh
+        for yy in range(Y0, Y0 + rh):
+            for xx in range(X0, X0 + rw):
+                if 0 <= xx < W and 0 <= yy < H and (walk(xx, yy) or TER[yy][xx] == '*'):
+                    put(autotile(*v['auto'], lambda ddx, ddy, xx=xx, yy=yy: inside(xx + ddx, yy + ddy)), xx, yy)
 # 2) 지형·벽
 for y in range(H):
     if not inlevel(y): continue
@@ -146,6 +160,16 @@ for y in range(H):
             below = y + 1 < H and (walk(x, y + 1) or TER[y + 1][x] == '*') and level_at(y + 1) == lv
             if below: rb = (near_area(x, y + 1) or {}).get('name'); put((TH['wall'].get(rb) or TH['wall'].get(lv) or TH['wall']['*'])['im'], x, y)
             else: put(TH['misc']['wall_top']['im'], x, y)
+# 벽 장식(창문·액자): 벽 아래 방 기준, 간격마다. 문 옆 칸은 건너뜀
+for y in range(H):
+    if not inlevel(y): continue
+    for x in range(W):
+        if not (TER[y][x] == '#' and y + 1 < H and walk(x, y + 1) and level_at(y + 1) == level_at(y)): continue
+        a = area_at(x, y + 1)
+        if not a or a['name'] not in TH['wallart'] and a['name'].rstrip('0123456789 ') not in TH['wallart']: continue
+        step, v = TH['wallart'].get(a['name']) or TH['wallart'][a['name'].rstrip('0123456789 ')]
+        if (x - a['x0']) % step != step // 2 or any(walk(x + d, y) for d in (-1, 1)) or any(TER[y][x + d] != '#' for d in (-1, 1)): continue
+        put(v['im'], x, y + 1 - v['im'].height / T)
 # 정문: 건물 아랫줄 가운데 문
 for L_ in MAP['links']:
     if L_['name'] == '정문':

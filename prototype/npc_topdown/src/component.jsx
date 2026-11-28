@@ -221,14 +221,15 @@ function trCharSprite(c, animRef, movedRef, sel, bad, look) {
   const a = A[c.id] || (A[c.id] = { x: c.x, y: c.y, dir: 'down', step: 0, at: -1e9 });
   if (a.x !== c.x || a.y !== c.y) {
     const dx = c.x - a.x, dy = c.y - a.y;
-    a.dir = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+    a.jump = Math.abs(dx) + Math.abs(dy) > 1 ? now : a.jump || 0;   // 계단·문처럼 한 번에 건너뛴 이동은 미끄러지듯 보이지 않게
+    if (Math.abs(dx) + Math.abs(dy) <= 1) a.dir = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
     a.step++; a.at = now; a.x = c.x; a.y = c.y;
   }
   const el = now - a.at, walking = el < TR_STEP_MS;
   if (el < TR_STEP_MS + TR_FRAME_MS) movedRef.current = true;
   const { sp, row } = trSprite(c.id);
   const df = c.n ? trNpc(c.id) : { name: '나', color: '#f6dfab', symbol: '나' };
-  const pos = { transform: `translate(${c.x * TR_CELL}px,${c.y * TR_CELL}px)` };
+  const pos = { transform: `translate(${c.x * TR_CELL}px,${c.y * TR_CELL}px)`, ...(now - (a.jump || 0) < 400 ? { transition: 'none' } : null) };
   // 이름표: 옆 칸 인물과 겹치지 않게 홀수 열은 한 줄 위로 엇갈린다.
   const tag = c.n ? <div className="tr-tag" style={{ borderColor: df.color, ...(c.x % 2 ? { transform: 'translate(-50%, -15px)' } : null) }}>{trShort(c.id)}{c.n.mode === 'accompany' ? ' ★' : ''}</div> : null;
   if (c.n) { const raw = trNpcRaw(c.id); look = raw && raw.look && !(sp && row >= 0 && !bad[trUrl(sp.src)]) ? raw.look : null; } // 보행 도트 시트에 없는 인물만 조립 도트(체크인 부품)로
@@ -392,7 +393,8 @@ function trThumb(id) {
   const P = c && c.poses && c.poses.default;
   if (!P || !P.src) return { hair: n.hair || n.color || '#999' };
   const k = P.ed ? 24 / P.ed : 150 / P.w; // 눈 사이 24px 로 맞춘다
-  return { src: P.src, crop: { width: P.w * k, maxWidth: 'none', marginLeft: P.eye ? 75 - P.eye[0] * k : 75 - P.w * k / 2, marginBottom: P.eye ? 300 - (P.h - P.eye[1]) * k - 14 : 0 } };
+  const crop = { width: P.w * k, maxWidth: 'none', marginLeft: P.eye ? 75 - P.eye[0] * k : 75 - P.w * k / 2, marginBottom: P.eye ? 300 - (P.h - P.eye[1]) * k - 14 : 0 }, F = (P.faces || {})[P.def || '기본'];
+  return { src: P.src, crop, face: F ? { src: F.src, style: { position: 'absolute', left: '50%', bottom: 0, maxWidth: 'none', width: F.w * k, marginLeft: crop.marginLeft - 75 + F.x * k, marginBottom: crop.marginBottom + (P.h - F.y - F.h) * k } } : null };
 }
 // 레이어 방식 의상: 몸(P.src) 위에 얹는다. 인물별로 고른 옷(TR_WEAR) → 그림표의 wear → casual 순.
 // 방 이름으로 배경 찾기: 정확한 이름 → 끝 번호를 뗀 이름(객실 201 → 객실).
@@ -936,7 +938,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div className="tr-dr-bg" style={bg === undefined ? { background: '#120f1c' } : room(bg)} />
         {kind ? <i className={'tr-dr-prop ' + kind} style={{ left: ip[0] + '%' }} /> : null}{at && !['손', '바닥', '선반', '탁자', '순서표'].includes(at) ? <span className="tr-dr-atl" style={{ left: ip[0] + '%', top: (ip[1] + 9) + '%' }}>{at}</span> : null}
         {who === undefined ? <div className="tr-dr-ghost" style={{ left: cx + '%' }}>?</div>
-          : ch ? <div className={'tr-dr-who' + (run ? ' run' : '') + (give ? ' give' : '')} style={{ left: cx + '%' }}>{ch.src ? <img src={trUrl(ch.src)} alt="" style={ch.crop} /> : <i className="tr-dr-dot" style={{ background: ch.hair }} />}{run ? <i className="tr-dr-speed" /> : null}</div> : null}
+          : ch ? <div className={'tr-dr-who' + (run ? ' run' : '') + (give ? ' give' : '')} style={{ left: cx + '%' }}>{ch.src ? <>{<img src={trUrl(ch.src)} alt="" style={ch.crop} />}{ch.face ? <img src={trUrl(ch.face.src)} alt="" style={ch.face.style} /> : null}</> : <i className="tr-dr-dot" style={{ background: ch.hair }} />}{run ? <i className="tr-dr-speed" /> : null}</div> : null}
         {pose === undefined && who ? <b className="tr-dr-q" style={{ left: cx + '%', top: '40%' }}>?</b> : null}
         {it && ip ? <div className={'tr-dr-item' + (give && at === '손' ? ' give' : '')} style={{ left: ip[0] + '%', top: ip[1] + '%' }}>{trItemPic(it, 30)}</div> : it && at === undefined ? <b className="tr-dr-q" style={{ left: (L ? 40 : 60) + '%', top: '62%' }}>?</b> : null}
         <span className="tr-dr-tag">{L ? '전' : '후'}</span></div>; };
@@ -1365,6 +1367,28 @@ function trFloorMap(x, y, id, W0) {
         <circle cx={px} cy={py} r={k * 1.6 + 3} fill="#ff3b3b" opacity=".25" className="tr-ping" /><circle cx={px} cy={py} r={Math.max(3, k * .7)} fill="#ff3b3b" stroke="#fff" strokeWidth="1" /></svg>
       <div className={'tr-fbub' + ((TR_A.sd || {})[id] ? ' sd' : '')} style={{ left: px + 8, top: py - 54 }}>{trSd(id, 42)}</div></div></div>;
 }
+// 전체 지도: 층을 골라 보고, 내 위치(빨간 점)와 방 이름을 표시한다. 지도 그림이 있으면 그것을, 없으면 칸 색을 그린다.
+function TrWorldMap({ state }) {
+  const M = TN_WORLD.map, LV = M.levels || [], p = state.player;
+  const here = LV.findIndex(l => p.x >= l.x0 && p.x <= l.x1 && p.y >= l.y0 && p.y <= l.y1);
+  const [li, setLi] = useState(here < 0 ? 0 : here); const L = LV[li] || LV[0];
+  const cols = L.x1 - L.x0 + 1, rows = L.y1 - L.y0 + 1, W0 = 330, k = Math.min(W0 / cols, 420 / rows), img = TR_A.map;
+  const cells = [];
+  if (!img) for (let yy = L.y0; yy <= L.y1; yy++) for (let xx = L.x0; xx <= L.x1; xx++) { const wall = M.rows[yy][xx] === '#', tc = trTerrain(xx, yy); if (wall && !tc) continue; const i = TroemereiNPC.areaOf(TN_WORLD, xx, yy);
+    cells.push(<rect key={xx + '-' + yy} x={(xx - L.x0) * k} y={(yy - L.y0) * k} width={k + .3} height={k + .3} fill={wall ? tc : i >= 0 ? ((M.areas[i] || {}).color || '#3a4656') : '#4a5260'} />); }
+  const names = M.areas.filter(a => a.y0 >= L.y0 && a.y1 <= L.y1 && !/^객실 \d/.test(a.name) || (a.y0 >= L.y0 && a.y1 <= L.y1 && a.name === '객실 201'));
+  return <div style={{ display: 'grid', gap: 6, paddingTop: 4 }}>
+    <div className="tr-dbgrw">{LV.map((l, i) => <button key={l.name} className={i === li ? 'on' : ''} onClick={() => setLi(i)}>{l.name}{i === here ? ' ●' : ''}</button>)}</div>
+    <div style={{ position: 'relative', width: cols * k, height: rows * k, margin: '0 auto', borderRadius: 8, overflow: 'hidden', background: '#0f1a27' }}>
+      {img ? <div className="tr-px" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${trUrl(img.src)})`, backgroundSize: `${M.width * k}px ${M.height * k}px`, backgroundPosition: `${-L.x0 * k}px ${-L.y0 * k}px` }} />
+        : <svg width={cols * k} height={rows * k} style={{ position: 'absolute', inset: 0 }}>{cells}</svg>}
+      {(TR_A.mapOverlays || []).filter(o => !(o.unless && state.flags[o.unless]) && o.y >= L.y0 && o.y <= L.y1).map(o => <img key={o.src} className="tr-px" src={trUrl(o.src)} alt="" style={{ position: 'absolute', left: (o.x - L.x0) * k, top: (o.y - L.y0) * k, width: o.w * k, height: o.h * k }} />)}
+      {names.map(a => <span key={a.name + a.x0} className="tr-wm-name" style={{ left: ((a.x0 + a.x1 + 1) / 2 - L.x0) * k, top: ((a.y0 + a.y1 + 1) / 2 - L.y0) * k }}>{a.name === '객실 201' ? '객실' : a.name}</span>)}
+      {li === here ? <><i className="tr-wm-dot" style={{ left: (p.x - L.x0 + .5) * k, top: (p.y - L.y0 + .5) * k }} /><span className="tr-wm-me" style={{ left: (p.x - L.x0 + .5) * k, top: (p.y - L.y0 + .5) * k }}>나</span></> : null}
+    </div>
+    <div className="tr-mut">{here >= 0 ? '지금: ' + LV[here].name + ' · ' + trArea(p.x, p.y) : ''}</div>
+  </div>;
+}
 function trDevice(state, busy, onDev, pick, setPick) {
   const b = TroemereiNPC.battery(TN_WORLD, state), C = (TN_WORLD.device || {}).cost || {}; if (!b) return <div className="tr-mut">팔찌가 없다.</div>;
   const ppl = state.npcs.filter(n => !(TN_WORLD.npcs.find(s => s.id === n.id) || {}).hidden), L = state.player.lastLocate;
@@ -1383,7 +1407,7 @@ function trDevice(state, busy, onDev, pick, setPick) {
   </div>;
 }
 function trSheet({ onDev, onDbg, onGal, ev, heard, free, tab, setTab, state, debug, setDebug, busy, onSkip, onUnstuck, onTrial, onTrialAt, onRel, onLook, pick, setPick, rest, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
-  const tabs = [...(TN_WORLD.device ? [['dev', '팔찌']] : []), ['note', '수첩'], ['scene', '목격'], ['item', '증거'], ['clue', '단서'], ['rest', '휴식'], ['set', '설정']];
+  const tabs = [...(TN_WORLD.device ? [['dev', '팔찌']] : []), ...((TN_WORLD.map.levels || []).length > 1 ? [['map', '지도']] : []), ['note', '수첩'], ['scene', '목격'], ['item', '증거'], ['clue', '단서'], ['rest', '휴식'], ['set', '설정']];
   const mem = (state.player.mem || []).slice().reverse();
   return <div className="tr-sheet">
     <div className="tr-tabs">{tabs.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => { setTab(k); setPick(null); }}>{l}</button>)}<button style={{ flex: 'none', width: 34 }} onClick={() => setTab('')}>✕</button></div>
@@ -1392,6 +1416,7 @@ function trSheet({ onDev, onDbg, onGal, ev, heard, free, tab, setTab, state, deb
       {tab === 'item' ? (() => { const its = (TN_WORLD.items || []).filter(it => (state.player.items || {})[it.id] !== undefined).sort((a, b) => state.player.items[b.id] - state.player.items[a.id]);
         return its.length ? its.map(it => { const l = TN_WORLD.map.landmarks.find(x => x.id === it.at); return <div className="tr-row" key={it.id}><b>{it.name}</b> <span className="tr-mut">{Math.floor(state.player.items[it.id] / 86400) + 1}일 {trHM(state.player.items[it.id])} · {(state.player.given || {})[it.id] ? '지배인에게서 받음' : (l ? l.name : '') + '에서 발견'}</span><div className="tr-mut">{it.desc}</div></div>; }) : <div className="tr-mut">아직 찾은 증거가 없다. 물건을 눌러 「조사」하면 찾을 수 있다.</div>; })() : null}
       {tab === 'dev' ? trDevice(state, busy, onDev, pick, setPick) : null}
+      {tab === 'map' ? <TrWorldMap state={state} /> : null}
       {tab === 'rest' ? trRest({ state, busy, onSkip, ...rest }) : null}
       {tab === 'note' ? trNotebook(state, pick, setPick, debug ? onRel : null) : null}
       {tab === 'scene' ? trScenes(state, pick, setPick) : null}
@@ -1460,7 +1485,9 @@ function trPortrait(id, w, h) {
   const c = (TR_A.chars || {})[id], { sp, row } = trSprite(id), df = trNpc(id);
   const P = c && c.poses && c.poses.default;
   if (P && P.src && P.eye) { const k = w * .3 / (P.ed || P.w * .12); // 자세 그림: 눈을 기준으로 얼굴·상반신을 잘라 보인다
-    return <div style={{ width: w, height: h, overflow: 'hidden', position: 'relative', background: '#e9dcc0' }}><img src={trUrl(P.src)} alt="" style={{ position: 'absolute', left: w / 2 - P.eye[0] * k, top: h * .36 - P.eye[1] * k, width: P.w * k, height: P.h * k, maxWidth: 'none' }} /></div>; }
+    const F = (P.faces || {})[P.def || '기본'], L0 = w / 2 - P.eye[0] * k, T0 = h * .36 - P.eye[1] * k;   // 빈 얼굴 방식이면 기본 표정 조각을 덮는다
+    return <div style={{ width: w, height: h, overflow: 'hidden', position: 'relative', background: '#e9dcc0' }}><img src={trUrl(P.src)} alt="" style={{ position: 'absolute', left: L0, top: T0, width: P.w * k, height: P.h * k, maxWidth: 'none' }} />
+      {F ? <img src={trUrl(F.src)} alt="" style={{ position: 'absolute', left: L0 + F.x * k, top: T0 + F.y * k, width: F.w * k, height: F.h * k, maxWidth: 'none' }} /> : null}</div>; }
   if (c && c.src) return <div style={{ width: w, height: h, overflow: 'hidden', position: 'relative', background: '#e9dcc0' }}><img src={trUrl(c.src)} alt="" style={{ position: 'absolute', left: '50%', top: 0, width: w * 1.6, transform: 'translateX(-50%)' }} /></div>;
   if (sp && row >= 0) { const k = Math.max(1, Math.floor(Math.min(w / sp.cw, h / sp.ch))), col = (sp.dirs && sp.dirs.down) ? sp.dirs.down.idle : 0;
     return <div style={{ width: w, height: h, display: 'grid', placeItems: 'center', background: '#e9dcc0' }}><div className="tr-px" style={{ width: sp.cw * k, height: sp.ch * k, backgroundImage: `url(${trUrl(sp.src)})`, backgroundSize: `${sp.w * k}px ${sp.h * k}px`, backgroundPosition: `${-col * sp.cw * k}px ${-row * sp.ch * k}px` }} /></div>; }

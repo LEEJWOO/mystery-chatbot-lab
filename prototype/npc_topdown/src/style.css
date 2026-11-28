@@ -488,3 +488,11 @@
 .tr-dsn-opts button{height:28px;padding:0 9px;border-radius:7px;background:#1b1530;border:1px solid #c9b4ff44;color:#e6dcff;font-size:13px}
 .tr-dsn-opts button.on{background:#3a2c66;border-color:#ffd36a;color:#ffd36a}
 .tr-dsn-hint{margin-top:7px;font-size:11px;color:#9d93b8}
+
+/* 전체 지도 */
+.tr-wm-name{position:absolute;transform:translate(-50%,-50%);font-size:10px;font-weight:700;color:#fff;text-shadow:0 0 3px #000,0 0 2px #000;white-space:nowrap;pointer-events:none}
+.tr-wm-me{position:absolute;transform:translate(-50%,-160%);font-size:10px;font-weight:800;color:#fff;background:#d33;border-radius:6px;padding:0 4px;pointer-events:none}
+.tr-wm-dot{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 0 2px #fff;animation:trWmDot 1.2s ease-out infinite}
+@keyframes trWmDot{0%{box-shadow:0 0 0 2px #fff,0 0 0 2px #ff3b3b88}100%{box-shadow:0 0 0 2px #fff,0 0 0 14px #ff3b3b00}}
+/* 메뉴 탭이 많아져도 글자가 세로로 꺾이지 않게 */
+.tr-tabs button{white-space:nowrap;padding-left:2px;padding-right:2px;font-size:12px;min-width:0}
