@@ -314,10 +314,20 @@ const trNPC = (() => {
         const side=[[dy,dx],[-dy,-dx],[-dx,-dy]].map(([ax,ay])=>({x:n.x+ax,y:n.y+ay})).find(p=>walkable(w,p.x,p.y)&&!occ.has(posKey(p.x,p.y)));
         if(side){n.x=side.x;n.y=side.y;n.route=[];n.blockedSince=null;n.nextMoveAt=s.clock+(w.npcs.find(x=>x.id===n.id).stepSeconds||7);
           addLog(w,s,nm(w,s,n.id)+'이(가) '+nm(w,s,other.id)+'에게 길을 비켜 주었다.','npc',n);return;}
+        // 비킬 옆칸이 없는 좁은 문·통로: 서로 어깨를 비켜 자리를 맞바꾼다(둘 다 멈춰 서는 교착 방지)
+        const ox=other.x,oy=other.y;other.x=n.x;other.y=n.y;other.route.shift();n.x=ox;n.y=oy;n.route.shift();n.blockedSince=null;other.blockedSince=null;
+        const st=id=>w.npcs.find(x=>x.id===id).stepSeconds||7;n.nextMoveAt=s.clock+st(n.id);other.nextMoveAt=Math.max(other.nextMoveAt,s.clock+st(other.id));
+        if(hasReached(w,s,n,n.intent))arrive(w,s,n);if(hasReached(w,s,other,other.intent))arrive(w,s,other);
+        return;
       }
     }
     if(blockedByPlayer||blockedByNpc){
       if(n.blockedSince===null)n.blockedSince=s.clock;
+      // 다른 인물이 막은 채 6초(일하는 중이면 12초) 넘게 비켜 주지 않으면: 어깨를 비켜 자리를 맞바꾼다(문간 교착 방지)
+      if(blockedByNpc&&!blockedByPlayer){const o=s.npcs.find(q=>q.id!==n.id&&posKey(q.x,q.y)===blocker);
+        if(o&&o.mode!=='accompany'&&s.clock-n.blockedSince>=(o.mode==='busy'?12:6)){
+          o.x=n.x;o.y=n.y;o.route=[];n.x=next.x;n.y=next.y;n.route.shift();n.blockedSince=null;
+          n.nextMoveAt=s.clock+(w.npcs.find(x=>x.id===n.id).stepSeconds||7);if(hasReached(w,s,n,n.intent))arrive(w,s,n);return;}}
       if(s.clock-n.blockedSince>=8){
         const alternate=routeFor(w,s,n,n.intent);
         if(alternate&&alternate.length&&posKey(alternate[0].x,alternate[0].y)!==blocker){

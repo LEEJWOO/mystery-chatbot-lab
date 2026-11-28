@@ -1393,10 +1393,40 @@ const trNPC = /* @__PURE__ */ (() => {
           addLog(w, s, nm(w, s, n.id) + "\uC774(\uAC00) " + nm(w, s, other.id) + "\uC5D0\uAC8C \uAE38\uC744 \uBE44\uCF1C \uC8FC\uC5C8\uB2E4.", "npc", n);
           return;
         }
+        const ox = other.x, oy = other.y;
+        other.x = n.x;
+        other.y = n.y;
+        other.route.shift();
+        n.x = ox;
+        n.y = oy;
+        n.route.shift();
+        n.blockedSince = null;
+        other.blockedSince = null;
+        const st = (id) => w.npcs.find((x) => x.id === id).stepSeconds || 7;
+        n.nextMoveAt = s.clock + st(n.id);
+        other.nextMoveAt = Math.max(other.nextMoveAt, s.clock + st(other.id));
+        if (hasReached(w, s, n, n.intent)) arrive(w, s, n);
+        if (hasReached(w, s, other, other.intent)) arrive(w, s, other);
+        return;
       }
     }
     if (blockedByPlayer || blockedByNpc) {
       if (n.blockedSince === null) n.blockedSince = s.clock;
+      if (blockedByNpc && !blockedByPlayer) {
+        const o = s.npcs.find((q) => q.id !== n.id && posKey(q.x, q.y) === blocker);
+        if (o && o.mode !== "accompany" && s.clock - n.blockedSince >= (o.mode === "busy" ? 12 : 6)) {
+          o.x = n.x;
+          o.y = n.y;
+          o.route = [];
+          n.x = next.x;
+          n.y = next.y;
+          n.route.shift();
+          n.blockedSince = null;
+          n.nextMoveAt = s.clock + (w.npcs.find((x) => x.id === n.id).stepSeconds || 7);
+          if (hasReached(w, s, n, n.intent)) arrive(w, s, n);
+          return;
+        }
+      }
       if (s.clock - n.blockedSince >= 8) {
         const alternate = routeFor(w, s, n, n.intent);
         if (alternate && alternate.length && posKey(alternate[0].x, alternate[0].y) !== blocker) {

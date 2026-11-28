@@ -12,17 +12,17 @@
 
 # ── 바닥: floor 방이름 = 조각  (* = 기본)
 floor * = in Ilmare_Inside_A2 4 3
-floor 정원 = in Ilmare_Outside_A2 0 0
-floor 앞마당 = in Ilmare_Outside_A2 0 3
+floor 정원 = auto Ilmare_Outside_A2 8 3
+floor 앞마당 = auto Ilmare_Outside_A2 0 3
 floor 수영장 = in Ilmare_Outside_A2 10 6
 floor 탈의실 = in Ilmare_Inside_A2 0 3
 floor 해변 = in Ilmare_Outside_A2 6 0
-floor 해안 산책로 = in Ilmare_Outside_A2 0 6
+floor 해안 산책로 = auto Ilmare_Outside_A2 0 6
 floor 선착장 = in Ilmare_Outside_A2 2 0
-floor 바위 해안 = in Ilmare_Outside_A2 6 0 + in Ilmare_Outside_A2 12 3
-floor 이끼 비탈 = tile fsm_Forest01_A5 4 13
+floor 바위 해안 = auto Ilmare_Outside_A2 2 6
+floor 이끼 비탈 = in fsm_Forest01_A2 4 3
 floor 전망 바위 = in fsm_Forest01_A4 2 0
-floor 갯바위 = in World_A1 6 6
+floor 갯바위 = in fsm_Forest01_A2 6 9
 floor 화장실 = in Ilmare_Inside_A2 0 3
 floor 지배인실 = in Ilmare_Inside_A2 6 6
 floor 계단홀 = in Ilmare_Inside_A2 2 6
@@ -43,6 +43,18 @@ floor 지하 복도 = in Ilmare_Inside_A2 2 9
 floor 재판장 앞 = in Ilmare_Inside_A2 12 9
 floor 재판장 = in Ilmare_Inside_A2 12 9
 
+# ── 층 바탕(모든 땅 칸에 먼저 깜) · 덩어리 무늬 · 흩뿌림
+ground 외부 = in Ilmare_Outside_A2 6 0
+patch 바위 해안 0.25 2 7 = auto Ilmare_Outside_A2 12 3
+patch 정원 0.3 3 11 = auto Ilmare_Outside_A2 8 6
+patch 전망 바위 0.4 2 13 = auto Ilmare_Outside_A2 8 6
+dots 전망 바위 0.08 6 = tile fsm_Forest01_B 3 0
+dots 정원 0.08 3 = tile fsm_Forest01_B 3 0
+dots 정원 0.05 4 = tile fsm_Forest01_B 1 0
+dots 정원 0.03 9 = tile fsm_Forest01_B 5 0
+dots 바위 해안 0.16 2 = tile fsm_Forest01_B 4 2
+dots 갯바위 0.06 8 = tile fsm_Forest01_B 4 2
+
 # ── 지형
 terrain ~ = auto World_A1 0 3
 terrain % = auto Ilmare_Outside_A1 8 9
@@ -60,7 +72,8 @@ wall 지하 = face Ilmare_Inside_A4 0 13
 wall 기관실 = face SF_Inside_A4 8 3
 wall 재판장 = face SF_Inside_A4 0 3
 wall 재판장 앞 = face SF_Inside_A4 0 3
-wall_top = color #17121e
+wall_fill = color #17121e
+wall_top = auto Ilmare_Inside_A4 2 5
 
 # ── 조사 지점 몸체 (object 아이디 = …)
 object fountain = tile Tuscan_B 8 12 4 3 fit

@@ -70,7 +70,7 @@ def spec(s):
         else: im.alpha_composite(p, (0, im.height - p.height))
     return {'im': im, **opts}
 
-TH = {'floor': {}, 'terrain': {}, 'wall': {}, 'object': {}, 'link': {}, 'guard': {}, 'overlay': {}, 'misc': {}, 'rug': {}, 'wallart': {}}
+TH = {'floor': {}, 'terrain': {}, 'wall': {}, 'object': {}, 'link': {}, 'guard': {}, 'overlay': {}, 'misc': {}, 'rug': {}, 'wallart': {}, 'ground': {}, 'patch': {}, 'dots': {}, 'walltop': {}}
 for line in open(os.path.join(ROOT, 'maps', CH, 'theme.txt'), encoding='utf-8'):
     line = line.strip()
     if not line or line.startswith('#') or '=' not in line: continue
@@ -81,6 +81,8 @@ for line in open(os.path.join(ROOT, 'maps', CH, 'theme.txt'), encoding='utf-8'):
     v = spec(right)
     if kind == 'rug':
         t = name.split(); TH['rug'][' '.join(t[:-4])] = TH['rug'].get(' '.join(t[:-4]), []) + [(tuple(int(q) for q in t[-4:]), v)]
+    elif kind in ('patch', 'dots'):     # patch 방이름 밀도 크기 씨앗 = auto … / dots 방이름 밀도 씨앗 = tile …
+        t = name.split(); n = 3 if kind == 'patch' else 2; TH[kind].setdefault(' '.join(t[:-n]), []).append((tuple(float(q) for q in t[-n:]), v))
     elif kind == 'wallart':
         t = name.split(); TH['wallart'][' '.join(t[:-1])] = (int(t[-1]), v)    # wallart 방이름 간격 = 조각
     elif kind in TH and name: TH[kind][name.strip()] = v
@@ -107,6 +109,16 @@ def floor_im(a):
         if key in TH['floor']: return TH['floor'][key]
     return TH['floor'].get('*')
 
+def hrand(x, y, seed=0):
+    h = (x * 374761393 + y * 668265263 + int(seed) * 2246822519) & 0xffffffff
+    h = ((h ^ (h >> 13)) * 1274126177) & 0xffffffff
+    return ((h ^ (h >> 16)) & 0xffffff) / 0x1000000
+def noise(x, y, seed=0, sc=3.0):
+    """부드러운 값 잡음(0~1) — 덩어리 무늬용. sc = 덩어리 크기(칸)."""
+    fx, fy = x / sc, y / sc; ix, iy = math.floor(fx), math.floor(fy); tx, ty = fx - ix, fy - iy
+    sm = lambda t: t * t * (3 - 2 * t); tx, ty = sm(tx), sm(ty)
+    a, b, c, d = hrand(ix, iy, seed), hrand(ix + 1, iy, seed), hrand(ix, iy + 1, seed), hrand(ix + 1, iy + 1, seed)
+    return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty
 ROCKY = {'바위 해안', '갯바위', '전망 바위', '이끼 비탈'}   # 이 방에 붙은 바다 칸에는 바위를 띄엄띄엄 놓는다
 walk = lambda x, y: 0 <= x < W and 0 <= y < H and ROWS[y][x] != '#'
 img = Image.new('RGBA', (W * T, H * T), (12, 10, 18, 255))
@@ -114,14 +126,51 @@ def put(im, x, y): img.alpha_composite(im, (int(round(x * T)), int(round(y * T))
 secret = {(q['x'], q['y']) for q in MAP['secrets']}
 inlevel = lambda y: level_at(y) is not None
 
-# 1) 바닥(걷는 칸 + 가구 밑)
+# 1) 바닥(걷는 칸 + 가구 밑). 층 바탕(ground)을 먼저 깔고, auto 바닥은 다른 바닥과 만나는 곳에 가장자리를 그린다.
+land = lambda x, y: 0 <= x < W and 0 <= y < H and inlevel(y) and (walk(x, y) or TER[y][x] in '*^')
+FK = [[None] * W for _ in range(H)]
+for y in range(H):
+    for x in range(W):
+        if land(x, y): FK[y][x] = id(floor_im(near_area(x, y)))
+def floor_at(f, x, y):
+    if not f: return
+    if 'auto' in f:
+        k = FK[y][x]; put(autotile(*f['auto'], lambda dx, dy: not land(x + dx, y + dy) or FK[y + dy][x + dx] in (k, None)), x, y)
+    else: put(f['im'], x, y)
+def floor_full(f, x, y):      # 가장자리 없는 속(바다·벼랑 밑에 깔 때)
+    if not f: return
+    if 'auto' in f: put(autotile(*f['auto'], lambda dx, dy: True), x, y)
+    else: put(f['im'], x, y)
 for y in range(H):
     if not inlevel(y): continue
+    gb = TH['ground'].get(level_at(y))
     for x in range(W):
-        t = TER[y][x]
-        if walk(x, y) or t == '*' or t == '^':
-            f = floor_im(near_area(x, y))
-            if f: put(f['im'], x, y)
+        if land(x, y):
+            if gb: floor_full(gb, x, y)
+            floor_at(floor_im(near_area(x, y)), x, y)
+# 1a) 덩어리 무늬(patch): 잡음으로 고른 칸에 자동 타일 — 같은 그림이 칸마다 되풀이되지 않게
+taken = set()
+for l in MAP['landmarks']: taken |= {tuple(c) for c in (l['hit'] or [])} | {(l['x'], l['y'])}
+for pp in META['props']: taken |= {tuple(c) for c in pp['cells']}
+for L_ in MAP['links']: taken |= {tuple(L_['a']), tuple(L_['b'])}
+for a in areas:
+    key = a['name'] if a['name'] in TH['patch'] else a['name'].rstrip('0123456789 ')
+    for k, ((dens, sc, seed), v) in enumerate(TH['patch'].get(key, [])):
+        if not v or 'auto' not in v: continue
+        inp = lambda xx, yy: a['x0'] <= xx <= a['x1'] and a['y0'] <= yy <= a['y1'] and land(xx, yy) and noise(xx, yy, seed, sc) > 1 - dens
+        for yy in range(a['y0'], a['y1'] + 1):
+            for xx in range(a['x0'], a['x1'] + 1):
+                if inp(xx, yy): put(autotile(*v['auto'], lambda dx, dy, xx=xx, yy=yy: inp(xx + dx, yy + dy)), xx, yy)
+# 1c) 흩뿌림(dots): 걷는 칸에 작은 풀·꽃·자갈(막는 것처럼 보이는 건 쓰지 않는다)
+for a in areas:
+    key = a['name'] if a['name'] in TH['dots'] else a['name'].rstrip('0123456789 ')
+    for (dens, seed), v in TH['dots'].get(key, []):
+        if not v or 'im' not in v: continue
+        got = set()
+        for yy in range(a['y0'], a['y1'] + 1):
+            for xx in range(a['x0'], a['x1'] + 1):
+                if not walk(xx, yy) or (xx, yy) in taken or hrand(xx, yy, seed) >= dens or {(xx - 1, yy), (xx, yy - 1), (xx - 1, yy - 1), (xx + 1, yy - 1)} & got: continue
+                got.add((xx, yy)); put(v['im'], xx, yy)
 # 1b) 깔개(방 사각형 기준 위치·크기, 자동 타일 가장자리)
 for a in areas:
     for (dx, dy, rw, rh), v in TH['rug'].get(a['name'], []):
@@ -141,13 +190,13 @@ for y in range(H):
         if t in '~%|=' or t == '^':
             v = TH['terrain'].get(t)
             if v and 'cliff' in v:
-                nm_, bx, by = v['cliff']; f = floor_im(near_area(x, y)); put(f['im'], x, y) if f else None
+                nm_, bx, by = v['cliff']; floor_full(floor_im(near_area(x, y)), x, y)
                 low = y + 1 < H and TER[y + 1][x] not in '^|' and inlevel(y + 1)
                 if low: put(piece(['face', nm_, bx, by + 3]), x, y)
                 else: put(autotile(nm_, bx, by, lambda dx, dy, x=x, y=y: not (0 <= x + dx < W and 0 <= y + dy < H) or TER[y + dy][x + dx] in '^|'), x, y)
             elif v and 'auto' in v:
                 if t == '~':          # 바다 가장자리 밑에는 이웃 땅의 바닥을 깐다
-                    f = floor_im(near_area(x, y)); put(f['im'], x, y) if f else None
+                    floor_full(floor_im(near_area(x, y)), x, y)
                 same = lambda dx, dy, t=t, x=x, y=y: not (0 <= x + dx < W and 0 <= y + dy < H) or TER[y + dy][x + dx] == t or not inlevel(y + dy)
                 put(autotile(*v['auto'], same), x, y)
             elif v: put(v['im'], x, y)
@@ -159,7 +208,19 @@ for y in range(H):
         elif t == '#' or (x, y) in secret:
             below = y + 1 < H and (walk(x, y + 1) or TER[y + 1][x] == '*') and level_at(y + 1) == lv
             if below: rb = (near_area(x, y + 1) or {}).get('name'); put((TH['wall'].get(rb) or TH['wall'].get(lv) or TH['wall']['*'])['im'], x, y)
-            else: put(TH['misc']['wall_top']['im'], x, y)
+            else:
+                wt = TH['walltop'].get(lv) or TH['misc'].get('wall_top')
+                if wt and 'auto' in wt:
+                    istop = lambda xx, yy: not (0 <= xx < W and 0 <= yy < H) or level_at(yy) != lv or (TER[yy][xx] == '#' and not (yy + 1 < H and (walk(xx, yy + 1) or TER[yy + 1][xx] == '*') and level_at(yy + 1) == lv))
+                    put(TH['misc']['wall_fill']['im'], x, y) if TH['misc'].get('wall_fill') else None
+                    put(autotile(*wt['auto'], lambda dx, dy: istop(x + dx, y + dy)), x, y)
+                else: put(wt['im'], x, y)
+# 그림자: 벽 바로 오른쪽 바닥의 왼쪽 반(알만툴 자동 그림자처럼)
+SH = Image.new('RGBA', (T // 2, T), (0, 0, 0, 70))
+for y in range(1, H):
+    if not inlevel(y): continue
+    for x in range(1, W):
+        if (walk(x, y) or TER[y][x] == '*') and TER[y][x - 1] in '#=' and TER[y - 1][x - 1] in '#=' and level_at(y - 1) == level_at(y): put(SH, x, y)
 # 벽 장식(창문·액자): 벽 아래 방 기준, 간격마다. 문 옆 칸은 건너뜀
 for y in range(H):
     if not inlevel(y): continue
@@ -231,8 +292,7 @@ def place(v, cells):
         top = y1 + 1 - im.height / T
         for i in range(bw): put(L_ if i == 0 else R_ if i == bw - 1 else M_, x0 + i, top)
         return
-    if v.get('fit'):
-        k = bw * T / im.width; im = im.resize((bw * T, max(1, int(im.height * k))), Image.LANCZOS)
+    # fit: 늘이거나 줄이지 않는다(도트가 뭉개짐) — 원래 크기로 덩어리 가운데에
     put(im, x0 + (bw - im.width / T) / 2, y1 + 1 - im.height / T)
 
 jobs = []
