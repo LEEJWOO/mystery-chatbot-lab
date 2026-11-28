@@ -518,6 +518,9 @@ test('1장 물때·사다리: 갯바위는 썰물 때만, 밧줄 사다리는 �
   assert.ok(E.lineOfSight(w, L('bench'), L('slope_foot')), '벤치에서 비탈 입구가 보여야 함');
   assert.ok(!E.lineOfSight(w, L('bench'), foot) && !E.lineOfSight(w, L('bench'), cr), '벤치에서 바다 쪽 바위벽·바위틈은 안 보여야 함');
   assert.ok(E.lineOfSight(w, L('rock_edge'), cr), '바위 끝에서 바위틈이 내려다보여야 함');
+  { const T = w.map.areas.findIndex(a => a.name === '갯바위'), b = L('bench');
+    for (let y = 0; y < w.map.rows.length; y++) for (let x = 0; x < w.map.rows[0].length; x++) if (E.areaOf(w, x, y) === T) assert.ok(!E.lineOfSight(w, b, { x, y }), '벤치에서 갯바위(' + x + ',' + y + ')가 보이면 안 됨(능선)');
+    assert.ok(!E.lineOfSight(w, b, L('shore_ledge')), '벤치에서 물가 바위턱(팔찌 떨어진 자리)이 보이면 안 됨'); }
   for (const nm of ['바위 해안', '해안 산책로', '해변', '이끼 비탈', '앞마당']) { const a = w.map.areas.find(x => x.name === nm);
     for (let y = a.y0; y <= a.y1; y++) for (let x = a.x0; x <= a.x1; x++) if (w.map.rows[y][x] !== '#') assert.ok(!E.lineOfSight(w, { x, y }, cr) && !E.lineOfSight(w, { x, y }, foot), nm + ' ' + x + ',' + y + '에서 바위틈·바위벽 밑이 보이면 안 됨'); }
 });
