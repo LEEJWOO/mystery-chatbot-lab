@@ -305,6 +305,7 @@ function trCond(st, c, who) {
   if (c.talked && (p.talked || {})[c.talked] === undefined) return false;
   if (c.seen && !(p.seen || {})[c.seen]) return false;
   if (c.fact && !(p.mem || []).some(m => m[0] === c.fact)) return false;
+  if (c.heard && !(p.mem || []).some(m => m[0] === c.heard && m[1] >= 2)) return false; // 누군가에게 직접 들은 기억(증언)
   if (c.scene && (p.scenes || {})[c.scene] === undefined) return false;
   if (c.item && (p.items || {})[c.item] === undefined) return false;
   if (c.flag && !st.flags[c.flag]) return false;
@@ -915,14 +916,15 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const g = tv.g || {}, me = state.player.look ? state.player.look.name : '나', ans = [].concat(ph.answer);
     const rows = ph.logs.map((L, i) => ({ ...L, i })).sort((a, b) => a.t.localeCompare(b.t));
     const icon = { 교체: '🔋', 사진: '📷', 통화: '📞', 조회: '📍', 해제: '⚠' };
-    const submit = () => { if (g.sel === undefined || tv.fx) return; if (ans.includes(g.sel)) trialRight(ph.okLabel || '이 기록이다', 1300); else { setTv(v => ({ ...v, g: { ...v.g, bad: (v.g.bad || 0) + 1, sel: undefined, miss: true } })); trialWrong(); } };
+    const submit = () => { if (g.sel === undefined || tv.fx) return; if (ans.includes(g.sel)) trialRight(ph.okLabel || '이 기록이다', 1300); else { setTv(v => ({ ...v, g: { ...v.g, bad: (v.g.bad || 0) + 1, sel: undefined, miss: true, last: v.g.sel } })); trialWrong(); } };
     const c = ph.claim && (ph.claim.who === 'me' ? { name: me, color: '#3a6a8a' } : trNpc(ph.claim.who));
     return <div className="tr-debate tr-logs">
       <div className="tr-dv-head"><b>{ph.title || '팔찌 기록 대조'}</b><span>{ph.guide || '주장과 어긋나는 기록 한 줄을 찍는다'}</span></div>
       {ph.claim ? <div className="tr-chs-say">{ph.claim.who !== 'me' ? <div className="tr-tpor sm">{trPortrait(ph.claim.who, 44, 54)}</div> : null}<div><b style={{ color: c.color }}>{c.name}</b><div className="tr-ttext">「{ph.claim.text}」</div></div></div> : null}
       <div className="tr-log-list">{rows.map(L => <button key={L.i} className={'tr-log' + (g.sel === L.i ? ' on' : '')} onClick={() => setTv(v => ({ ...v, g: { ...v.g, sel: L.i, miss: false } }))}>
         <span className="tr-log-t">{L.t}</span><span className="tr-log-who" style={{ color: trNpc(L.who).color }}>{trShort(L.who)}</span><span className="tr-log-k" title={L.kind}>{icon[L.kind] || '·'}</span><span className="tr-log-x">{L.text}</span></button>)}</div>
-      {g.miss && ph.miss ? <div className="tr-chs-miss" key={g.bad}><div className="tr-chs-say"><div><b style={{ color: trNpc(ph.miss.who).color }}>{trNpc(ph.miss.who).name}</b><div className="tr-ttext">{ph.miss.text}</div></div></div></div> : null}
+      {(() => { const M = g.miss && ((ph.missAt || {})[g.last] || ph.miss); if (!M) return null; const P = M.who === 'me' ? { name: me, color: '#3a6a8a' } : trNpc(M.who);
+        return <div className="tr-chs-miss" key={g.bad}><div className="tr-chs-say"><div><b style={{ color: P.color }}>{P.name}</b><div className="tr-ttext">{M.text}</div></div></div></div>; })()}
       <button className="tr-tbtn gold" disabled={g.sel === undefined || !!tv.fx} onClick={submit}>이 기록과 어긋난다</button>
     </div>;
   }
@@ -1047,7 +1049,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         const g2 = boot.tres === 'hit' && P0 && P0.type === 'rebut' && P0.lines && P0.lines.length ? { rb: 2, mono: trMono(state, P0, 'rb') } : {};
         setTv(v => ({ ...v, reply: false, ...resetTv, g: g2, fx: boot.tres || '', fly: flyGo(fl) })); if (boot.tres === 'hit' || boot.tres === 'ok') setTimeout(() => setTv(v => ({ ...v, fx: v.fx === boot.tres ? '' : v.fx })), 1000); };
     } else if (ph.type === 'talk') {
-      const all = ph.lines.filter(x => !(x.here && x.who && !trHere(state, x.who))).map(x => trLineOf(state, x)); total = all.length; cur = all[Math.min(tv.idx, total - 1)]; onEnd = trialNext;
+      const all = ph.lines.filter(x => !(x.here && x.who && !trHere(state, x.who)) && trCond(state, x.if, x.who)).map(x => trLineOf(state, x)); total = all.length; cur = all[Math.min(tv.idx, total - 1)]; onEnd = trialNext;
     }
     const segs = cur ? trSegs(cur.text) : [], len = segs.reduce((n, g) => n + Array.from(g.t).length, 0), done = tv.shown >= len;
     typeRef.current = cur && !sent ? { len, ms: Math.round(30 / (cur.speed || 1)) } : null;

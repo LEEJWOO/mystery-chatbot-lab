@@ -3005,6 +3005,7 @@ function trCond(st, c, who) {
   if (c.talked && (p.talked || {})[c.talked] === void 0) return false;
   if (c.seen && !(p.seen || {})[c.seen]) return false;
   if (c.fact && !(p.mem || []).some((m) => m[0] === c.fact)) return false;
+  if (c.heard && !(p.mem || []).some((m) => m[0] === c.heard && m[1] >= 2)) return false;
   if (c.scene && (p.scenes || {})[c.scene] === void 0) return false;
   if (c.item && (p.items || {})[c.item] === void 0) return false;
   if (c.flag && !st.flags[c.flag]) return false;
@@ -3896,12 +3897,17 @@ function Troemerei({ s = "", t = "", d = "", e = "", k = "", f = "", r = "" }) {
       if (g.sel === void 0 || tv.fx) return;
       if (ans.includes(g.sel)) trialRight(ph.okLabel || "\uC774 \uAE30\uB85D\uC774\uB2E4", 1300);
       else {
-        setTv((v) => ({ ...v, g: { ...v.g, bad: (v.g.bad || 0) + 1, sel: void 0, miss: true } }));
+        setTv((v) => ({ ...v, g: { ...v.g, bad: (v.g.bad || 0) + 1, sel: void 0, miss: true, last: v.g.sel } }));
         trialWrong();
       }
     };
     const c = ph.claim && (ph.claim.who === "me" ? { name: me, color: "#3a6a8a" } : trNpc(ph.claim.who));
-    return /* @__PURE__ */ React.createElement("div", { className: "tr-debate tr-logs" }, /* @__PURE__ */ React.createElement("div", { className: "tr-dv-head" }, /* @__PURE__ */ React.createElement("b", null, ph.title || "\uD314\uCC0C \uAE30\uB85D \uB300\uC870"), /* @__PURE__ */ React.createElement("span", null, ph.guide || "\uC8FC\uC7A5\uACFC \uC5B4\uAE0B\uB098\uB294 \uAE30\uB85D \uD55C \uC904\uC744 \uCC0D\uB294\uB2E4")), ph.claim ? /* @__PURE__ */ React.createElement("div", { className: "tr-chs-say" }, ph.claim.who !== "me" ? /* @__PURE__ */ React.createElement("div", { className: "tr-tpor sm" }, trPortrait(ph.claim.who, 44, 54)) : null, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", { style: { color: c.color } }, c.name), /* @__PURE__ */ React.createElement("div", { className: "tr-ttext" }, "\u300C", ph.claim.text, "\u300D"))) : null, /* @__PURE__ */ React.createElement("div", { className: "tr-log-list" }, rows.map((L) => /* @__PURE__ */ React.createElement("button", { key: L.i, className: "tr-log" + (g.sel === L.i ? " on" : ""), onClick: () => setTv((v) => ({ ...v, g: { ...v.g, sel: L.i, miss: false } })) }, /* @__PURE__ */ React.createElement("span", { className: "tr-log-t" }, L.t), /* @__PURE__ */ React.createElement("span", { className: "tr-log-who", style: { color: trNpc(L.who).color } }, trShort(L.who)), /* @__PURE__ */ React.createElement("span", { className: "tr-log-k", title: L.kind }, icon[L.kind] || "\xB7"), /* @__PURE__ */ React.createElement("span", { className: "tr-log-x" }, L.text)))), g.miss && ph.miss ? /* @__PURE__ */ React.createElement("div", { className: "tr-chs-miss", key: g.bad }, /* @__PURE__ */ React.createElement("div", { className: "tr-chs-say" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", { style: { color: trNpc(ph.miss.who).color } }, trNpc(ph.miss.who).name), /* @__PURE__ */ React.createElement("div", { className: "tr-ttext" }, ph.miss.text)))) : null, /* @__PURE__ */ React.createElement("button", { className: "tr-tbtn gold", disabled: g.sel === void 0 || !!tv.fx, onClick: submit }, "\uC774 \uAE30\uB85D\uACFC \uC5B4\uAE0B\uB09C\uB2E4"));
+    return /* @__PURE__ */ React.createElement("div", { className: "tr-debate tr-logs" }, /* @__PURE__ */ React.createElement("div", { className: "tr-dv-head" }, /* @__PURE__ */ React.createElement("b", null, ph.title || "\uD314\uCC0C \uAE30\uB85D \uB300\uC870"), /* @__PURE__ */ React.createElement("span", null, ph.guide || "\uC8FC\uC7A5\uACFC \uC5B4\uAE0B\uB098\uB294 \uAE30\uB85D \uD55C \uC904\uC744 \uCC0D\uB294\uB2E4")), ph.claim ? /* @__PURE__ */ React.createElement("div", { className: "tr-chs-say" }, ph.claim.who !== "me" ? /* @__PURE__ */ React.createElement("div", { className: "tr-tpor sm" }, trPortrait(ph.claim.who, 44, 54)) : null, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", { style: { color: c.color } }, c.name), /* @__PURE__ */ React.createElement("div", { className: "tr-ttext" }, "\u300C", ph.claim.text, "\u300D"))) : null, /* @__PURE__ */ React.createElement("div", { className: "tr-log-list" }, rows.map((L) => /* @__PURE__ */ React.createElement("button", { key: L.i, className: "tr-log" + (g.sel === L.i ? " on" : ""), onClick: () => setTv((v) => ({ ...v, g: { ...v.g, sel: L.i, miss: false } })) }, /* @__PURE__ */ React.createElement("span", { className: "tr-log-t" }, L.t), /* @__PURE__ */ React.createElement("span", { className: "tr-log-who", style: { color: trNpc(L.who).color } }, trShort(L.who)), /* @__PURE__ */ React.createElement("span", { className: "tr-log-k", title: L.kind }, icon[L.kind] || "\xB7"), /* @__PURE__ */ React.createElement("span", { className: "tr-log-x" }, L.text)))), (() => {
+      const M = g.miss && ((ph.missAt || {})[g.last] || ph.miss);
+      if (!M) return null;
+      const P = M.who === "me" ? { name: me, color: "#3a6a8a" } : trNpc(M.who);
+      return /* @__PURE__ */ React.createElement("div", { className: "tr-chs-miss", key: g.bad }, /* @__PURE__ */ React.createElement("div", { className: "tr-chs-say" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", { style: { color: P.color } }, P.name), /* @__PURE__ */ React.createElement("div", { className: "tr-ttext" }, M.text))));
+    })(), /* @__PURE__ */ React.createElement("button", { className: "tr-tbtn gold", disabled: g.sel === void 0 || !!tv.fx, onClick: submit }, "\uC774 \uAE30\uB85D\uACFC \uC5B4\uAE0B\uB09C\uB2E4"));
   }
   function trTable(ph) {
     const g = tv.g || {}, val = g.val || {}, sel = g.cell, bad = g.bad || {};
@@ -4030,7 +4036,7 @@ function Troemerei({ s = "", t = "", d = "", e = "", k = "", f = "", r = "" }) {
         if (boot.tres === "hit" || boot.tres === "ok") setTimeout(() => setTv((v) => ({ ...v, fx: v.fx === boot.tres ? "" : v.fx })), 1e3);
       };
     } else if (ph.type === "talk") {
-      const all = ph.lines.filter((x) => !(x.here && x.who && !trHere(state, x.who))).map((x) => trLineOf(state, x));
+      const all = ph.lines.filter((x) => !(x.here && x.who && !trHere(state, x.who)) && trCond(state, x.if, x.who)).map((x) => trLineOf(state, x));
       total = all.length;
       cur = all[Math.min(tv.idx, total - 1)];
       onEnd = trialNext;
