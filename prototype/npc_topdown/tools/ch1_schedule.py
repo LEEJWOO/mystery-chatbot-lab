@@ -127,13 +127,19 @@ CASE = {'id': 'J1', 'flag': 'justin_dead', 'spot': 'rock_edge',   # 바위 끝�
         'notice': '전망 바위 끝에서 손전등으로 내려다보던 수색대가 바위틈의 저스틴을 발견했다.',
         'task': {'id': 'gather_J1', 'kind': 'visit', 'area': '전망 바위', 'durationSeconds': 1800, 'priority': 300, 'weight': 1, 'interruptible': False, 'once': True}}
 
-CASE_TRIAL = {'id': 'case_j1', 'code': 'J1', 'kind': 'case', 'title': '(임시) 바위틈의 저스틴', 'stage': '전망 바위', 'hp': 5, 'evidence': [], 'issues': [], 'then': [{'code': 'X1'}],
+CASE_TRIAL = {'id': 'case_j1', 'code': 'J1', 'kind': 'case', 'title': '바위틈의 저스틴', 'stage': '전망 바위', 'hp': 5, 'evidence': [], 'issues': [], 'then': [{'code': 'K1'}],
               'phases': [{'type': 'talk', 'lines': [
-                  {'who': 'host', 'text': '(임시 대본) 손님 여러분, 시신이 발견되었습니다. 지금부터 조사 시간입니다.', 'fx': 'flash'},
-                  {'who': 'host', 'text': '(임시 대본) 23시에 지하 재판장을 열겠습니다.', 'speed': 0.8}]},
-                  {'type': 'investigate', 'grant': [], 'declare': True, 'afterFound': 150},
-                  {'type': 'talk', 'lines': [{'who': 'host', 'text': '(임시 대본) 시간이 되었습니다. 재판장으로 모여 주십시오.', 'fx': 'flash', 'speed': 0.8}]}]}
-
+                  {'who': 'varun', 'text': '(초안) 비켜. 내가 내려간다— ……밀물이다. 이미 늦었어.', 'face': '절망', 'here': True},
+                  {'who': 'ruoxi', 'text': '(초안) 맥이 없습니다. 체온도 낮습니다. 물에 잠긴 지 꽤 됐어요.', 'face': '진지', 'here': True},
+                  {'who': 'suzune', 'text': '(초안) 저스틴 씨……? 저스틴 씨!', 'face': '충격', 'here': True},
+                  {'who': 'killian', 'text': '(초안) 스즈네 씨, 너무 가까이 가지 마세요. 바위 끝이에요.', 'face': '곤란', 'here': True},
+                  {'who': 'host', 'text': '손님 여러분. [[저스틴 트루먼 님]]의 시신이 발견되었습니다.', 'fx': 'flash',
+                   'alt': [{'if': {'not': {'allHere': True}}, 'text': '모이신 분들부터 말씀드리지요. [[저스틴 트루먼 님]]의 시신이 발견되었습니다.'}]},
+                  {'who': 'host', 'text': '지금부터 조사 시간입니다. 23시에 지하 재판장을 열겠습니다. 그 전에 준비가 끝나셨다면 말씀해 주십시오.', 'speed': 0.85},
+                  {'who': 'seoha', 'text': '(초안) ……23시. 그쪽, 같이 볼 거면 서둘러.', 'face': '진지', 'here': True},
+              ]},
+                  {'type': 'investigate', 'grant': [], 'declare': True, 'until': '22:55'},
+                  {'type': 'talk', 'lines': [{'who': 'host', 'text': '시간이 되었습니다. 손님 여러분, 지하 재판장으로 모여 주십시오.', 'fx': 'flash', 'speed': 0.8}]}]}
 
 # 사실(누가 무엇을 겪었나/보았나) — 대화 AI에게 넘기는 인물의 기억. self = 직접 겪은 사람의 말, seen = 옆에서 본 사람, player = 플레이어가 보았을 때.
 FACTS = [
