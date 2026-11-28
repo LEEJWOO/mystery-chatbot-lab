@@ -23,6 +23,11 @@ const trMemCode = (id, role) => TroemereiNPC.factCode(TN_WORLD, id) + (role === 
 // 공지(매일 반복) 중 (from, to] 사이의 것들. [{t: 절대 시각, n: 공지}]
 const trNotices = (from, to) => { const out = []; for (let d = Math.floor(from / 86400); d <= Math.floor(to / 86400); d++) for (const n of TN_WORLD.notices || []) { const t = d * 86400 + TroemereiNPC.absTime(n.time); if (t > from && t <= to) out.push({ t, n }); } return out.sort((a, b) => a.t - b.t); };
 // 받침에 따라 조사 고르기(이/가, 을/를)
+// 받침: 0 없음 · 1 있음 · 2 ㄹ받침. 숫자는 읽는 소리로(0영 1일 3삼 6육 7칠 8팔).
+const trBat = w => { const s = String(w), ch = s[s.length - 1] || '', c = ch.charCodeAt(0) - 0xac00; if (c >= 0 && c < 11172) return c % 28 ? (c % 28 === 8 ? 2 : 1) : 0; return '013678'.includes(ch) && ch ? ('178'.includes(ch) ? 2 : 1) : 0; };
+// 문장형 조사: 대본에는 '가·을·와·은·로'로 적고, 고른 말의 받침에 맞춰 바꾼다. 아직 안 고른 칸은 (이)가 꼴.
+const trJ = (w, p) => { if (w === undefined || w === null) return ({ 가: '(이)가', 을: '(을)를', 와: '(와)과', 은: '(은)는', 로: '(으)로' })[p] ?? p; const b = trBat(w);
+  return p === '가' ? (b ? '이' : '가') : p === '을' ? (b ? '을' : '를') : p === '와' ? (b ? '과' : '와') : p === '은' ? (b ? '은' : '는') : p === '로' ? (b === 1 ? '으로' : '로') : p; };
 const trJosa = (w, a, b) => { const c = String(w).charCodeAt(String(w).length - 1) - 0xac00; return w + (c >= 0 && c < 11172 && c % 28 ? a : b); };
 const trVisible = (s, n) => TroemereiNPC.sees(TN_WORLD, s.player, n);
 const trChars = lines => lines.reduce((k, l) => k + Array.from(l.text).length, 0);
@@ -774,7 +779,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const msg = trText.trim(); if (!msg || busy) return;
     const it = (TN_WORLD.items || []).find(x => x.id === tv.ev), npc = trNpc(ph.npc), TR = TN_WORLD.trials[state.trial.i];
     const next = { ...TroemereiNPC.clone(state), pend: ph.npc, pk: 'R', pc: Array.from(msg).length };
-    const ctx = [meLine(next), '재판: ' + TR.title + ' · 반론 상대 ' + npc.name, trRelLine(next, ph.npc) ? npc.name + ' → 플레이어: ' + trRelLine(next, ph.npc) : '', npc.name + '의 주장: ' + ph.claim, '제시한 증거: ' + (it ? it.name + '(' + it.desc + ')' : '없음'), settledLine(next), clueLine(next), evidLine(next)];
+    const ctx = [meLine(next), '재판: ' + TR.title + ' · 반론 상대 ' + npc.name, trRelLine(next, ph.npc) ? npc.name + ' → 플레이어: ' + trRelLine(next, ph.npc) : '', npc.name + '의 주장: ' + (ph.claim || (ph.lines || []).map(L => String(L.text).replace(/[{}]/g, '')).join(' ')), ph.goal ? '판정 기준(플레이어에게 비공개): ' + ph.goal : '', '제시한 증거: ' + (it ? it.name + '(' + it.desc + ')' : '없음'), settledLine(next), clueLine(next), evidLine(next)];
     const message = TroemereiTalk.handoff({ kind: 'R', target: npc.name, where: '재판장', time: next.day + '일 ' + trHM(next.clock), marks: TroemereiNPC.markers(TN_WORLD, next), ctx, text: msg, code: TroemereiCodec.pack(TN_WORLD, next) });
     if (typeof sendMessage !== 'function') { setManual(message); return; }
     try { const r = sendMessage(message); setSent(message); setTrText(''); if (r && typeof r.then === 'function') r.then(v => { if (v === false) setSent(''); }, () => { setSent(''); setToast('전송 실패 · 다시 보내 주세요'); }); }
@@ -885,25 +890,49 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   }
   // ---------- 꿈 조각 잇기: 사선으로 나뉜 '전 → 후' 두 장면. 「?」 칸만 바꿀 수 있다 ----------
   // 장면 = { bg, who, pose, obj, at }. rounds[i].ask = [['a'|'b', 칸], ...]
+  // 문장형 편집: 왼쪽 전/후 탭 + 칸·조사로 된 문장. 「?」 칸을 누르면 아래에 고를 말이 뜬다.
+  // 조각마다 칸 순서를 R.sa / R.sb = [[칸, 조사], ...] 로 정할 수 있다(없으면 기본 순서).
+  function trDreamSentence(ph, R, ri, pick, ask, OPT, NAME, label, dtab) {
+    const g = tv.g || {}, DEF = { a: [['who', '가'], ['time', '에'], ['at', '의'], ['obj', '을'], ['to', '에게'], ['act', '']], b: [['who', '가'], ['obj', '을'], ['at', '에'], ['to', '에게'], ['act', '']] };
+    const setPick = (k, x) => { const nx = { ...pick, [k]: x }, next = ask.find(a => a.startsWith(dtab + '.') && nx[a] === undefined) || '';
+      setTv(v => ({ ...v, g: { ...v.g, bad: 0, ds: next, r: { ...(v.g.r || {}), [ri]: nx } } })); };
+    const sentence = side => (R['s' + side] || DEF[side]).filter(([f]) => ask.includes(side + '.' + f) || (R[side][f] !== undefined && R[side][f] !== '')).map(([f, p]) => {
+      const k = side + '.' + f, q = ask.includes(k), x = q ? pick[k] : R[side][f], word = x === undefined ? '?' : label(f, x);
+      const hand = f === 'at' && x === '손' && p === '의', josa = hand ? '에 든' : x === '' ? '' : p ? trJ(x === undefined ? undefined : word, p) : '';
+      return <span key={k} className="tr-dsn-w">{q ? <button className={'tr-dsn-c' + (x === undefined ? ' empty' : '') + (g.ds === k ? ' sel' : '')} onClick={() => setTv(v => ({ ...v, g: { ...v.g, dt: side, dti: ri, ds: v.g.ds === k ? '' : k } }))}>{word}</button>
+        : <b className="tr-dsn-f">{word}</b>}{josa ? <i>{josa}</i> : null}</span>; });
+    const sel = g.ds && g.ds.startsWith(dtab + '.') ? g.ds : '', f = sel ? sel.split('.')[1] : '';
+    const left = s2 => ask.filter(a => a.startsWith(s2 + '.') && pick[a] === undefined).length;
+    return <div className="tr-dsn">
+      <div className="tr-dsn-tabs">{['a', 'b'].map(s2 => <button key={s2} className={dtab === s2 ? 'on' : ''} onClick={() => setTv(v => ({ ...v, g: { ...v.g, dt: s2, dti: ri, ds: '' } }))}>{s2 === 'a' ? '전' : '후'}{left(s2) ? <i>{left(s2)}</i> : null}</button>)}</div>
+      <div className="tr-dsn-body"><div className="tr-dsn-line">{sentence(dtab)}<span className="tr-dsn-end">.</span></div>
+        {sel ? <div className="tr-dsn-opts"><span>{NAME[f]}</span>{OPT[f].map(o => <button key={String(o)} className={pick[sel] === o ? 'on' : ''} onClick={() => setPick(sel, o)}>{label(f, o)}</button>)}</div>
+          : <div className="tr-dsn-hint">{left(dtab) ? '점선 칸을 눌러 말을 고른다' : left(dtab === 'a' ? 'b' : 'a') ? (dtab === 'a' ? '「후」' : '「전」') + ' 탭에도 빈칸이 있다' : '두 문장이 모두 채워졌다'}</div>}</div>
+    </div>;
+  }
   function trDream(ph) {
     const g = tv.g || {}, ri = Math.min(state.trial.sub || 0, ph.rounds.length - 1), R = ph.rounds[ri], pick = (g.r || {})[ri] || {};
-    const OPT = { who: [...(ph.cast || []), ''], pose: ['서 있음', '달림', '건넴'], at: ph.ats || ['손', '바닥', '선반', '탁자', '순서표'], bg: ph.rooms || ['자료실', '작업실', '정원', '광장'], obj: [...(ph.objs || []), ''] };
-    const NAME = { who: '누가', pose: '자세', at: '물건 자리', bg: '장소', obj: '물건' }, ask = R.ask.map(([side, f]) => side + '.' + f);
+    const SF = ph.form === 'sentence', times = ph.times || [...new Set(ph.rounds.flatMap(r => [r.a.time, r.b.time]).filter(Boolean))].sort();
+    const OPT = { who: [...(ph.cast || []), ''], to: [...(ph.cast || [])], time: times, act: ph.acts || ['꺼냈다', '쥐었다', '건넸다', '숨겼다', '내려놓았다', '달려갔다'], pose: ['서 있음', '달림', '건넴'], at: ph.ats || ['손', '바닥', '선반', '탁자', '순서표'], bg: ph.rooms || ['자료실', '작업실', '정원', '광장'], obj: [...(ph.objs || []), ''] };
+    const NAME = { who: '인물', pose: '자세', at: SF ? '위치' : '물건 자리', bg: '장소', obj: '물건', time: '시간', to: '상대', act: '동작' }, ask = R.ask.map(([side, f]) => side + '.' + f);
     const val = (side, f) => ask.includes(side + '.' + f) ? pick[side + '.' + f] : R[side][f];
     const cyc = (side, f, d) => { const k = side + '.' + f, o = OPT[f], cur = pick[k], n = cur === undefined ? (d > 0 ? 0 : o.length - 1) : (o.indexOf(cur) + d + o.length) % o.length;
       setTv(v => ({ ...v, g: { ...v.g, bad: 0, r: { ...(v.g.r || {}), [ri]: { ...pick, [k]: o[n] } } } })); };
-    const label = (f, x) => x === undefined ? '?' : f === 'who' ? (x ? trNpc(x).name : '아무도 없음') : f === 'obj' ? (x ? (trItem(x) || {}).name || x : '없음') : x;
+    const label = (f, x) => x === undefined ? '?' : f === 'who' || f === 'to' ? (x ? trNpc(x).name : '아무도 없음') : f === 'obj' ? (x ? (trItem(x) || {}).name || x : '없음') : x;
     const room = name => { const b = trBgOf(name); if (b) return { backgroundImage: `url(${trUrl(b)})`, backgroundSize: 'cover', backgroundPosition: 'center' };
       const A = (TN_WORLD.map.areas || []).find(x => x.name === name), M = TR_A.map; if (!A || !M) return { background: '#1a1626' };
       const w = (A.x1 - A.x0 + 1) * TR_CELL, k = 230 / w; // 그 방 부분만 확대
       return { backgroundImage: `url(${trUrl(M.src)})`, backgroundSize: `${M.w * k}px ${M.h * k}px`, backgroundPosition: `${-A.x0 * TR_CELL * k}px ${-A.y0 * TR_CELL * k + 20}px` }; };
-    const scene = side => { const bg = val(side, 'bg'), who = val(side, 'who'), pose = val(side, 'pose'), obj = val(side, 'obj'), at = val(side, 'at'), L = side === 'a', cx = L ? 26 : 74;
+    const dtab = g.dti === ri ? g.dt || 'a' : 'a';
+    const ACTPOSE = { 건넸다: '건넴', 달려갔다: '달림', 달아났다: '달림' };
+    const poseOf = side => { if (!SF) return val(side, 'pose'); const a = val(side, 'act'); return a === undefined && ask.includes(side + '.act') ? undefined : ACTPOSE[a] || R[side].pose || '서 있음'; };
+    const scene = side => { const bg = val(side, 'bg'), who = val(side, 'who'), pose = poseOf(side), obj = val(side, 'obj'), at = val(side, 'at'), L = side === 'a', cx = L ? 26 : 74;
       const ch = who ? trThumb(who) : null, it = obj ? trItem(obj) : null, run = pose === '달림', give = pose === '건넴';
       // 물건 자리: 기본 다섯 곳 + 대본이 정한 자리(ph.atProp = {자리: 'shelf'|'desk'|'board'} 로 받침 모양을 고른다)
       const AP = ph.atProp || {}, kind = at === '선반' ? 'shelf' : at === '탁자' ? 'desk' : at === '순서표' ? 'board' : AP[at];
       const atPos = { 손: [cx + (L ? 9 : -9), 52], 바닥: [cx + (L ? 12 : -12), 84], shelf: [L ? 10 : 90, 26], desk: [cx + (L ? 14 : -14), 66], board: [L ? 16 : 82, 25] };
       const ip = !at ? null : atPos[at] || atPos[kind] || atPos.desk;
-      return <div className={'tr-dr-pane ' + (L ? 'a' : 'b')}>
+      return <div className={'tr-dr-pane ' + (L ? 'a' : 'b') + (SF && dtab === side ? ' on' : '')} onClick={SF ? () => setTv(v => ({ ...v, g: { ...v.g, dt: side, dti: ri, ds: '' } })) : undefined}>
         <div className="tr-dr-bg" style={bg === undefined ? { background: '#120f1c' } : room(bg)} />
         {kind ? <i className={'tr-dr-prop ' + kind} style={{ left: ip[0] + '%' }} /> : null}{at && !['손', '바닥', '선반', '탁자', '순서표'].includes(at) ? <span className="tr-dr-atl" style={{ left: ip[0] + '%', top: (ip[1] + 9) + '%' }}>{at}</span> : null}
         {who === undefined ? <div className="tr-dr-ghost" style={{ left: cx + '%' }}>?</div>
@@ -918,8 +947,8 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     return <div className="tr-debate">
       <div className="tr-dv-head"><b>{ph.title} · 조각 {ri + 1}/{ph.rounds.length}</b><span>{R.cap || ph.guide}</span></div>
       <div className={'tr-dr' + (g.bad ? ' bad' : '')} key={ri + '.' + (g.bad || 0)}>{scene('a')}{scene('b')}<svg className="tr-dr-cut" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="58" y1="0" x2="42" y2="100" /></svg><i className="tr-dr-arrow">▶</i></div>
-      <div className="tr-dr-ctl">{R.ask.map(([side, f]) => { const k = side + '.' + f; return <div key={k} className={'tr-dr-row' + (pick[k] === undefined ? ' empty' : '')}>
-        <span>{side === 'a' ? '전' : '후'} · {NAME[f]}</span><button onClick={() => cyc(side, f, -1)}>‹</button><b>{label(f, pick[k])}</b><button onClick={() => cyc(side, f, 1)}>›</button></div>; })}</div>
+      {SF ? trDreamSentence(ph, R, ri, pick, ask, OPT, NAME, label, dtab) : <div className="tr-dr-ctl">{R.ask.map(([side, f]) => { const k = side + '.' + f; return <div key={k} className={'tr-dr-row' + (pick[k] === undefined ? ' empty' : '')}>
+        <span>{side === 'a' ? '전' : '후'} · {NAME[f]}</span><button onClick={() => cyc(side, f, -1)}>‹</button><b>{label(f, pick[k])}</b><button onClick={() => cyc(side, f, 1)}>›</button></div>; })}</div>}
       <button className="tr-tbtn gold" disabled={!done || !!tv.fx} onClick={submit}>{done ? '이 흐름으로 이어 붙인다' : '「?」를 모두 채운다'}</button>
     </div>;
   }

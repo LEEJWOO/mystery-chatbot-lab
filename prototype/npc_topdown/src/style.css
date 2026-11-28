@@ -466,3 +466,25 @@
 .tr-guard-sil .tr-host-sil,.tr-hosttok .tr-host-sil{position:static;inset:auto;left:auto;top:auto;bottom:auto;transform:none;width:100%;height:100%;max-width:none;filter:none}
 .tr-fbub.sd{background:#fff;border-radius:50%;padding:2px}.tr-fbub.sd:after{left:12px}
 .tr-batwarn{position:absolute;left:8px;right:8px;top:60px;z-index:6;background:#4a1010ee;color:#ffd9d2;border:1px solid #ff5a4a;border-radius:8px;font-size:12px;padding:6px 8px;text-align:left;animation:trBlink 1s ease-in-out infinite alternate;cursor:pointer}@keyframes trBlink{from{box-shadow:0 0 0 #ff5a4a00}to{box-shadow:0 0 12px #ff5a4aaa}}
+
+/* 꿈 조각 문장형 */
+.tr-dr-pane.on{box-shadow:inset 0 0 0 2px #ffd36a}
+.tr-dsn{display:grid;grid-template-columns:44px 1fr;gap:6px;align-items:stretch}
+.tr-dsn-tabs{display:grid;gap:5px;align-content:start}
+.tr-dsn-tabs button{position:relative;height:44px;border-radius:8px;background:#1b1530;border:1px solid #c9b4ff44;color:#c9bfe0;font-size:14px;font-weight:700}
+.tr-dsn-tabs button.on{background:#3a2c66;color:#ffd36a;border-color:#ffd36a}
+.tr-dsn-tabs i{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;border-radius:8px;background:#e05a6a;color:#fff;font-size:10px;font-style:normal;line-height:16px}
+.tr-dsn-body{background:#120f1e;border:1px solid #ffffff1a;border-radius:9px;padding:8px;min-width:0}
+.tr-dsn-line{display:flex;flex-wrap:wrap;align-items:center;gap:4px 3px;font-size:14px;color:#efe8ff;line-height:1.5}
+.tr-dsn-w{display:inline-flex;align-items:center;gap:1px}
+.tr-dsn-w i{font-style:normal;color:#c9bfe0}
+.tr-dsn-f{font-weight:600;color:#fff}
+.tr-dsn-c{min-width:34px;height:28px;padding:0 8px;border-radius:7px;background:#2a2148;border:1px solid #c9b4ff88;color:#fff;font-size:14px;font-weight:700}
+.tr-dsn-c.empty{border-style:dashed;color:#c9b4ff;background:#1b1530}
+.tr-dsn-c.sel{border-color:#ffd36a;box-shadow:0 0 0 2px #ffd36a55}
+.tr-dsn-end{color:#c9bfe0}
+.tr-dsn-opts{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;padding-top:7px;border-top:1px dashed #ffffff22;align-items:center}
+.tr-dsn-opts span{font-size:11px;color:#9d93b8;margin-right:2px}
+.tr-dsn-opts button{height:28px;padding:0 9px;border-radius:7px;background:#1b1530;border:1px solid #c9b4ff44;color:#e6dcff;font-size:13px}
+.tr-dsn-opts button.on{background:#3a2c66;border-color:#ffd36a;color:#ffd36a}
+.tr-dsn-hint{margin-top:7px;font-size:11px;color:#9d93b8}

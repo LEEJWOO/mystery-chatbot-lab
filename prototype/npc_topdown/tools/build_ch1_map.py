@@ -199,9 +199,38 @@ if __name__ == '__main__':
                        'answers': [{'at': [0, 1], 'ev': ['bar_log']}],
                        'miss': next(p2['miss'] for p2 in T['phases'] if p2['type'] == 'nonstop')})
     ri = next(i for i, ph in enumerate(T['phases']) if ph['type'] == 'rebut')
+    # 꿈 조각 문장형 시험(1장 사본만): 칸·조사로 문장을 만든다. 체험판 대본 이야기는 그대로.
+    di = next(i for i, ph in enumerate(T['phases']) if ph['type'] == 'dream')
+    T['phases'][di].update({'form': 'sentence', 'guide': '왼쪽 탭으로 전/후를 바꾸고, 점선 칸을 눌러 문장을 완성한다',
+        'acts': ['꺼냈다', '쥐었다', '건넸다', '숨겼다', '벗었다', '내려놓았다', '남았다', '달려갔다'], 'times': ['19:46', '19:52', '19:53', '19:55', '19:58'],
+        'rounds': [
+            {'cap': '휴식 시간 · 라운지', 'a': {'bg': '라운지', 'who': 'clara', 'time': '19:52', 'at': '진열장', 'obj': 'brooch', 'act': '꺼냈다'},
+             'b': {'bg': '라운지', 'who': 'clara', 'time': '19:53', 'obj': 'brooch', 'at': '손', 'act': '쥐었다'},
+             'ask': [['a', 'who'], ['a', 'time'], ['b', 'act']]},
+            {'cap': '19:55 · 라운지', 'a': {'bg': '라운지', 'who': 'clara', 'time': '19:55', 'obj': 'glove', 'at': '손', 'act': '벗었다'},
+             'b': {'bg': '라운지', 'who': '', 'obj': 'glove', 'at': '피아노 의자', 'act': '남았다'},
+             'sa': [['who', '가'], ['time', '에'], ['obj', '을'], ['act', '']], 'sb': [['obj', '가'], ['at', '에'], ['act', '']],
+             'ask': [['a', 'obj'], ['b', 'at']]}]})
+    # 1장 팔찌 반론 초안(2026-11-28): 해제 감지 시각 ≠ 집행. 반론자 메이벨(가정). 정답 = 셋째 문단 + 저스틴의 팔찌 기록.
+    T['phases'][ri + 1:ri + 1] = [
+        {'type': 'rebut', 'npc': 'mei', 'event': 'X1_R2', 'holdEvent': 'X1_R2H', 'title': '반론 · 팔찌가 알려 준 시각',
+         'guide': '메이벨이 기록에서 읽은 사실과, 규칙을 보고 짐작한 일을 짚어 보자',
+         'goal': "'팔찌 해제'와 '실제 처형 집행'은 별개라는 뜻이면 통과. 특정 시각·사인·바룬의 이름은 요구하지 않는다. '십 분 뒤잖아'처럼 계산만 말하면 부족.",
+         'lines': [{'who': 'mei', 'text': '{팔찌가 풀린 시각은} {여섯 시 사십 분}. 이건 우리 모두 같은 기록을 보고 있지요?', 'face': '기본'},
+                   {'who': 'mei', 'text': '{다시 차지 않으면} {십 분 뒤에 처형}이에요. {지배인이 우리에게 직접 읽어 준 규칙}이잖아요.', 'face': '진지'},
+                   {'who': 'mei', 'text': '그러니 {저스틴이 여섯 시 오십 분에 처형됐다는 것까지}, {이 기록으로 확인된 셈}이에요.', 'face': '의심'}],
+         'answers': [{'at': [2, 0], 'ev': ['band_log']}, {'at': [2, 1], 'ev': ['band_log']}],
+         'miss': {'mei': {'text': '어느 대목이 그 증거와 어긋난다는 거죠?', 'face': '의심'}},
+         'mono': ['같은 기록을 읽었는데, 메이벨은 거기서 어디까지 알아냈다는 거지?', '기록에 적힌 것과, 메이벨이 덧붙인 것. 그 경계가 어디지?', '……세 문장 중 하나는 기록이 아니라 짐작이야.'],
+         'monoRb': ['시각 계산에는 이견이 없어. 확인해야 하는 건 그 시각에 무슨 일이 있었느냐야.', '기한을 안다고 해서, 그 기한에 무슨 일이 일어났는지까지 아는 건 아니야.', '팔찌가 알려 준 건 하나뿐이야. 나머지는 누구에게 물어야 하지?']},
+        {'type': 'talk', 'lines': [{'who': 'me', 'text': '지배인. 열여덟 시 오십 분에, 저스틴에 대한 해제 벌칙을 집행했어?'},
+                                   {'who': 'host', 'text': '집행하지 않았습니다.', 'fx': 'flash'}]}]
     w['trials'] = [T]
     w['events'] = {'X1_R1': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'X1', 'phase': ri}, 'X1_R1H': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'X1', 'phase': ri, 'hold': True}}
+    w['events'].update({'X1_R2': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'X1', 'phase': ri + 1}, 'X1_R2H': {'kinds': ['R'], 'npcs': ['mei'], 'trial': 'X1', 'phase': ri + 1, 'hold': True}})
+    T['evidence'] = T['evidence'] + ['band_log']
     w['items'] = [dict(it, at=None) for it in base['items'] if it['id'] in T['evidence']]
+    w['items'].append({'id': 'band_log', 'name': '저스틴의 팔찌 기록', 'at': None, 'from': '2일 19:30', 'desc': '18:00 전지 교체 · 18:40 해제 감지 (그 뒤 기록 없음)'})
     w['flagNames'] = sorted(set(w['flagNames'] + ['x1_done']))
     json.dump(w, open(os.path.join(ROOT, 'src', 'world_ch1.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('world_ch1.json:', W_, 'x', H_, '방', len(areas), '조사 지점', len(landmarks), '계단', len(links), '숨은 공간', len(secrets))
