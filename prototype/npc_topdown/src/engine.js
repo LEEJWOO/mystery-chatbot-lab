@@ -580,6 +580,7 @@ const TroemereiNPC = (() => {
         s.player.cells--;s.player.batAt=s.clock+60;s.player.batUsed=0;addLog(w,s,'팔찌 전지를 갈아 끼웠다(1분).','player');return s;} // 교체 1분은 화면이 WAIT 60으로 흘린다
       if(b.empty){addLog(w,s,'전지가 다 됐다. 전지부터 갈아야 한다.','player');return s;}
       const cost=action.op==='photo'?(C.photo||300):action.op==='call'?(C.callMin||600)*Math.max(1,action.minutes|0):action.op==='locate'?(C.locate||10800):0;
+      if(cost>b.left){s.devShort={op:action.op,need:cost,left:b.left,at:s.clock};addLog(w,s,'전지가 모자라다(남은 '+Math.floor(b.left/60)+'분, 필요 '+Math.floor(cost/60)+'분). 먼저 새 전지로 갈아 끼워야 한다.','player');return s;} // 남은 양보다 큰 기능은 쓰지 못한다(쓰다 꺼지지 않게)
       batUse(w,s,cost);
       if(action.op==='locate'){const n=node(s,action.npcId),sp=n&&w.npcs.find(x=>x.id===n.id),ba=sp&&sp.band&&s.flags[sp.band.flag]&&landmark(w,sp.band.at); // 팔찌를 풀어 둔 뒤에는 팔찌 자리가 나온다
         s.player.lastLocate=n?{id:n.id,x:ba?ba.x:n.x,y:ba?ba.y:n.y,at:s.clock}:null;addLog(w,s,(n?nm(w,s,n.id):'?')+'의 위치를 조회했다.','player');}

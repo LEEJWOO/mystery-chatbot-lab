@@ -551,6 +551,10 @@ test('팔찌 전지: 시간·기능으로 줄고, 교체하면 새로, 0 뒤 1�
   assert.equal(E.battery(w, s).left, 43200 - 3600 - 10800 - 300 - 1200);
   const back = C.unpack(w, C.pack(w, s)); assert.equal(E.battery(w, back).left, E.battery(w, s).left); assert.equal(E.battery(w, back).cells, 7);
   s = E.dispatch(w, s, { type: 'DEVICE', op: 'swap' }); s = E.advance(w, s, 60); assert.equal(E.battery(w, s).left, 43200); assert.equal(E.battery(w, s).cells, 6);
+  let q = JSON.parse(JSON.stringify(s)); q.player.batUsed = 43200 - 6900; q = E.dispatch(w, q, { type: 'DEVICE', op: 'locate', npcId: 'justin' });
+  assert.equal(E.battery(w, q).left, 6900, '남은 1시간 55분으로는 3시간짜리 조회를 못 함(쓰다 꺼지지 않음)'); assert.ok(q.devShort && q.devShort.op === 'locate');
+  q = E.dispatch(w, q, { type: 'DEVICE', op: 'swap' }); q = E.advance(w, q, 60); q = E.dispatch(w, q, { type: 'DEVICE', op: 'locate', npcId: 'justin' });
+  assert.equal(E.battery(w, q).left, 43200 - 10800, '일찍 갈아 끼우면(남은 시간은 버려짐) 바로 조회 가능');
   let d = JSON.parse(JSON.stringify(s)); d.player.batUsed = 43200; d = E.advance(w, d, 59); assert.equal(E.battery(w, d).dead, false);
   d = E.advance(w, d, 2); assert.equal(E.battery(w, d).dead, true);
 });

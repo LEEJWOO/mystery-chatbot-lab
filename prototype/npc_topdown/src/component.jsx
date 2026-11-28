@@ -1373,11 +1373,11 @@ function trDevice(state, busy, onDev, pick, setPick) {
     {b.empty ? <div className="tr-devwarn">전지가 다 됐다. 1분 안에 갈아 끼우지 않으면 위험하다.</div> : b.left < 3600 ? <div className="tr-devwarn">전지가 1시간도 남지 않았다.</div> : null}
     <div className="tr-dbgrw">
       <button disabled={busy || b.cells <= 0} onClick={() => onDev({ op: 'swap' })}>전지 교체 (1분)</button>
-      <button disabled={busy || b.empty} onClick={() => onDev({ op: 'photo' })}>사진 찍기 (−{trDur(C.photo || 300)})</button>
+      <button disabled={busy || b.empty || b.left < (C.photo || 300)} onClick={() => onDev({ op: 'photo' })}>사진 찍기 (−{trDur(C.photo || 300)})</button>
     </div>
-    <div className="tr-mut">위치 조회 (1회 −{trDur(C.locate || 10800)})</div>
+    <div className="tr-mut">위치 조회 (1회 −{trDur(C.locate || 10800)}){b.left < (C.locate || 10800) ? <b style={{ color: '#ffb36a' }}> · 남은 전지가 모자라다 — 새 전지로 갈아 끼우면 쓸 수 있다(남은 시간은 버려짐)</b> : null}</div>
     <div className="tr-dbgrw">{ppl.map(n => <button key={n.id} disabled={busy || b.empty} className={pick === 'loc:' + n.id ? 'on' : ''} onClick={() => setPick(pick === 'loc:' + n.id ? null : 'loc:' + n.id)}>{trNpc(n.id).name}</button>)}</div>
-    {pick && pick.startsWith('loc:') ? <button className="tr-tbtn gold" disabled={busy || b.empty} onClick={() => { onDev({ op: 'locate', npcId: pick.slice(4) }); setPick(null); }}>{trNpc(pick.slice(4)).name}의 위치 조회하기</button> : null}
+    {pick && pick.startsWith('loc:') ? <button className="tr-tbtn gold" disabled={busy || b.empty || b.left < (C.locate || 10800)} onClick={() => { onDev({ op: 'locate', npcId: pick.slice(4) }); setPick(null); }}>{trNpc(pick.slice(4)).name}의 위치 조회하기</button> : null}
     {L ? <div><div className="tr-mut">마지막 조회: {trNpc(L.id).name} · {Math.floor(L.at / 86400) + 1}일 {trHM(L.at)}</div>{trFloorMap(L.x, L.y, L.id, 320)}</div> : null}
     <div className="tr-mut">통화는 사건 대본이 정해진 뒤 연결한다.</div>
   </div>;
