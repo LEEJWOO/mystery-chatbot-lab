@@ -1,0 +1,20 @@
+# 옥상 — 잠김 — 계단 연결 없음(올려다보기만)
+@level 옥상
+@grid
+#####################
+#AAAAAAAAAAAAAAAAAA##
+#AAAAAAAAAAAAAAA*AA##
+#AAAAAA*****AAAbAAA##
+#AAAAAA*****AAAAAAA##
+#AAAAAA*****AAAAAAA##
+#AAAAAAAAAAAAAAAAAA##
+#AAAAAAAAaAAAAAAAAA##
+#AAAAAAAAAAAAAAAAAA##
+#AAAAAAAAAAAAAAAAAA##
+#AAAAAAAAAAAAAAAAAA##
+#####################
+@rooms
+A 옥상 #3a3f45
+@marks
+a water_tank 물탱크 ◉
+b antenna 안테나 ψ

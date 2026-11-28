@@ -13,9 +13,17 @@ const TroemereiNPC = (() => {
   // 막는 칸(map.guards): 열림 플래그가 꺼져 있으면 지나갈 수 없다(예: 공지 전 재판장 문 — 지배인이 막는다).
   const guardAt = (w,x,y) => (w.map.guards||[]).find(G=>G.cells.some(c=>c[0]===x&&c[1]===y));
   const guarded = (w,x,y,s) => { const G=guardAt(w,x,y); return !!G&&!(s&&s.flags&&s.flags[G.open]); };
-  const walkable = (w,x,y,s) => { if(!inBounds(w,x,y))return false; if(guarded(w,x,y,s))return false; if(w.map.rows[y][x]!=='#')return true; const q=s&&secretAt(w,x,y); return !!(q&&s.flags&&s.flags[q.flag]); };
+  // 물때 칸(map.tide = {cells, low:['2일 02:00~04:40', …]}): 상태를 넘긴 경우, 썰물 시간대에만 걸을 수 있다.
+  const tideCache=new WeakMap();
+  const tideOf = w => { if(!w.map.tide)return null; let t=tideCache.get(w); if(t)return t;
+    const win=(w.map.tide.low||[]).map(v=>{const [a,b]=String(v).split('~').map(x=>x.trim()),d=(/^(\d+)일/.exec(a)||[])[1];const A=absTime(a),B=absTime(/일/.test(b)?b:(d?d+'일 ':'')+b);return [A,B];});
+    t={cells:new Set(w.map.tide.cells.map(c=>c[0]+','+c[1])),win}; tideCache.set(w,t); return t; };
+  const tideLow = (w,s) => { const t=tideOf(w); return !t||t.win.some(([a,b])=>s.clock>=a&&s.clock<=b); };
+  const tideShut = (w,x,y,s) => { const t=s&&tideOf(w); return !!t&&t.cells.has(x+','+y)&&!tideLow(w,s); };
+  const walkable = (w,x,y,s) => { if(!inBounds(w,x,y))return false; if(guarded(w,x,y,s))return false; if(tideShut(w,x,y,s))return false; if(w.map.rows[y][x]!=='#')return true; const q=s&&secretAt(w,x,y); return !!(q&&s.flags&&s.flags[q.flag]); };
   // 계단 등 연결 칸: map.links [{a:[x,y], b:[x,y], name}]. 한 칸에서 다른 칸으로 한 걸음에 이어진다(층 사이 이동).
-  const linkOf = (w,x,y) => { for(const L of w.map.links||[]){ if(L.a[0]===x&&L.a[1]===y)return {x:L.b[0],y:L.b[1],L}; if(L.b[0]===x&&L.b[1]===y)return {x:L.a[0],y:L.a[1],L}; } return null; };
+  // off: 그 플래그가 켜지면 끊김(예: 사다리를 걷음) · on: 그 플래그가 켜져야 이어짐. 상태를 안 넘기면 늘 이어진 것으로 본다.
+  const linkOf = (w,x,y,s) => { for(const L of w.map.links||[]){ if(s&&s.flags&&((L.off&&s.flags[L.off])||(L.on&&!s.flags[L.on])))continue; if(L.a[0]===x&&L.a[1]===y)return {x:L.b[0],y:L.b[1],L}; if(L.b[0]===x&&L.b[1]===y)return {x:L.a[0],y:L.a[1],L}; } return null; };
   const linked = (w,p,q) => { const o=linkOf(w,p.x,p.y); return !!o&&o.x===q.x&&o.y===q.y; };
   const node = (s,id) => s.npcs.find(n=>n.id===id);
   const landmark = (w,id) => w.map.landmarks.find(x=>x.id===id);
@@ -28,7 +36,7 @@ const TroemereiNPC = (() => {
   function blockers(w){
     let b=blockCache.get(w);if(b)return b;
     const low=new Set();for(const p of w.map.props||[])if(p.low)for(let y=p.y;y<p.y+p.h;y++)for(let x=p.x;x<p.x+p.w;x++)low.add(posKey(x,y));
-    b=new Set();w.map.rows.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==='#'&&!low.has(posKey(x,y)))b.add(posKey(x,y));}));
+    const T=w.map.terrain,see=w.map.seeThrough||'';b=new Set();w.map.rows.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==='#'&&!low.has(posKey(x,y))&&!(T&&see.includes(T[y][x])))b.add(posKey(x,y));}));
     blockCache.set(w,b);return b;
   }
   // 두 칸 사이 직선(브레젠험)이 막힌 칸을 지나지 않으면 보인다.
@@ -131,7 +139,7 @@ const TroemereiNPC = (() => {
     for(let i=0;i<q.length;i++){
       const p=q[i], k=posKey(p.x,p.y);
       if(p.x===to.x&&p.y===to.y){const out=[];let curr=k;while(prev.get(curr)!==null){out.push(v.get(curr));curr=prev.get(curr);}return out.reverse();}
-      const lk=linkOf(w,p.x,p.y), nb=[[1,0],[0,1],[-1,0],[0,-1]].map(([dx,dy])=>[p.x+dx,p.y+dy]); if(lk)nb.push([lk.x,lk.y]);
+      const lk=linkOf(w,p.x,p.y,s), nb=[[1,0],[0,1],[-1,0],[0,-1]].map(([dx,dy])=>[p.x+dx,p.y+dy]); if(lk)nb.push([lk.x,lk.y]);
       for(const [nx,ny] of nb){
         const nk=posKey(nx,ny);
         if(walkable(w,nx,ny,s)&&!prev.has(nk)&&(!occupied.has(nk)||(nx===from.x&&ny===from.y))){
@@ -579,7 +587,7 @@ const TroemereiNPC = (() => {
       const p=route(w,s,player,target,{ignorePlayer:true});
       if(!p.length&&manhattan(player,target)>0){addLog(w,s,'갈 수 있는 경로가 없다.','player');return s;}
       // 계단 칸으로 한 걸음 들어가면 그대로 연결된 반대쪽(다른 층)까지 이어서 간다.
-      const lt=action.type==='MOVE_ONE'&&p.length===1&&linkOf(w,target.x,target.y); if(lt)p.push({x:lt.x,y:lt.y});
+      const lt=action.type==='MOVE_ONE'&&p.length===1&&linkOf(w,target.x,target.y,s); if(lt&&walkable(w,lt.x,lt.y,s))p.push({x:lt.x,y:lt.y});
       player.route=p;player.nextMoveAt=s.clock+(w.player.moveSeconds||4);
       addLog(w,s,p.length?'목적지로 이동을 시작했다.':'이미 그곳에 있다.','player');
     }else if(action.type==='ACCOMPANY'){
@@ -678,6 +686,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y,s))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {battery, createWorld, nm, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {tideLow, battery, createWorld, nm, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;

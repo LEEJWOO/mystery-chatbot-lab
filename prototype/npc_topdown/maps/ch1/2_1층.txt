@@ -1,0 +1,46 @@
+# 1층 — 로비·라운지 바·연회장·주방. 지배인실은 잠김(문 없음)
+@level 1층
+@grid
+#########################################
+#AAAAAA#BBBBBB#CCCCCCCCCCC#DDDDDDDDDDDD##
+#AAAAAA#BBBBBB#CuCCCCCCCtC#DD*******DDD##
+#AAAAAA#BBBBBB#CCCCCCCCCCC#DDDDDgDDDDDD##
+#AAAAAA#BBBBBB#CCCCCCCCCCC#DDDDDDDDDDDD##
+#AAAAAA#BBBBBB#CCCCCCCCCCC#DDDDDDDDDDDD##
+#AAAAAA#BBBBBB#CCCCCCCCCCC#DDDDDDDDDDDD##
+#AAAAAA#BBBBBB#CCCCCCCCCCC#DDDDDDDDDDDD##
+#AAAAAA#BBBBBB#CCCCCCCCCCC#DDDDDDDDDDDD##
+###+######*#########+###########+########
+#EEEEEEEEEaEEEEEEEEEEEEEEEEEEEEEEEEEEEE##
+#EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE##
+######+############++###########+########
+#FFFFFFFFFFFF#G***GGGGGGGG#HHHHHHHHHHHH##
+#F***FFFFFF*F#GGbGGGGGGGGG#HHHHHHHHHHHH##
+#F***FFFFFF*F#GGGGGGGGGG*G#HHHHHHHHHHHH##
+#FFdFFFFFFe*F+GGGGGGGGGc*G+HH********HH##
+#FFFFFFFFFF*F#GGGGGGGGGG*G#HHHHHHHHHHHH##
+#FFFFFFFFFFFF#GGGGGGGGGGGG#HHHHHfHHHHHH##
+#FFFFFFFFFFFF#GhGGGGGGGGGG#HHHHHHHHHHHH##
+#FFFFFFFFFFFF#GGGGGmGGGGGG#HHHHHHHHHHHH##
+#########################################
+@rooms
+A 화장실 #2b3540
+B 지배인실 #2a2430
+C 계단홀 #2f2c3a
+D 주방 #33362e
+E 1층 복도 #2a2a33
+F 라운지 바 #25344a
+G 로비 #3a3026
+H 연회장 #3a2a2a
+@marks
+a office_door 지배인실 문(잠김) 🔒
+b case 진열장 ▣
+c front 프런트 ☎
+d piano 그랜드 피아노 ♪
+e bar 바 카운터 🍸
+f table 연회 테이블 🍽
+g stove 조리대 🔥
+h eaves_view 창밖 처마 ⌂
+u link 계단(1층↔2층)
+t link 계단(1층↔지하)
+m link 정문

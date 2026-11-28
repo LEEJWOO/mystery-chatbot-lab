@@ -1,0 +1,69 @@
+# 외부(섬) — 1장 사건 동선 기준
+# 칸 글자: 대문자=방, 소문자·숫자=표시(@marks), # 벽, ~ 바다, % 수영장 물, ^ 바위(시야도 막음), | 절벽(아래가 내려다보임), = 호텔 건물, * 가구·물건 몸체(이웃한 표시에 딸림), + 통로
+@level 외부
+@pad ~
+@tide 2일 02:00~04:40, 2일 14:20~17:00
+@grid
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~GGGGGGGG~^==================^PPPPPPPPPPP~~~~~~
+~GGGGGGGGGG^==================^PPPPPPPPPP*P~~~~~
+~GGGGGGGGGG^==================^PP%%%%%%%%dP~~~~~
+~GGGGGGGGGG^==================^PP%%%%%%%%PP~~~~~
+~GGGG***GGG^==================^PP%%%%%%%%PP~~~~~
+~GGGG***GGG^==================^PP%%%%%%%%PP~~~~~
+~GGGGGfGGGG^==================^PPPPPpPPPPPP~~~~~
+~GGGGGGGGGG^==================^PPPPPPPPPPPP~~~~~
+~GGGGGGGGGG^==================^PPPPPPPPPPPP~~~~~
+~GGGGGGGGGGYYYYvYYYYeYYYYYYYYYYYYYYYY#LL**L~~~~~
+~GGGGGGGGGGYYYYYYYYYYYYYYYYYYYYYYYYYY#LLkLL~~~~~
+~GGGGGGGGGGYYYYYYYYYYYYYYYYYYYYYYYYYY#LLLLL~~~~~
+~GGGGGGGGGGYYYYYYYYYYYYYYYYYYYYYYYYYY######~~~~~
+~BBBBBBBBBBBBBBBBBBSSSSSSSSSSSSSS*SSSSSSS~~~~~~~
+~BBBBBBBBBBBBBBBBBBSSSSSSSSSSSSSSbSSSSSSS~~~~~~~
+~BBBBBBBBBBBBBBBBBBSSSSSSSSSSSSSSSSSSSSSS~~~~~~~
+~BBBBBBBBBBBBBBBBBB^^^RRR*RRRRRRRRRR^MmM^^~~~~~~
+~BBBBBBBBBBBBBBBBBB^^^RRRsRRRRRRRRRR^MMM^^~~~~~~
+~BBBBBBBBBBBBBBBBBB^^^RRRRRRRRRRRRRR^MMM^^~~~~~~
+~~BBBBBBBBBBBBBBBB~^^^RRRRRRRRRRRRRR^V^^V*VV~~~~
+~~~~BBBBBBBBBBBBB~~^^^RRRRRRRRRRRRRR^VVVVoVVV~~~
+~~~~~~~~~~DDD~~~~~~~~~~RRRRRRRRRRRRR^VVVVVVVVV~~
+~~~~~~~~~~DDD~~~~~~~~~~~RRRRRRRRRRrR^VVxVVVlhV~~
+~~~~~~~~~~DDD~~~~~~~~~~^^^^^^^RRRRRR^^^|^^^^^^~~
+~~~~~~~~~~DDD~~~~~~~~~~~~~~~~~~TTTTT^^TTTTTlTTT~
+~~~~~~~~~~DDD~~~~~~~~~~~~~~~~~~~TTTTTTTcTTTTTT~~
+~~~~~~~~~~DDD~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~DqD~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@rooms
+G 정원 #2d3a30
+Y 앞마당 #3a3a34
+P 수영장 #24414f
+L 탈의실 #2c3550
+B 해변 #4a4330
+S 해안 산책로 #33302a
+D 선착장 #3b3226
+R 바위 해안 #2e3236
+M 이끼 비탈 #2f4a2f
+V 전망 바위 #3a3e3a
+T 갯바위 #34403c tide
+@marks
+e link 정문
+f fountain 분수 ⛲
+p pool 수영장 ≈
+d diving 다이빙대 ⇡
+k lockers 사물함 ▤
+v eaves 외벽 처마(올려다봄) ⌂
+b bench 산책로 벤치 ⌓
+m slope_foot 이끼 비탈 입구 ≋
+s tide_sign 물때 표지판 ⚑
+r shore_ledge 물가 바위턱 ◡
+o view_site 옛 전망대 터 ⌖
+x rock_edge 바위 끝(아래가 내려다보임) ⤓
+l link 밧줄 사다리 off=ladder_gone
+h rope_spot 밧줄 사다리를 걸던 자리 ⫶
+c crevice 바위벽 아래 바위틈 ◣
+q dock_end 선착장 끝 ⚓
+@sight b m 바룬·스즈네: 벤치에서 비탈 입구를 지켜봄
+@sight q h 선착장 끝에서 바다 건너 바위벽(사다리 자리)이 보임
+@note 갯바위(T)는 썰물 때만 걸을 수 있다(@tide 시간대, 가정). 밧줄 사다리는 ladder_gone 플래그가 켜지면 끊긴다(2일 12:50 바룬이 걷음).
+@note 바위틈·사다리는 바다 쪽(남쪽 면) — 바위 해안·산책로에서는 바위(^)에 가려 보이지 않는다.

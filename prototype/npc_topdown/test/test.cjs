@@ -487,7 +487,7 @@ test('1장 지도: 모든 방이 이어지고(잠긴 옥상·재판장·지배�
   const w = require('../src/world_ch1.json'); let s = E.createWorld(w);
   const A = w.map.areas, cell = a => { for (let y = a.y0; y <= a.y1; y++) for (let x = a.x0; x <= a.x1; x++) if (E.walkable(w, x, y, s) && !s.npcs.some(n => n.x === x && n.y === y)) return { x, y }; };
   for (const a of A) {
-    if (['옥상', '재판장', '지배인실'].includes(a.name)) continue;
+    if (['옥상', '재판장', '지배인실', '갯바위'].includes(a.name)) continue;
     const r = E.dispatch(w, s, { type: 'MOVE_TO', ...cell(a) });
     assert.ok(r.player.route.length > 0 || (r.player.x === cell(a).x && r.player.y === cell(a).y), a.name + '(으)로 가는 길이 없음');
   }
@@ -499,6 +499,27 @@ test('1장 지도: 모든 방이 이어지고(잠긴 옥상·재판장·지배�
   }
   const lv = w.map.levels.map(l => l.name); assert.deepEqual(lv, ['외부', '1층', '2층', '옥상', '지하']);
   assert.equal(C.pack(w, C.unpack(w, C.pack(w, s))), C.pack(w, s), '1장 세계 상태 코드 왕복');
+});
+
+test('1장 물때·사다리: 갯바위는 썰물 때만, 밧줄 사다리는 걷으면 끊김, 바다는 시야를 막지 않음', () => {
+  const w = require('../src/world_ch1.json'), T = w.map.areas.find(a => a.name === '갯바위'), R = w.map.areas.find(a => a.name === '바위 해안');
+  const lad = w.map.links.find(l => l.name === '밧줄 사다리'), [tx, ty] = lad.b[1] > lad.a[1] ? lad.b : lad.a, [vx, vy] = lad.b[1] > lad.a[1] ? lad.a : lad.b;
+  let s = E.createWorld(w); s.player.x = 32; s.player.y = R.y1; s.player.route = [];
+  assert.equal(E.walkable(w, tx, ty, s), false, '1일 저녁(밀물)엔 갯바위가 잠김');
+  s.clock = E.absTime('2일 15:50'); assert.equal(E.walkable(w, tx, ty, s), true, '썰물엔 걸을 수 있음');
+  assert.ok(E.dispatch(w, s, { type: 'MOVE_TO', x: tx, y: ty }).player.route.length > 0, '썰물엔 바위 해안에서 갯바위로 감');
+  let v = E.createWorld(w); v.clock = E.absTime('2일 15:50'); v.player.x = vx; v.player.y = vy - 1; v.player.route = [];
+  let d = E.dispatch(w, v, { type: 'MOVE_ONE', dx: 0, dy: 1 }); d = E.advance(w, d, 20); assert.deepEqual([d.player.x, d.player.y], [tx, ty], '사다리로 내려감');
+  v.flags.ladder_gone = true; d = E.dispatch(w, v, { type: 'MOVE_ONE', dx: 0, dy: 1 }); d = E.advance(w, d, 20); assert.deepEqual([d.player.x, d.player.y], [vx, vy], '사다리를 걷으면 내려가지 못함');
+  const dock = w.map.landmarks.find(l => l.id === 'dock_end'), spot = w.map.landmarks.find(l => l.id === 'rope_spot');
+  assert.ok(E.lineOfSight(w, dock, { x: spot.x, y: spot.y + 2 }), '선착장 끝에서 바다 건너 바위벽 밑(갯바위)까지 보임');
+  // 시야 약속(동업자 확인 11-28): ① 선착장 끝 → 바위벽 ② 벤치 → 비탈 입구는 보이고 바다 쪽 바위벽은 안 보임 ③ 바위 끝 → 바위틈
+  const L = id => w.map.landmarks.find(l => l.id === id), cr = L('crevice'), foot = { x: spot.x, y: spot.y + 2 };
+  assert.ok(E.lineOfSight(w, L('bench'), L('slope_foot')), '벤치에서 비탈 입구가 보여야 함');
+  assert.ok(!E.lineOfSight(w, L('bench'), foot) && !E.lineOfSight(w, L('bench'), cr), '벤치에서 바다 쪽 바위벽·바위틈은 안 보여야 함');
+  assert.ok(E.lineOfSight(w, L('rock_edge'), cr), '바위 끝에서 바위틈이 내려다보여야 함');
+  for (const nm of ['바위 해안', '해안 산책로', '해변', '이끼 비탈', '앞마당']) { const a = w.map.areas.find(x => x.name === nm);
+    for (let y = a.y0; y <= a.y1; y++) for (let x = a.x0; x <= a.x1; x++) if (w.map.rows[y][x] !== '#') assert.ok(!E.lineOfSight(w, { x, y }, cr) && !E.lineOfSight(w, { x, y }, foot), nm + ' ' + x + ',' + y + '에서 바위틈·바위벽 밑이 보이면 안 됨'); }
 });
 
 test('팔찌 전지: 시간·기능으로 줄고, 교체하면 새로, 0 뒤 1분이면 사망, 상태 코드에 남음', () => {

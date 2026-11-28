@@ -1277,12 +1277,15 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
 
 // 움직이지 않는 지도 층: 한 번만 만들고 다시 그리지 않는다.
 // 움직이지 않는 지도 층(함수 호출로 사용: 대문자 이름은 UUMMAI가 별도 컴포넌트로 인식하므로 피한다).
+// 지형 색(map.terrain): ~ 바다 · % 수영장 물 · ^ 바위 · = 건물 지붕. 없으면 벽색.
+const TR_TERRAIN = { '~': '#173a57', '%': '#2a7a92', '^': '#4a443c', '|': '#6a5e4e', '=': '#5a4636' };
+const trTerrain = (x, y) => { const T = TN_WORLD.map.terrain; return T ? TR_TERRAIN[(T[y] || '')[x]] : null; };
 const trStaticLayer = (() => {
   let cache = null;
   return () => {
     if (cache) return cache;
     const out = [];
-    TN_WORLD.map.rows.forEach((row, y) => row.split('').forEach((c, x) => { const i = TroemereiNPC.areaOf(TN_WORLD, x, y); out.push(<rect key={x + '-' + y} x={x * TR_CELL} y={y * TR_CELL} width={TR_CELL} height={TR_CELL} fill={c === '#' ? '#0f1a27' : ((TN_WORLD.map.areas[i] || {}).color || TR_BG[Math.max(0, i) % TR_BG.length])} stroke="#5f7585" strokeOpacity=".09" />); }));
+    TN_WORLD.map.rows.forEach((row, y) => row.split('').forEach((c, x) => { const i = TroemereiNPC.areaOf(TN_WORLD, x, y); out.push(<rect key={x + '-' + y} x={x * TR_CELL} y={y * TR_CELL} width={TR_CELL} height={TR_CELL} fill={c === '#' ? trTerrain(x, y) || '#0f1a27' : ((TN_WORLD.map.areas[i] || {}).color || TR_BG[Math.max(0, i) % TR_BG.length])} stroke="#5f7585" strokeOpacity=".09" />); }));
     // 계단·정문 등 연결 칸 표시(양 끝 모두)
     (TN_WORLD.map.links || []).forEach((L, i) => [L.a, L.b].forEach((p, j) => out.push(<g key={'k' + i + '-' + j}><rect x={p[0] * TR_CELL + 3} y={p[1] * TR_CELL + 3} width={TR_CELL - 6} height={TR_CELL - 6} rx="5" fill="#f2c46d" opacity=".28" stroke="#f2c46d" strokeOpacity=".7" /><text x={(p[0] + .5) * TR_CELL} y={(p[1] + .5) * TR_CELL + 5} fontSize="13" textAnchor="middle" fill="#f6e3b4">{/계단/.test(L.name) ? '⇅' : '⇳'}</text></g>)));
     TN_WORLD.map.landmarks.forEach(l => out.push(<g key={'l' + l.id}><rect x={l.x * TR_CELL + 6} y={l.y * TR_CELL + 6} width={TR_CELL - 12} height={TR_CELL - 12} rx="4" fill="#e0bc78" opacity=".22" /><text x={(l.x + .5) * TR_CELL} y={(l.y + .5) * TR_CELL + 6} fontSize="16" textAnchor="middle" fill="#eddbaf">{l.icon}</text></g>));
@@ -1352,8 +1355,8 @@ function trSd(id, size) { const s = (TR_A.sd || {})[id]; return s ? <img src={tr
 function trFloorMap(x, y, id, W0) {
   const M = TN_WORLD.map, L = (M.levels || []).find(l => x >= l.x0 && x <= l.x1 && y >= l.y0 && y <= l.y1) || { name: '', x0: 0, y0: 0, x1: M.width - 1, y1: M.height - 1 };
   const cols = L.x1 - L.x0 + 1, rows = L.y1 - L.y0 + 1, k = Math.min(W0 / cols, 220 / rows), cells = [];
-  for (let yy = L.y0; yy <= L.y1; yy++) for (let xx = L.x0; xx <= L.x1; xx++) { if (M.rows[yy][xx] === '#') continue; const i = TroemereiNPC.areaOf(TN_WORLD, xx, yy);
-    cells.push(<rect key={xx + '-' + yy} x={(xx - L.x0) * k} y={(yy - L.y0) * k} width={k + .3} height={k + .3} fill={i >= 0 ? ((M.areas[i] || {}).color || '#3a4656') : '#4a5260'} />); }
+  for (let yy = L.y0; yy <= L.y1; yy++) for (let xx = L.x0; xx <= L.x1; xx++) { const wall = M.rows[yy][xx] === '#', tc = trTerrain(xx, yy); if (wall && !tc) continue; const i = TroemereiNPC.areaOf(TN_WORLD, xx, yy);
+    cells.push(<rect key={xx + '-' + yy} x={(xx - L.x0) * k} y={(yy - L.y0) * k} width={k + .3} height={k + .3} fill={wall ? tc : i >= 0 ? ((M.areas[i] || {}).color || '#3a4656') : '#4a5260'} />); }
   const px = (x - L.x0 + .5) * k, py = (y - L.y0 + .5) * k, area = trArea(x, y);
   return <div className="tr-fmap"><div className="tr-mut">{L.name} · {area}</div>
     <div style={{ position: 'relative', width: cols * k, height: rows * k, margin: '4px auto' }}>

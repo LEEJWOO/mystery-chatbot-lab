@@ -1,0 +1,42 @@
+# 2층 — 객실 12개·리넨실(숨은 공간)·휴게 코너. 옥상 문은 잠김
+@level 2층
+@grid
+##############################################
+#BBBBB#DDDDD#FFFFF#HHHHH#JJJJJ#LLLLL#NNNNN**##
+#BBBBB#DDDDD#FFFFF#HHHHH#JJJJJ#LLLLL#NNNNNaN##
+#BBBBB#DDDDD#FFFFF#HHHHH#JJJJJ#LLLLL#NNNNNNN##
+#BBBBB#DDDDD#FFFFF#HHHHH#JJJJJ#LLLLL#NNNNNNN##
+#BBBBB#DDDDD#FFFFF#HHHHH#JJJJJ#LLLLL#NNNNNNNxn
+###+#####+#####+#####+#####+#####+######+#####
+#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#
+#uAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAb#
+#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#
+###+#####+#####+#####+#####+#####+######+#####
+#CCCCC#EEEEE#GGGGG#IIIII#KKKKK#MMMMM#OOOOOOO##
+#CCCCC#EEEEE#GGGGG#IIIII#KKKKK#MMMMM#OOOOOOO##
+#CCCCC#EEEEE#GGGGG#IIIII#KKKKK#MMMMM#OOOOOOO##
+#CCCCC#EEEEE#GGGGG#IIIII#KKKKK#MMMMM#OOOOOOO##
+#CCCCC#EEEEE#GGGGG#IIIII#KKKKK#MMMMM#OOOOOOO##
+##############################################
+@rooms
+A 2층 복도 #2a2a33
+B 객실 201 #2c3550
+C 객실 207 #2c3550
+D 객실 202 #2c3550
+E 객실 208 #2c3550
+F 객실 203 #2c3550
+G 객실 209 #2c3550
+H 객실 204 #2c3550
+I 객실 210 #2c3550
+J 객실 205 #2c3550
+K 객실 211 #2c3550
+L 객실 206 #2c3550
+M 객실 212 #2c3550
+N 리넨실 #353028
+O 휴게 코너 #2f3a33
+@marks
+a linen_shelf 리넨 선반 ▥
+b roof_door 옥상 문(잠김) 🔒
+u link 계단(1층↔2층)
+x secret linen_gap flag=secret_linen | 선반 뒤 벽에 틈이 있다. 몸을 비틀면 들어갈 수 있을 것 같다.
+n linen_nook 선반 뒤 틈 ·

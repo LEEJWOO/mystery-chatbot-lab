@@ -19,9 +19,17 @@ const trNPC = (() => {
   // 막는 칸(map.guards): 열림 플래그가 꺼져 있으면 지나갈 수 없다(예: 공지 전 재판장 문 — 지배인이 막는다).
   const guardAt = (w,x,y) => (w.map.guards||[]).find(G=>G.cells.some(c=>c[0]===x&&c[1]===y));
   const guarded = (w,x,y,s) => { const G=guardAt(w,x,y); return !!G&&!(s&&s.flags&&s.flags[G.open]); };
-  const walkable = (w,x,y,s) => { if(!inBounds(w,x,y))return false; if(guarded(w,x,y,s))return false; if(w.map.rows[y][x]!=='#')return true; const q=s&&secretAt(w,x,y); return !!(q&&s.flags&&s.flags[q.flag]); };
+  // 물때 칸(map.tide = {cells, low:['2일 02:00~04:40', …]}): 상태를 넘긴 경우, 썰물 시간대에만 걸을 수 있다.
+  const tideCache=new WeakMap();
+  const tideOf = w => { if(!w.map.tide)return null; let t=tideCache.get(w); if(t)return t;
+    const win=(w.map.tide.low||[]).map(v=>{const [a,b]=String(v).split('~').map(x=>x.trim()),d=(/^(\d+)일/.exec(a)||[])[1];const A=absTime(a),B=absTime(/일/.test(b)?b:(d?d+'일 ':'')+b);return [A,B];});
+    t={cells:new Set(w.map.tide.cells.map(c=>c[0]+','+c[1])),win}; tideCache.set(w,t); return t; };
+  const tideLow = (w,s) => { const t=tideOf(w); return !t||t.win.some(([a,b])=>s.clock>=a&&s.clock<=b); };
+  const tideShut = (w,x,y,s) => { const t=s&&tideOf(w); return !!t&&t.cells.has(x+','+y)&&!tideLow(w,s); };
+  const walkable = (w,x,y,s) => { if(!inBounds(w,x,y))return false; if(guarded(w,x,y,s))return false; if(tideShut(w,x,y,s))return false; if(w.map.rows[y][x]!=='#')return true; const q=s&&secretAt(w,x,y); return !!(q&&s.flags&&s.flags[q.flag]); };
   // 계단 등 연결 칸: map.links [{a:[x,y], b:[x,y], name}]. 한 칸에서 다른 칸으로 한 걸음에 이어진다(층 사이 이동).
-  const linkOf = (w,x,y) => { for(const L of w.map.links||[]){ if(L.a[0]===x&&L.a[1]===y)return {x:L.b[0],y:L.b[1],L}; if(L.b[0]===x&&L.b[1]===y)return {x:L.a[0],y:L.a[1],L}; } return null; };
+  // off: 그 플래그가 켜지면 끊김(예: 사다리를 걷음) · on: 그 플래그가 켜져야 이어짐. 상태를 안 넘기면 늘 이어진 것으로 본다.
+  const linkOf = (w,x,y,s) => { for(const L of w.map.links||[]){ if(s&&s.flags&&((L.off&&s.flags[L.off])||(L.on&&!s.flags[L.on])))continue; if(L.a[0]===x&&L.a[1]===y)return {x:L.b[0],y:L.b[1],L}; if(L.b[0]===x&&L.b[1]===y)return {x:L.a[0],y:L.a[1],L}; } return null; };
   const linked = (w,p,q) => { const o=linkOf(w,p.x,p.y); return !!o&&o.x===q.x&&o.y===q.y; };
   const node = (s,id) => s.npcs.find(n=>n.id===id);
   const landmark = (w,id) => w.map.landmarks.find(x=>x.id===id);
@@ -34,7 +42,7 @@ const trNPC = (() => {
   function blockers(w){
     let b=blockCache.get(w);if(b)return b;
     const low=new Set();for(const p of w.map.props||[])if(p.low)for(let y=p.y;y<p.y+p.h;y++)for(let x=p.x;x<p.x+p.w;x++)low.add(posKey(x,y));
-    b=new Set();w.map.rows.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==='#'&&!low.has(posKey(x,y)))b.add(posKey(x,y));}));
+    const T=w.map.terrain,see=w.map.seeThrough||'';b=new Set();w.map.rows.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==='#'&&!low.has(posKey(x,y))&&!(T&&see.includes(T[y][x])))b.add(posKey(x,y));}));
     blockCache.set(w,b);return b;
   }
   // 두 칸 사이 직선(브레젠험)이 막힌 칸을 지나지 않으면 보인다.
@@ -137,7 +145,7 @@ const trNPC = (() => {
     for(let i=0;i<q.length;i++){
       const p=q[i], k=posKey(p.x,p.y);
       if(p.x===to.x&&p.y===to.y){const out=[];let curr=k;while(prev.get(curr)!==null){out.push(v.get(curr));curr=prev.get(curr);}return out.reverse();}
-      const lk=linkOf(w,p.x,p.y), nb=[[1,0],[0,1],[-1,0],[0,-1]].map(([dx,dy])=>[p.x+dx,p.y+dy]); if(lk)nb.push([lk.x,lk.y]);
+      const lk=linkOf(w,p.x,p.y,s), nb=[[1,0],[0,1],[-1,0],[0,-1]].map(([dx,dy])=>[p.x+dx,p.y+dy]); if(lk)nb.push([lk.x,lk.y]);
       for(const [nx,ny] of nb){
         const nk=posKey(nx,ny);
         if(walkable(w,nx,ny,s)&&!prev.has(nk)&&(!occupied.has(nk)||(nx===from.x&&ny===from.y))){
@@ -585,7 +593,7 @@ const trNPC = (() => {
       const p=route(w,s,player,target,{ignorePlayer:true});
       if(!p.length&&manhattan(player,target)>0){addLog(w,s,'갈 수 있는 경로가 없다.','player');return s;}
       // 계단 칸으로 한 걸음 들어가면 그대로 연결된 반대쪽(다른 층)까지 이어서 간다.
-      const lt=action.type==='MOVE_ONE'&&p.length===1&&linkOf(w,target.x,target.y); if(lt)p.push({x:lt.x,y:lt.y});
+      const lt=action.type==='MOVE_ONE'&&p.length===1&&linkOf(w,target.x,target.y,s); if(lt&&walkable(w,lt.x,lt.y,s))p.push({x:lt.x,y:lt.y});
       player.route=p;player.nextMoveAt=s.clock+(w.player.moveSeconds||4);
       addLog(w,s,p.length?'목적지로 이동을 시작했다.':'이미 그곳에 있다.','player');
     }else if(action.type==='ACCOMPANY'){
@@ -684,7 +692,7 @@ const trNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y,s))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {battery, createWorld, nm, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {tideLow, battery, createWorld, nm, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 
 /* Troemerei 상태 압축 코덱 v2 — AI가 매 턴 그대로 복사하는 문자열을 최소화한다.
@@ -2206,12 +2214,15 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
 
 // 움직이지 않는 지도 층: 한 번만 만들고 다시 그리지 않는다.
 // 움직이지 않는 지도 층(함수 호출로 사용: 대문자 이름은 UUMMAI가 별도 컴포넌트로 인식하므로 피한다).
+// 지형 색(map.terrain): ~ 바다 · % 수영장 물 · ^ 바위 · = 건물 지붕. 없으면 벽색.
+const TR_TERRAIN = { '~': '#173a57', '%': '#2a7a92', '^': '#4a443c', '|': '#6a5e4e', '=': '#5a4636' };
+const trTerrain = (x, y) => { const T = TN_WORLD.map.terrain; return T ? TR_TERRAIN[(T[y] || '')[x]] : null; };
 const trStaticLayer = (() => {
   let cache = null;
   return () => {
     if (cache) return cache;
     const out = [];
-    TN_WORLD.map.rows.forEach((row, y) => row.split('').forEach((c, x) => { const i = trNPC.areaOf(TN_WORLD, x, y); out.push(<rect key={x + '-' + y} x={x * TR_CELL} y={y * TR_CELL} width={TR_CELL} height={TR_CELL} fill={c === '#' ? '#0f1a27' : ((TN_WORLD.map.areas[i] || {}).color || TR_BG[Math.max(0, i) % TR_BG.length])} stroke="#5f7585" strokeOpacity=".09" />); }));
+    TN_WORLD.map.rows.forEach((row, y) => row.split('').forEach((c, x) => { const i = trNPC.areaOf(TN_WORLD, x, y); out.push(<rect key={x + '-' + y} x={x * TR_CELL} y={y * TR_CELL} width={TR_CELL} height={TR_CELL} fill={c === '#' ? trTerrain(x, y) || '#0f1a27' : ((TN_WORLD.map.areas[i] || {}).color || TR_BG[Math.max(0, i) % TR_BG.length])} stroke="#5f7585" strokeOpacity=".09" />); }));
     // 계단·정문 등 연결 칸 표시(양 끝 모두)
     (TN_WORLD.map.links || []).forEach((L, i) => [L.a, L.b].forEach((p, j) => out.push(<g key={'k' + i + '-' + j}><rect x={p[0] * TR_CELL + 3} y={p[1] * TR_CELL + 3} width={TR_CELL - 6} height={TR_CELL - 6} rx="5" fill="#f2c46d" opacity=".28" stroke="#f2c46d" strokeOpacity=".7" /><text x={(p[0] + .5) * TR_CELL} y={(p[1] + .5) * TR_CELL + 5} fontSize="13" textAnchor="middle" fill="#f6e3b4">{/계단/.test(L.name) ? '⇅' : '⇳'}</text></g>)));
     TN_WORLD.map.landmarks.forEach(l => out.push(<g key={'l' + l.id}><rect x={l.x * TR_CELL + 6} y={l.y * TR_CELL + 6} width={TR_CELL - 12} height={TR_CELL - 12} rx="4" fill="#e0bc78" opacity=".22" /><text x={(l.x + .5) * TR_CELL} y={(l.y + .5) * TR_CELL + 6} fontSize="16" textAnchor="middle" fill="#eddbaf">{l.icon}</text></g>));
@@ -2281,8 +2292,8 @@ function trSd(id, size) { const s = (TR_A.sd || {})[id]; return s ? <img src={tr
 function trFloorMap(x, y, id, W0) {
   const M = TN_WORLD.map, L = (M.levels || []).find(l => x >= l.x0 && x <= l.x1 && y >= l.y0 && y <= l.y1) || { name: '', x0: 0, y0: 0, x1: M.width - 1, y1: M.height - 1 };
   const cols = L.x1 - L.x0 + 1, rows = L.y1 - L.y0 + 1, k = Math.min(W0 / cols, 220 / rows), cells = [];
-  for (let yy = L.y0; yy <= L.y1; yy++) for (let xx = L.x0; xx <= L.x1; xx++) { if (M.rows[yy][xx] === '#') continue; const i = trNPC.areaOf(TN_WORLD, xx, yy);
-    cells.push(<rect key={xx + '-' + yy} x={(xx - L.x0) * k} y={(yy - L.y0) * k} width={k + .3} height={k + .3} fill={i >= 0 ? ((M.areas[i] || {}).color || '#3a4656') : '#4a5260'} />); }
+  for (let yy = L.y0; yy <= L.y1; yy++) for (let xx = L.x0; xx <= L.x1; xx++) { const wall = M.rows[yy][xx] === '#', tc = trTerrain(xx, yy); if (wall && !tc) continue; const i = trNPC.areaOf(TN_WORLD, xx, yy);
+    cells.push(<rect key={xx + '-' + yy} x={(xx - L.x0) * k} y={(yy - L.y0) * k} width={k + .3} height={k + .3} fill={wall ? tc : i >= 0 ? ((M.areas[i] || {}).color || '#3a4656') : '#4a5260'} />); }
   const px = (x - L.x0 + .5) * k, py = (y - L.y0 + .5) * k, area = trArea(x, y);
   return <div className="tr-fmap"><div className="tr-mut">{L.name} · {area}</div>
     <div style={{ position: 'relative', width: cols * k, height: rows * k, margin: '4px auto' }}>

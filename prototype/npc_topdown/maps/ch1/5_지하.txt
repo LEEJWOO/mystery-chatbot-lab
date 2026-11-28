@@ -1,0 +1,37 @@
+# 지하 — 식료품 창고·기관실·와인 저장고(숨은 공간)·재판장(공지 전엔 지배인이 막음)
+@level 지하
+@grid
+##########################################
+#AAAAAAAAAAAA#BBBBBBBBBBBB#C******CCCCCxn#
+#AAAAAAAAAAAA#BBBB***BBBBB#CCCCCCCCCCCC###
+#AAAAAAAAAAAA#BBBBBBBBBBBB#CCCbCCCCCCCC###
+#AAAAAAAAAAAA#BBBBBaBBBBBB#CCCCCCCCCCCC###
+#AAAAAAAAAAAA#BBBBBBBBBBBB#CCCCCCCCCCCC###
+#AAAAAAAAAAAA#BBBBBBBBBBBB#CCCCCCCCCCCC###
+######+############+############+#########
+#tDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD###
+#DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD###
+############+#############################
+#EEEEEEEEEEEEEEEEEEEEEEEE##FFFFFFFFFFFF###
+#EEEEEEEEEEEEEEEEEEEEEEEc##FFFFFFFFFFFF###
+#EEEEEEEEEEEEEEEEEEEEEEEEggFFFFFFFFFFFF###
+#EEEEEEEEEEEEEEEEEEEEEEEE##FFFFFFFFFFFF###
+#EEEEEEEEEEEEEEEEEEEEEEEE##FFFFFFFFFFFF###
+#EEEEEEEEEEEEEEEEEEEEEEEE##FFFFFFFFFFFF###
+##########################################
+##########################################
+@rooms
+A 식료품 창고 #2e2a24
+B 기관실 #2a2e2e
+C 와인 저장고 #2e2428
+D 지하 복도 #24242c
+E 재판장 앞 #26222e
+F 재판장 #1e1a26
+@marks
+a generator 발전기 ⚡
+b wine_rack 와인 선반 🍷
+c court_door 재판장 문 ⚖
+t link 계단(1층↔지하)
+x secret wine_gap flag=secret_wine | 선반 끝 벽돌 하나가 헐겁다. 그 뒤로 좁은 틈이 있다.
+n wine_nook 벽돌 뒤 틈 ·
+g guard court open=court_open warn=court_warn1,court_warn2 over=court_over who=지배인 area=재판장 앞 | 손님, 그 문은 아직 열리지 않았습니다. 때가 되면 제가 직접 안내해 드리겠습니다. | 다시 한번 말씀드리겠습니다. 그 문을 넘으시는 것은 규칙 위반입니다. 세 번째는 없습니다. | ……유감입니다, 손님. 규칙은 규칙이니까요.
