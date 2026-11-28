@@ -926,6 +926,28 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       <button className="tr-tbtn gold" disabled={g.sel === undefined || !!tv.fx} onClick={submit}>이 기록과 어긋난다</button>
     </div>;
   }
+  // 시간표 채우기(알리바이·면담표): 빈칸(ask)을 눌러 보기에서 고른다. 다 채우고 내면 틀린 칸만 표시되고 체력이 준다.
+  // ph = { title, guide, cols:[이름…], rows:[[{v} | {a, ask:true}]…], opts:{열 번호: [보기…]} }
+  function trTable(ph) {
+    const g = tv.g || {}, val = g.val || {}, sel = g.cell, bad = g.bad || {};
+    const asks = []; ph.rows.forEach((r, ri) => r.forEach((c, ci) => { if (c.ask) asks.push(ri + '.' + ci); }));
+    const done = asks.every(k => val[k] !== undefined);
+    const set = (k, v) => { const nv = { ...val, [k]: v }, next = asks.find(q => nv[q] === undefined); setTv(t => ({ ...t, g: { ...t.g, val: nv, cell: next, bad: { ...(t.g.bad || {}), [k]: false } } })); };
+    const submit = () => { if (tv.fx) return; const wrong = {}; ph.rows.forEach((r, ri) => r.forEach((c, ci) => { const k = ri + '.' + ci; if (c.ask && val[k] !== c.a) wrong[k] = true; }));
+      if (!Object.keys(wrong).length) trialRight(ph.okLabel || '표가 맞았다', 1300); else { setTv(t => ({ ...t, g: { ...t.g, bad: wrong } })); trialWrong(); } };
+    const [sr, sc] = sel ? sel.split('.').map(Number) : [-1, -1];
+    return <div className="tr-debate tr-tbl">
+      <div className="tr-dv-head"><b>{ph.title || '시간표 채우기'}</b><span>{ph.guide || '빈칸을 눌러 채운다'}</span></div>
+      <div className="tr-tbl-grid" style={{ gridTemplateColumns: ph.cols.map(() => '1fr').join(' ') }}>
+        {ph.cols.map((c, i) => <b key={'h' + i} className="tr-tbl-h">{c}</b>)}
+        {ph.rows.map((r, ri) => r.map((c, ci) => { const k = ri + '.' + ci; return c.ask
+          ? <button key={k} className={'tr-tbl-c ask' + (val[k] === undefined ? ' empty' : '') + (sel === k ? ' sel' : '') + (bad[k] ? ' bad' : '')} onClick={() => setTv(t => ({ ...t, g: { ...t.g, cell: t.g.cell === k ? null : k } }))}>{val[k] === undefined ? '?' : val[k]}</button>
+          : <span key={k} className="tr-tbl-c">{c.v}</span>; }))}
+      </div>
+      {sel ? <div className="tr-dsn-opts"><span>{ph.cols[sc]}</span>{(ph.opts[sc] || []).map(o => <button key={o} className={val[sel] === o ? 'on' : ''} onClick={() => set(sel, o)}>{o}</button>)}</div> : null}
+      <button className="tr-tbtn gold" disabled={!done || !!tv.fx} onClick={submit}>{done ? '이 표로 정리한다' : '빈칸을 모두 채운다'}</button>
+    </div>;
+  }
   function trDreamSentence(ph, R, ri, pick, ask, OPT, NAME, label, dtab) {
     const g = tv.g || {}, DEF = { a: [['who', '가'], ['time', '에'], ['at', '의'], ['obj', '을'], ['to', '에게'], ['act', '']], b: [['who', '가'], ['obj', '을'], ['at', '에'], ['to', '에게'], ['act', '']] };
     const setPick = (k, x) => { const nx = { ...pick, [k]: x }, next = ask.find(a => a.startsWith(dtab + '.') && nx[a] === undefined) || '';
@@ -1113,6 +1135,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     } else if (ph.type === 'dream') body = trDream(ph);
     else if (ph.type === 'choice') body = trChoice(ph);
     else if (ph.type === 'logs') body = trLogs(ph);
+    else if (ph.type === 'table') body = trTable(ph);
     else if (ph.type === 'crystal') {
       // 진상 결정: 모서리를 누르면 그 자리 단서 다섯 장이 부채꼴로 펼쳐진다
       const g = tv.g, put = g.put || {}, open = g.open, R2 = 88, cx = 174, cy = 118;

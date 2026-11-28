@@ -556,6 +556,7 @@ test('1장 재판(K1) 데이터: 인물·표정(36종)·증거·정답 위치·�
       ph.answers.forEach(a => { assert.ok(a.at[1] < segs[a.at[0]], at + ' 구절 위치'); (a.ev || []).forEach(e => assert.ok(T.evidence.includes(e), at + ' 증거 ' + e)); }); }
     if (ph.type === 'choice') { assert.equal(ph.options.filter(o => o.ok).length, 1, at + ' 정답 하나'); ph.options.forEach(o => see(o.miss, at)); }
     if (ph.type === 'crystal') ph.slots.forEach(sl => assert.ok(sl.options.includes(sl.answer), at + ' ' + sl.label));
+    if (ph.type === 'table') ph.rows.forEach(r => r.forEach((c, ci) => { if (c.ask) assert.ok((ph.opts[ci] || []).includes(c.a), at + ' 표 보기 ' + c.a); }));
     if (ph.type === 'logs') { [].concat(ph.answer).forEach(a => assert.ok(a >= 0 && a < ph.logs.length, at + ' 정답 줄')); ph.logs.forEach(l => assert.ok(ids.has(l.who), at + ' 기록 인물')); see(ph.claim, at); }
     if (ph.type === 'vote') assert.ok(ph.options.includes(ph.answer) && ph.options.every(o => ids.has(o)), at);
     if (ph.type === 'dream') ph.rounds.forEach((r, ri) => r.ask.forEach(([sd, f]) => { const v = r[sd][f], opt = { who: [...ph.cast, ''], obj: [...ph.objs, ''], at: ph.ats, time: ph.times, act: ph.acts, to: ph.cast }[f];

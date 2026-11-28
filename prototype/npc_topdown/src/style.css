@@ -516,3 +516,13 @@
 .tr-log-who{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tr-log-k{color:#c9bfe0;white-space:nowrap}
 .tr-log-x{color:#fff}
+
+/* 시간표 채우기 */
+.tr-tbl-grid{display:grid;gap:3px}
+.tr-tbl-h{font-size:11px;color:#c9bfe0;text-align:center;padding:2px 0}
+.tr-tbl-c{display:flex;align-items:center;justify-content:center;min-height:30px;padding:2px 4px;border-radius:6px;background:#120f1e;border:1px solid #ffffff14;color:#fff;font-size:12px;text-align:center}
+.tr-tbl-c.ask{background:#2a2148;border-color:#c9b4ff88;font-weight:700}
+.tr-tbl-c.ask.empty{border-style:dashed;color:#c9b4ff;background:#1b1530}
+.tr-tbl-c.ask.sel{border-color:#ffd36a;box-shadow:0 0 0 2px #ffd36a55}
+.tr-tbl-c.ask.bad{border-color:#e05a6a;color:#ffb3bd}
+.tr-tbl .tr-tbl-c{font-size:12px;line-height:1.25}
