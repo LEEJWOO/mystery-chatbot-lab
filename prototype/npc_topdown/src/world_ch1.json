@@ -3361,6 +3361,34 @@
      "area": "전망 바위",
      "spot": 3,
      "cooldownSeconds": 60
+    },
+    {
+     "id": "suzune_2_2040_19",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "21:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "로비",
+     "spot": 5,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "suzune_2_2130_20",
+     "kind": "visit",
+     "day": 2,
+     "from": "21:30",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "해안 산책로",
+     "spot": 1,
+     "cooldownSeconds": 60
     }
    ],
    "notes": [],
@@ -3647,6 +3675,20 @@
      "interruptible": true,
      "area": "정원",
      "spot": 2,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "mei_2_2040_15",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "로비",
+     "spot": 1,
      "cooldownSeconds": 60
     }
    ],
@@ -3943,6 +3985,34 @@
      "area": "휴게 코너",
      "spot": 2,
      "cooldownSeconds": 60
+    },
+    {
+     "id": "ruoxi_2_2030_15",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:30",
+     "until": "21:20",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "landmark": "shore_ledge",
+     "spot": 0,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "ruoxi_2_2120_16",
+     "kind": "visit",
+     "day": 2,
+     "from": "21:20",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "로비",
+     "spot": 4,
+     "cooldownSeconds": 60
     }
    ],
    "notes": [],
@@ -4218,6 +4288,34 @@
      "until": "10:30",
      "durationSeconds": 1560,
      "priority": 70,
+     "weight": 1,
+     "interruptible": true,
+     "area": "휴게 코너",
+     "spot": 1,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "seoha_2_2040_15",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "21:20",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "landmark": "diving",
+     "spot": 0,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "seoha_2_2120_16",
+     "kind": "visit",
+     "day": 2,
+     "from": "21:20",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
      "weight": 1,
      "interruptible": true,
      "area": "휴게 코너",
@@ -4503,6 +4601,34 @@
      "interruptible": true,
      "area": "로비",
      "spot": 20,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "clara_2_2040_15",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "21:20",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "landmark": "eaves",
+     "spot": 0,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "clara_2_2120_16",
+     "kind": "visit",
+     "day": 2,
+     "from": "21:20",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "라운지 바",
+     "spot": 1,
      "cooldownSeconds": 60
     }
    ],
@@ -4801,6 +4927,34 @@
      "interruptible": true,
      "area": "로비",
      "spot": 22,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "odile_2_2040_15",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "21:40",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "landmark": "dock_end",
+     "spot": 0,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "odile_2_2140_16",
+     "kind": "visit",
+     "day": 2,
+     "from": "21:40",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "로비",
+     "spot": 3,
      "cooldownSeconds": 60
     }
    ],
@@ -5121,6 +5275,20 @@
      "weight": 1,
      "interruptible": true,
      "landmark": "rock_edge",
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "varun_2_2040_19",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "landmark": "bench",
+     "spot": 0,
      "cooldownSeconds": 60
     }
    ],
@@ -6016,6 +6184,34 @@
      "spot": 1,
      "once": true,
      "onCompleteFact": "freddie_locate"
+    },
+    {
+     "id": "freddie_2_2040_16",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "21:20",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "landmark": "linen_shelf",
+     "spot": 0,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "freddie_2_2120_17",
+     "kind": "visit",
+     "day": 2,
+     "from": "21:20",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "정원",
+     "spot": 1,
+     "cooldownSeconds": 60
     }
    ],
    "notes": [],
@@ -6283,6 +6479,34 @@
      "area": "전망 바위",
      "spot": 1,
      "cooldownSeconds": 60
+    },
+    {
+     "id": "killian_2_2040_16",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "21:20",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "landmark": "wine_rack",
+     "spot": 0,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "killian_2_2120_17",
+     "kind": "visit",
+     "day": 2,
+     "from": "21:20",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "라운지 바",
+     "spot": 2,
+     "cooldownSeconds": 60
     }
    ],
    "notes": [],
@@ -6535,6 +6759,34 @@
      "interruptible": true,
      "area": "로비",
      "spot": 21,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "karim_2_2040_15",
+     "kind": "visit",
+     "day": 2,
+     "from": "20:40",
+     "until": "21:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "landmark": "stove",
+     "spot": 0,
+     "cooldownSeconds": 60
+    },
+    {
+     "id": "karim_2_2130_16",
+     "kind": "visit",
+     "day": 2,
+     "from": "21:30",
+     "until": "22:30",
+     "durationSeconds": 1200,
+     "priority": 55,
+     "weight": 1,
+     "interruptible": true,
+     "area": "로비",
+     "spot": 2,
      "cooldownSeconds": 60
     }
    ],
