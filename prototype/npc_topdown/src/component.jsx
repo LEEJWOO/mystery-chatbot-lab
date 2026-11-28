@@ -921,7 +921,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
       <div className="tr-dv-head"><b>{ph.title || '팔찌 기록 대조'}</b><span>{ph.guide || '주장과 어긋나는 기록 한 줄을 찍는다'}</span></div>
       {ph.claim ? <div className="tr-chs-say">{ph.claim.who !== 'me' ? <div className="tr-tpor sm">{trPortrait(ph.claim.who, 44, 54)}</div> : null}<div><b style={{ color: c.color }}>{c.name}</b><div className="tr-ttext">「{ph.claim.text}」</div></div></div> : null}
       <div className="tr-log-list">{rows.map(L => <button key={L.i} className={'tr-log' + (g.sel === L.i ? ' on' : '')} onClick={() => setTv(v => ({ ...v, g: { ...v.g, sel: L.i, miss: false } }))}>
-        <span className="tr-log-t">{L.t}</span><span className="tr-log-who" style={{ color: trNpc(L.who).color }}>{trShort(L.who)}</span><span className="tr-log-k">{icon[L.kind] || '·'} {L.kind}</span><span className="tr-log-x">{L.text}</span></button>)}</div>
+        <span className="tr-log-t">{L.t}</span><span className="tr-log-who" style={{ color: trNpc(L.who).color }}>{trShort(L.who)}</span><span className="tr-log-k" title={L.kind}>{icon[L.kind] || '·'}</span><span className="tr-log-x">{L.text}</span></button>)}</div>
       {g.miss && ph.miss ? <div className="tr-chs-miss" key={g.bad}><div className="tr-chs-say"><div><b style={{ color: trNpc(ph.miss.who).color }}>{trNpc(ph.miss.who).name}</b><div className="tr-ttext">{ph.miss.text}</div></div></div></div> : null}
       <button className="tr-tbtn gold" disabled={g.sel === undefined || !!tv.fx} onClick={submit}>이 기록과 어긋난다</button>
     </div>;
@@ -1483,7 +1483,7 @@ function trSheet({ onDev, onDbg, onGal, ev, heard, free, tab, setTab, state, deb
         {(TN_WORLD.trials || []).map(t => <div key={t.code} style={{ display: 'grid', gap: 4 }}><button style={{ height: 32 }} disabled={busy || !!state.trial} onClick={() => onTrial(t.code)}>재판 시제품 시작 · {t.title} (시험)</button>
           <div className="tr-mut">단계 바로가기(시험용)</div>
           <div className="tr-grid h">{t.phases.map((ph, i) => <button key={i} disabled={busy || !!state.trial} title={ph.title || ph.type} onClick={() => onTrialAt(t.code, i)}>{i + 1}</button>)}</div>
-          <div className="tr-mut">{t.phases.map((ph, i) => (i + 1) + '.' + ({ talk: '대사', debate: '증거 제시', pairs: '엇갈린 증언', combine: '구절 짝짓기', rebut: 'AI 반론', develop: '기억 현상', route: '동선 재현', strings: '실 엮기', dream: '꿈 조각', crystal: '진상 결정', vote: '투표' }[ph.type] || ph.type)).join(' · ')}</div></div>)}
+          <div className="tr-mut">{t.phases.map((ph, i) => (i + 1) + '.' + ({ talk: '대사', debate: '증거 제시', pairs: '엇갈린 증언', combine: '구절 짝짓기', rebut: 'AI 반론', develop: '기억 현상', route: '동선 재현', strings: '실 엮기', dream: '꿈 조각', crystal: '진상 결정', vote: '투표', choice: '고르기', logs: '기록 대조', table: '표 채우기', nonstop: '엇갈린 증언', trans: '전환', investigate: '조사' }[ph.type] || ph.type)).join(' · ')}</div></div>)}
         <button onClick={onLook}>외형 다시 고르기(체크인 카드)</button>
         <div className="tr-mut">관계 조절(시험용 · ±10점, 20점마다 한 단계)</div>
         {TN_WORLD.npcs.map(n => <div key={n.id} className="tr-relbox"><b>{trNpc(n.id).name}</b>{trRelBars(state, n.id, onRel)}</div>)}

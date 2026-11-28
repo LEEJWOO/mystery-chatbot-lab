@@ -510,8 +510,9 @@
 
 /* 팔찌 기록 대조 */
 .tr-log-list{display:grid;gap:4px;max-height:240px;overflow:auto}
-.tr-log{display:grid;grid-template-columns:44px 54px 50px 1fr;gap:4px;align-items:center;text-align:left;padding:6px 7px;border-radius:8px;background:#120f1e;border:1px solid #ffffff1a;color:#e6dcff;font-size:12px}
-.tr-log.on{border-color:#ffd36a;box-shadow:0 0 0 2px #ffd36a44;background:#221a38}
+.tr-log-list .tr-log{display:grid;grid-template-columns:40px 44px 18px 1fr;gap:4px;align-items:center;text-align:left;padding:6px 7px;height:auto;min-height:30px;line-height:1.35;border-radius:8px;background:#120f1e;border:1px solid #ffffff1a;color:#e6dcff;font-size:12px}
+.tr-log-list .tr-log>span{font-size:12px}
+.tr-log-list .tr-log.on{border-color:#ffd36a;box-shadow:0 0 0 2px #ffd36a44;background:#221a38}
 .tr-log-t{font-weight:800;color:#ffd36a;font-variant-numeric:tabular-nums}
 .tr-log-who{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tr-log-k{color:#c9bfe0;white-space:nowrap}
