@@ -118,7 +118,13 @@ room('재판장', 27, B + 11, 38, B + 16, '#1e1a26')
 door(6, B + 7); door(19, B + 7); door(32, B + 7); door(12, B + 10)
 lm('generator', '발전기', 19, B + 4, '⚡', [(18, B + 2), (19, B + 2), (20, B + 2)])
 lm('wine_rack', '와인 선반', 30, B + 3, '🍷', [(x, B + 1) for x in range(28, 34)])
-lm('court_door', '재판장 문', 24, B + 13, '⚖', [(25, B + 13), (26, B + 13)])      # 공지 전에는 막힘(문 칸은 벽)
+lm('court_door', '재판장 문', 24, B + 12, '⚖')
+grid[B + 13][25] = '.'; grid[B + 13][26] = '.'                                   # 문 칸은 열려 있되, 공지 전에는 지배인이 막는다(map.guards)
+GUARDS = [{'id': 'court', 'cells': [[25, B + 13], [26, B + 13]], 'stand': [25, B + 13], 'area': '재판장 앞', 'open': 'court_open',
+           'warn': ['court_warn1', 'court_warn2'], 'over': 'court_over', 'who': '지배인',
+           'lines': ['손님, 그 문은 아직 열리지 않았습니다. 때가 되면 제가 직접 안내해 드리겠습니다.',
+                     '다시 한번 말씀드리겠습니다. 그 문을 넘으시는 것은 규칙 위반입니다. 세 번째는 없습니다.',
+                     '……유감입니다, 손님. 규칙은 규칙이니까요.']}]
 ST_B = (1, B + 8)
 link(ST1_DN, ST_B, '계단(1층↔지하)')
 # 숨은 공간 마: 와인 저장고 오른쪽 위 구석(38, B+1)에서 위 벽(B+0)으로 → 틈(B-1)… 위는 층 경계라 오른쪽으로
@@ -137,7 +143,7 @@ for q in secrets: assert grid[q['y']][q['x']] == '#' and grid[q['from'][1]][q['f
 
 rows = [''.join(r) for r in grid]
 MAP = {'id': 'hotel_reverie_ch1', 'width': W_, 'height': H_, 'rows': rows, 'tileSeconds': 4, 'areas': areas,
-       'landmarks': landmarks, 'props': [], 'floors': [], 'decor': [], 'links': links, 'secrets': secrets, 'levels': levels}
+       'landmarks': landmarks, 'props': [], 'floors': [], 'decor': [], 'links': links, 'secrets': secrets, 'levels': levels, 'guards': GUARDS}
 
 if __name__ == '__main__':
     base = json.load(open(os.path.join(ROOT, 'src', 'world.json'), encoding='utf-8'))
@@ -145,9 +151,9 @@ if __name__ == '__main__':
     w.update({'kind': 'troemerei-ch1', 'title': '몽환의 트로이메라이 1장 (뼈대)', 'chapter': 1, 'startTime': '18:00', 'map': MAP,
               'notes': '1장 뼈대: 지도·계단·숨은 공간만. 사건·일정·재판 데이터는 비어 있음.',
               'facts': [], 'events': {}, 'markers': [], 'items': [], 'notices': [], 'slots': [], 'branches': [], 'scenes': [],
-              'trials': [], 'cases': [], 'debugTalk': [], 'onComplete': [], 'debugFlags': ['secret_linen', 'secret_wine'],
+              'trials': [], 'cases': [], 'debugTalk': [], 'onComplete': [], 'debugFlags': ['secret_linen', 'secret_wine', 'court_open', 'court_warn1', 'court_warn2', 'court_over'],
               'device': {'cellSeconds': 43200, 'cells': 8, 'graceSeconds': 60, 'cost': {'photo': 300, 'callMin': 600, 'locate': 10800}}})
-    w['flagNames'] = sorted(set((base.get('flagNames') or []) + ['secret_linen', 'secret_wine']))
+    w['flagNames'] = sorted(set((base.get('flagNames') or []) + ['secret_linen', 'secret_wine', 'court_open', 'court_warn1', 'court_warn2', 'court_over']))
     def center(name):
         a = next(a for a in areas if a['name'] == name); return [(a['x0'] + a['x1']) // 2, (a['y0'] + a['y1']) // 2 + 1]
     w['player'] = dict(base['player'], x=21, y=F1 + 18)

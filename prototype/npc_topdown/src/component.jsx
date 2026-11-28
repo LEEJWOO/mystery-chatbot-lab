@@ -587,6 +587,10 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   function padUp() { clearInterval(padRef.current); padRef.current = null; }
   // 키보드 방향키 = 십자 패드(누르고 있으면 계속 걷는다). 글 입력 중에는 무시.
   const keyRef = useRef('');
+  // 막는 칸(지배인 등)에 부딪히면 경고 대사를 띄운다. 경고 수를 넘기면 게임 오버.
+  const [guardMsg, setGuardMsg] = useState(null), guardRef = useRef(state.guardHit ? state.guardHit.at : -1);
+  useEffect(() => { const h = state.guardHit; if (!h || h.at === guardRef.current) return; guardRef.current = h.at;
+    const G = (TN_WORLD.map.guards || []).find(x => x.id === h.id); if (G) { padUp(); keyRef.current = ''; setGuardMsg({ who: G.who, text: (G.lines || [])[Math.min(h.n, (G.lines || []).length) - 1] || '', over: !!state.flags[G.over] }); } });
   useEffect(() => {
     // 방향키는 e.key, WASD는 e.code(한글 입력 상태에서도 같은 자판 위치로 동작).
     const K = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
@@ -614,6 +618,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
     const lm = TN_WORLD.map.landmarks.find(l => (l.x === x && l.y === y || (l.hit || []).some(h => h[0] === x && h[1] === y)) && TroemereiNPC.areaOf(TN_WORLD, l.x, l.y) === room);
     if (lm) { setPreview(null); setMenu({ kind: 'lm', id: lm.id }); return; }
     setMenu(null);
+    { const G = (TN_WORLD.map.guards || []).find(g2 => g2.cells.some(q => q[0] === x && q[1] === y)); if (G && !state.flags[G.open] && Math.abs(x - p.x) + Math.abs(y - p.y) === 1) { setPreview(null); step(x - p.x, y - p.y); return; } }
     if (!TroemereiNPC.walkable(TN_WORLD, x, y, state)) { setPreview(null); return; }
     const ta = TroemereiNPC.areaOf(TN_WORLD, x, y);
     // 다른 방(문 너머)도 눌러서 갈 수 있다. 그 방 사람은 들어가기 전까지 보이지 않는다.
@@ -1168,12 +1173,15 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
             {(preview ? preview.path : p.route).map((q, i) => <circle key={i} cx={(q.x + .5) * TR_CELL} cy={(q.y + .5) * TR_CELL} r={i === (preview ? preview.path : p.route).length - 1 ? 7 : 3.5} fill={preview ? '#f6e3b4' : '#f2c46d'} opacity={preview ? .9 : .75} stroke="#3a2a14" strokeWidth="1" />)}
             {ml ? [[ml.x, ml.y], ...(ml.hit || [])].map(([hx, hy], i) => <rect key={i} x={hx * TR_CELL + 2} y={hy * TR_CELL + 2} width={TR_CELL - 4} height={TR_CELL - 4} rx="6" fill="none" stroke="#f6d48a" strokeWidth="2" strokeDasharray={i ? '4 3' : ''} />) : null}
           </svg>
+          {(TN_WORLD.map.guards || []).filter(G => !state.flags[G.open] && G.stand && trArea(p.x, p.y) === G.area).map(G => <div key={'g' + G.id} className="tr-ch" style={{ transform: `translate(${G.stand[0] * TR_CELL}px,${G.stand[1] * TR_CELL}px)` }}><div className="tr-shadow" /><div className="tr-hosttok">{trHostSil()}</div><div className="tr-tag" style={{ borderColor: '#e9c98c' }}>{G.who}</div></div>)}
           {[...vis.map(n => ({ id: n.id, x: n.x, y: n.y, n })), { id: 'player', x: p.x, y: p.y, n: null }].sort((a, b) => a.y - b.y).map(c => trCharSprite(c, animRef, movedRef, menu && menu.id === c.id, badImg, state.player.look))}
         </div>
         <div key={'fade' + room} className="tr-fade" />
       </div>
       {(() => { const b = TroemereiNPC.battery(TN_WORLD, state); return b && b.dead ? <div className="tr-over"><div><b>팔찌의 전지가 다 되었다</b><div className="tr-mut" style={{ margin: '8px 0 12px' }}>전지가 빠진 채로 1분이 지났다. ……의식이 멀어진다.</div>
         <button onClick={() => { setState(TroemereiNPC.createWorld(TN_WORLD)); }}>처음부터</button></div></div> : null; })()}
+      {guardMsg ? <div className="tr-over" {...(guardMsg.over ? {} : { 'data-adv': '1' })} onClick={() => { if (!guardMsg.over) setGuardMsg(null); }}><div className="tr-guard"><div className="tr-guard-sil">{trHostSil()}</div><b>{guardMsg.who}</b><p>{guardMsg.text}</p>
+        {guardMsg.over ? <><div className="tr-mut" style={{ marginBottom: 10 }}>게임 오버 — 규칙을 어겼다.</div><button onClick={() => { setGuardMsg(null); setState(TroemereiNPC.createWorld(TN_WORLD)); }}>처음부터</button></> : <div className="tr-mut">눌러서 닫기</div>}</div></div> : null}
       <div className="tr-batrow">{trBatPill(state, () => setSheet('dev'))}</div>
       <div className="tr-hud"><span className="tr-pill tr-area"><i />{RM.name}</span><span className="tr-pill tr-time">{state.day}일 {TroemereiNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
         <button className="tr-hbtn" disabled={busy} title="10초 진행" onClick={() => { setPreview(null); setState(v => TroemereiNPC.dispatch(TN_WORLD, v, { type: 'WAIT', seconds: 10 })); }}>+10초</button><button className="tr-hbtn" onClick={() => setSheet('rest')}>휴식</button><button className="tr-hbtn" onClick={() => setSheet('note')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>

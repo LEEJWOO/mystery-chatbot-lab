@@ -10,7 +10,10 @@ const TroemereiNPC = (() => {
   const inBounds = (w,x,y) => x>=0 && y>=0 && x<w.map.width && y<w.map.height;
   // 숨은 공간: map.secrets의 칸은 벽('#')이지만, 그 플래그가 켜진 뒤에는(상태 s를 넘긴 경우) 지나갈 수 있다.
   const secretAt = (w,x,y) => (w.map.secrets||[]).find(q=>q.x===x&&q.y===y);
-  const walkable = (w,x,y,s) => { if(!inBounds(w,x,y))return false; if(w.map.rows[y][x]!=='#')return true; const q=s&&secretAt(w,x,y); return !!(q&&s.flags&&s.flags[q.flag]); };
+  // 막는 칸(map.guards): 열림 플래그가 꺼져 있으면 지나갈 수 없다(예: 공지 전 재판장 문 — 지배인이 막는다).
+  const guardAt = (w,x,y) => (w.map.guards||[]).find(G=>G.cells.some(c=>c[0]===x&&c[1]===y));
+  const guarded = (w,x,y,s) => { const G=guardAt(w,x,y); return !!G&&!(s&&s.flags&&s.flags[G.open]); };
+  const walkable = (w,x,y,s) => { if(!inBounds(w,x,y))return false; if(guarded(w,x,y,s))return false; if(w.map.rows[y][x]!=='#')return true; const q=s&&secretAt(w,x,y); return !!(q&&s.flags&&s.flags[q.flag]); };
   // 계단 등 연결 칸: map.links [{a:[x,y], b:[x,y], name}]. 한 칸에서 다른 칸으로 한 걸음에 이어진다(층 사이 이동).
   const linkOf = (w,x,y) => { for(const L of w.map.links||[]){ if(L.a[0]===x&&L.a[1]===y)return {x:L.b[0],y:L.b[1],L}; if(L.b[0]===x&&L.b[1]===y)return {x:L.a[0],y:L.a[1],L}; } return null; };
   const linked = (w,p,q) => { const o=linkOf(w,p.x,p.y); return !!o&&o.x===q.x&&o.y===q.y; };
@@ -567,6 +570,11 @@ const TroemereiNPC = (() => {
       // 숨은 공간: 정해진 칸(from)에서 그 벽 쪽으로 한 번 더 움직이면 열린다.
       const sq=action.type==='MOVE_ONE'&&secretAt(w,target.x,target.y);
       if(sq&&!s.flags[sq.flag]&&sq.from&&sq.from[0]===player.x&&sq.from[1]===player.y){s.flags[sq.flag]=true;addLog(w,s,sq.text||'벽 틈으로 들어갈 수 있을 것 같다.','player');}
+      // 막는 칸에 들어가려 하면 경고가 쌓이고, 경고 수를 넘기면 over 플래그(게임 오버).
+      const gd=action.type==='MOVE_ONE'&&guardAt(w,target.x,target.y);
+      if(gd&&!s.flags[gd.open]){const n=gd.warn.filter(f=>s.flags[f]).length;
+        if(n>=gd.warn.length)s.flags[gd.over]=true;else s.flags[gd.warn[n]]=true;
+        s.guardHit={id:gd.id,n:n+1,at:s.clock};addLog(w,s,(gd.who||'누군가')+'이(가) 앞을 막아섰다.','player');return s;}
       if(!walkable(w,target.x,target.y,s)){addLog(w,s,'그곳으로는 이동할 수 없다.','player');return s;}
       const p=route(w,s,player,target,{ignorePlayer:true});
       if(!p.length&&manhattan(player,target)>0){addLog(w,s,'갈 수 있는 경로가 없다.','player');return s;}

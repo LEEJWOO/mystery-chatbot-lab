@@ -459,3 +459,8 @@
 @keyframes trPing{0%{transform:scale(.4);opacity:.6}100%{transform:scale(1.4);opacity:0}}
 .tr-over{position:absolute;inset:0;z-index:70;background:#05070bdd;display:grid;place-items:center;text-align:center;color:#f3ead6;padding:20px}.tr-over b{font-size:16px;color:#ff8a7a}.tr-over button{height:34px;padding:0 16px}
 .tr-batrow{position:absolute;right:4px;top:34px;z-index:5;display:flex}.tr-batrow .tr-bat{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px;white-space:nowrap;cursor:pointer;font-size:11px;background:#0e1624e0;border:1px solid #e9c98c55;border-radius:999px;color:#f3ead6}
+.tr-guard{max-width:280px;background:#120e1c;border:1px solid #e9c98c66;border-radius:12px;padding:14px 16px;color:#f3ead6}
+.tr-guard b{display:block;color:#e9c98c;font-size:14px;margin:4px 0}.tr-guard p{margin:6px 0 10px;font-size:13px;line-height:1.5}
+.tr-guard-sil{width:64px;height:100px;margin:0 auto}.tr-guard-sil svg{width:100%;height:100%}
+.tr-hosttok{position:absolute;left:4px;bottom:2px;width:28px;height:46px}.tr-hosttok svg{width:100%;height:100%}
+.tr-guard-sil .tr-host-sil,.tr-hosttok .tr-host-sil{position:static;inset:auto;left:auto;top:auto;bottom:auto;transform:none;width:100%;height:100%;max-width:none;filter:none}

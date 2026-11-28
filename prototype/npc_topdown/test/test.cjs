@@ -514,6 +514,15 @@ test('팔찌 전지: 시간·기능으로 줄고, 교체하면 새로, 0 뒤 1�
   let d = JSON.parse(JSON.stringify(s)); d.player.batUsed = 43200; d = E.advance(w, d, 59); assert.equal(E.battery(w, d).dead, false);
   d = E.advance(w, d, 2); assert.equal(E.battery(w, d).dead, true);
 });
+
+test('재판장 문: 공지 전에는 막히고 1·2회 경고, 3회째 게임 오버, 열리면 통과', () => {
+  const w = require('../src/world_ch1.json'), G = w.map.guards[0]; let s = E.createWorld(w);
+  const [gx, gy] = G.cells[0]; s.player.x = gx - 1; s.player.y = gy; s.player.route = [];
+  for (let i = 1; i <= 3; i++) { s = E.dispatch(w, s, { type: 'MOVE_ONE', dx: 1, dy: 0 }); assert.deepEqual([s.player.x, s.player.y], [gx - 1, gy], '들어가면 안 됨'); assert.equal(s.guardHit.n, i); }
+  assert.equal(!!s.flags.court_warn1 && !!s.flags.court_warn2 && !!s.flags.court_over, true);
+  let o = E.createWorld(w); o.player.x = gx - 1; o.player.y = gy; o.flags.court_open = true;
+  o = E.dispatch(w, o, { type: 'MOVE_ONE', dx: 1, dy: 0 }); o = E.advance(w, o, 10); assert.deepEqual([o.player.x, o.player.y], [gx, gy], '열리면 지나감');
+});
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
 console.log(`${pass}/${tests.length} 통과`);
 process.exit(pass === tests.length ? 0 : 1);
