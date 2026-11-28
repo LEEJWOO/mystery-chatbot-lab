@@ -76,7 +76,7 @@ wall_fill = color #17121e
 wall_top = auto Ilmare_Inside_A4 2 5
 
 # ── 조사 지점 몸체 (object 아이디 = …)
-object fountain = tile Tuscan_B 8 12 4 3 fit
+object fountain = tile Tuscan_B 8 11 4 3 fit
 object diving = draw diving
 object lockers = tile SF_Inside_B 12 6 1 2 repeat up=1
 object bench = tile Ilmare_Outside_C 4 9 2 1 fit

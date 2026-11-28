@@ -236,6 +236,12 @@ for L_ in MAP['links']:
     if L_['name'] == '정문':
         for p in (L_['a'], L_['b']):
             if p[1] > 0 and TER[p[1] - 1][p[0]] == '=': put(TH['misc']['building_door']['im'], p[0] - .5, p[1] - 2)
+            elif p[1] + 1 < H and TER[p[1] + 1][p[0]] == '#':      # 실내 쪽: 아래 벽에 열린 문 + 발판(나가는 곳이 보이게)
+                X0, Y0 = p[0] * T, (p[1] + 1) * T; d_ = ImageDraw.Draw(img)
+                floor_full(floor_im(near_area(p[0], p[1])), p[0], p[1] + 1)
+                d_.rectangle([X0, Y0, X0 + T - 1, Y0 + T - 1], fill=(250, 236, 200, 90))
+                d_.rectangle([X0 - 6, Y0, X0 + 3, Y0 + T - 1], fill=(92, 60, 38, 255)); d_.rectangle([X0 + T - 4, Y0, X0 + T + 5, Y0 + T - 1], fill=(92, 60, 38, 255))
+                d_.rectangle([p[0] * T + 5, p[1] * T + 14, p[0] * T + T - 6, p[1] * T + T - 4], fill=(122, 44, 40, 255), outline=(200, 160, 90, 255), width=2)
 
 # 3) 직접 그리는 것
 D = ImageDraw.Draw(img)
