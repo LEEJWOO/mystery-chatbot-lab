@@ -5,7 +5,7 @@ const TroemereiCodec = (() => {
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const MODES = ['idle', 'moving', 'busy', 'paused', 'accompany'];
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-  const VERSION = 11;
+  const VERSION = 12;
   // 플레이어 외형 항목(체크인): 성별·앞머리·뒷머리·머리색·눈 모양·눈동자색·피부·옷·옷 색·장신구
   const LOOK_KEYS = ['g', 'hf', 'hb', 'hc', 'eye', 'ec', 'sk', 'of', 'oc', 'ac'];
   const KINDS = ['', 'T', 'I', 'A', 'P', 'R'];
@@ -116,6 +116,7 @@ const TroemereiCodec = (() => {
     for (const c of w.cases || []) { const v = (s.cases || {})[c.id]; if (!v) o.uint(0); else { o.uint(v[0]); o.uint(Math.max(0, clock - v[1])); o.uint(v[2]); } } // 사건 진행
     if (s.trial) { o.uint(s.trial.i + 1); o.uint(s.trial.phase); o.uint(s.trial.hp); o.uint(s.trial.sub); o.uint(s.trial.failed ? 1 : 0); o.uint(s.trial.hold || 0); } else o.uint(0); // 재판 진행
     for (const spec of w.npcs) { const v = (s.player.seen || {})[spec.id]; if (!v) o.uint(0); else { o.uint(v[0] + 2); o.uint(Math.max(0, clock - v[1])); } }
+    if (w.device) { o.uint(Math.max(0, clock - (s.player.batAt || 0))); o.uint(Math.round((s.player.batUsed || 0) / 60)); o.uint(s.player.cells | 0); } // 팔찌 전지(끼운 뒤 지난 초·기능 소모 분·예비)
     for (const spec of w.npcs) {
       const n = s.npcs.find(x => x.id === spec.id);
       o.byte(n.x); o.byte(n.y); o.byte(MODES.indexOf(n.mode));
@@ -160,6 +161,7 @@ const TroemereiCodec = (() => {
     const ti = r.uint(); s.trial = ti ? { i: ti - 1, phase: r.uint(), hp: r.uint(), sub: r.uint(), failed: r.uint(), hold: r.uint() } : null;
     if (s.trial && !(w.trials || [])[s.trial.i]) throw Error('상태 코드의 재판 번호가 세계 데이터에 없습니다');
     for (const spec of w.npcs) { const a = r.uint(); if (a) s.player.seen[spec.id] = [a - 2, clock - r.uint()]; }
+    if (w.device) { s.player.batAt = clock - r.uint(); s.player.batUsed = r.uint() * 60; s.player.cells = r.uint(); }
     s.npcs = w.npcs.map(() => {
       const n = { x: r.byte(), y: r.byte() };
       n.mode = MODES[r.byte()]; if (!n.mode) throw Error('NPC 상태 값 오류');

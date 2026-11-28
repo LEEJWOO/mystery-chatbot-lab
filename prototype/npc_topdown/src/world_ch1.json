@@ -1904,5 +1904,15 @@
   ]
  },
  "cases": [],
- "debugTalk": []
+ "debugTalk": [],
+ "device": {
+  "cellSeconds": 43200,
+  "cells": 8,
+  "graceSeconds": 60,
+  "cost": {
+   "photo": 300,
+   "callMin": 600,
+   "locate": 10800
+  }
+ }
 }

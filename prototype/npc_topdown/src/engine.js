@@ -113,6 +113,7 @@ const TroemereiNPC = (() => {
       logs:[],revision:0,pend:null,pk:'',pc:0};
     relInit(w,s.player);
     s.player.look=null; // 체크인 전(첫 화면에서 외형을 고른다)
+    if(w.device){s.player.batAt=s.clock;s.player.batUsed=0;s.player.cells=(w.device.cells||8)-1;} // 팔찌: 끼운 시각·기능 소모(초)·남은 예비 전지
     addLog(w,s,'시뮬레이션이 시작되었다. NPC들은 각자의 일정에 따라 행동한다.','player');
     // Decisions exist from the first frame; the player can cancel a planned visit before movement.
     for(const n of s.npcs)decide(w,s,n);
@@ -540,8 +541,27 @@ const TroemereiNPC = (() => {
     for(const m of w.markers||[])if(s.flags[m.flag])out.push(m.token);
     return out;
   }
+  // ── 팔찌 전지 ── 남은 양 = 전지 1개 용량 − (지금 − 끼운 시각) − 기능으로 쓴 양. 0이 된 뒤 graceSeconds(1분)가 지나면 착용자 사망.
+  function devCfg(w){return w.device||null;}
+  function battery(w,s){const D=devCfg(w);if(!D||s.player.batAt===undefined)return null;
+    const cap=D.cellSeconds||43200,left=cap-(s.clock-s.player.batAt)-(s.player.batUsed||0);
+    return {left,cap,cells:s.player.cells|0,dead:left<=-(D.graceSeconds||60),empty:left<=0};}
+  function batUse(w,s,sec){if(devCfg(w)&&s.player.batAt!==undefined)s.player.batUsed=(s.player.batUsed||0)+Math.max(0,sec|0);}
   function dispatch(w,state,action){
     let s=clone(state);const player=s.player;
+    if(action.type==='DEVICE'){ // 팔찌 기능: photo / call(minutes) / locate(npcId) / swap
+      const D=devCfg(w),b=battery(w,s);if(!D||!b){addLog(w,s,'팔찌가 없다.','player');return s;}
+      if(b.dead){addLog(w,s,'팔찌가 멈췄다.','player');return s;}
+      const C=D.cost||{};
+      if(action.op==='swap'){if(s.player.cells<=0){addLog(w,s,'예비 전지가 없다.','player');return s;}
+        s.player.cells--;s.player.batAt=s.clock+60;s.player.batUsed=0;addLog(w,s,'팔찌 전지를 갈아 끼웠다(1분).','player');return s;} // 교체 1분은 화면이 WAIT 60으로 흘린다
+      if(b.empty){addLog(w,s,'전지가 다 됐다. 전지부터 갈아야 한다.','player');return s;}
+      const cost=action.op==='photo'?(C.photo||300):action.op==='call'?(C.callMin||600)*Math.max(1,action.minutes|0):action.op==='locate'?(C.locate||10800):0;
+      batUse(w,s,cost);
+      if(action.op==='locate'){const n=node(s,action.npcId);s.player.lastLocate=n?{id:n.id,x:n.x,y:n.y,at:s.clock}:null;addLog(w,s,(n?nm(w,s,n.id):'?')+'의 위치를 조회했다.','player');}
+      else addLog(w,s,action.op==='photo'?'사진을 찍었다.':'통화를 했다.','player');
+      return s;
+    }
     if(action.type==='MOVE_TO'||action.type==='MOVE_ONE'){
       const target=action.type==='MOVE_ONE'?{x:player.x+action.dx,y:player.y+action.dy}:{x:action.x,y:action.y};
       // 숨은 공간: 정해진 칸(from)에서 그 벽 쪽으로 한 번 더 움직이면 열린다.
@@ -650,6 +670,6 @@ const TroemereiNPC = (() => {
     for(const x of [s.player,...s.npcs])if(!walkable(w,x.x,x.y,s))throw Error('Invalid position '+x.x+','+x.y);
     return true;
   }
-  return {createWorld, nm, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
+  return {battery, createWorld, nm, inInvestigation, branchLetter, relScales, relLevel, relAdd, applyRel, startTrial, trialHit, trialStep, caller, parseK, lineOfSight, advance, advanceUntil, absTime, itemsAt, slotOf, advanceSlow, applyEvent, hearFacts, factCode, markers, dispatch, applyTalk, talkSeconds, describe, areaOf, sees, route, walkable, clock, diagnostics, validate, clone};
 })();
 if(typeof module!=='undefined')module.exports=TroemereiNPC;

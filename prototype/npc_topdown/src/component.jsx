@@ -576,6 +576,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
   function act(a) { if (busy) return; setState(v => TroemereiNPC.dispatch(TN_WORLD, v, a)); }
   function step(dx, dy) {
     setPreview(null);
+    { const b = TroemereiNPC.battery(TN_WORLD, state); if (b && b.dead) return; }
     // 바로 옆(상하좌우 1칸) 인물 쪽으로 한 칸 더 가려 하면, 그 인물을 눌렀을 때와 같은 행동 창을 연다.
     const P0 = state.player, nb = !P0.route.length && state.npcs.find(n => n.x === P0.x + dx && n.y === P0.y + dy && (debug || trVisible(state, n)));
     if (nb) { padUp(); keyRef.current = ''; setMenu({ kind: 'npc', id: nb.id }); return; }
@@ -1171,6 +1172,9 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         </div>
         <div key={'fade' + room} className="tr-fade" />
       </div>
+      {(() => { const b = TroemereiNPC.battery(TN_WORLD, state); return b && b.dead ? <div className="tr-over"><div><b>팔찌의 전지가 다 되었다</b><div className="tr-mut" style={{ margin: '8px 0 12px' }}>전지가 빠진 채로 1분이 지났다. ……의식이 멀어진다.</div>
+        <button onClick={() => { setState(TroemereiNPC.createWorld(TN_WORLD)); }}>처음부터</button></div></div> : null; })()}
+      <div className="tr-batrow">{trBatPill(state, () => setSheet('dev'))}</div>
       <div className="tr-hud"><span className="tr-pill tr-area"><i />{RM.name}</span><span className="tr-pill tr-time">{state.day}일 {TroemereiNPC.clock(state.clock)}</span><span style={{ flex: 1 }} />
         <button className="tr-hbtn" disabled={busy} title="10초 진행" onClick={() => { setPreview(null); setState(v => TroemereiNPC.dispatch(TN_WORLD, v, { type: 'WAIT', seconds: 10 })); }}>+10초</button><button className="tr-hbtn" onClick={() => setSheet('rest')}>휴식</button><button className="tr-hbtn" onClick={() => setSheet('note')}>노트</button><button className="tr-hbtn" aria-label="메뉴" onClick={() => setSheet('set')}>≡</button></div>
       {investigating ? (() => { const ph = TN_WORLD.trials[state.trial.i].phases[state.trial.phase]; return <div className="tr-inv"><b>조사 중</b><span>마감 {trHM(state.trial.sub)}</span>
@@ -1197,7 +1201,7 @@ function Troemerei({ s = '', t = '', d = '', e = '', k = '', f = '', r = '' }) {
         <div className="tr-menu-g"><button onClick={() => menuDo('LOOK')}>관찰 0초</button><button onClick={() => menuDo('SEARCH')}>조사</button><button onClick={() => menuDo('GO')}>여기로 이동</button><button onClick={() => setMenu(null)}>닫기</button></div></div> : null}
       {sent ? <div className="tr-preview" style={{ left: 112 }}>전달했습니다. 새 화면에서 이어집니다.</div> : null}
       {gal ? trGallery(gal, setGal, badImg, setBadImg) : null}
-      {sheet ? trSheet({ onDbg: (fn, msg) => { setState(v => { const x = TroemereiNPC.clone(v); fn(x); return x; }); if (msg) setToast(msg); }, onGal: () => { setGal({ id: TN_WORLD.npcs[0].id, pose: 'default', face: '기본' }); setSheet(''); }, onLook: () => { setCk(state.player.look || AV_DEFAULT); setSheet(''); }, onRel: (id, sc, d2) => setState(v => { const x = TroemereiNPC.clone(v); TroemereiNPC.relAdd(TN_WORLD, x, id, { [sc]: d2 }); return x; }), ev: boot.ev, heard: heardRef.current || (k ? { raw: String(k), accepted: [], rejected: [], wait: true } : null), free, tab: sheet, setTab: setSheet, state, debug, setDebug, busy, rest: { h: restH, setH: setRestH, mi: restM, setMi: setRestM }, onSkip: skipTo, onTrial: code => { setState(TroemereiNPC.startTrial(TN_WORLD, state, code)); setSheet(''); setTv({ reply: false, idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', fx: '', voted: false, g: {} }); }, onTrialAt: (code, n) => { let x = TroemereiNPC.startTrial(TN_WORLD, state, code); for (let i = 0; i < n; i++) x = TroemereiNPC.trialStep(TN_WORLD, x, 'NEXT'); setState(x); setSheet(''); setTv({ reply: false, idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', fx: '', voted: false, g: {} }); }, onUnstuck: () => { const n = TroemereiNPC.dispatch(TN_WORLD, state, { type: 'UNSTUCK' }); setState(n); setSheet(''); setToast((n.logs[n.logs.length - 1] || {}).text || ''); }, pick, setPick,
+      {sheet ? trSheet({ onDev: d => { setState(v => { let x = TroemereiNPC.dispatch(TN_WORLD, v, { type: 'DEVICE', ...d }); if (d.op === 'swap') x = TroemereiNPC.advance(TN_WORLD, x, 60); return x; }); }, onDbg: (fn, msg) => { setState(v => { const x = TroemereiNPC.clone(v); fn(x); return x; }); if (msg) setToast(msg); }, onGal: () => { setGal({ id: TN_WORLD.npcs[0].id, pose: 'default', face: '기본' }); setSheet(''); }, onLook: () => { setCk(state.player.look || AV_DEFAULT); setSheet(''); }, onRel: (id, sc, d2) => setState(v => { const x = TroemereiNPC.clone(v); TroemereiNPC.relAdd(TN_WORLD, x, id, { [sc]: d2 }); return x; }), ev: boot.ev, heard: heardRef.current || (k ? { raw: String(k), accepted: [], rejected: [], wait: true } : null), free, tab: sheet, setTab: setSheet, state, debug, setDebug, busy, rest: { h: restH, setH: setRestH, mi: restM, setMi: setRestM }, onSkip: skipTo, onTrial: code => { setState(TroemereiNPC.startTrial(TN_WORLD, state, code)); setSheet(''); setTv({ reply: false, idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', fx: '', voted: false, g: {} }); }, onTrialAt: (code, n) => { let x = TroemereiNPC.startTrial(TN_WORLD, state, code); for (let i = 0; i < n; i++) x = TroemereiNPC.trialStep(TN_WORLD, x, 'NEXT'); setState(x); setSheet(''); setTv({ reply: false, idx: 0, shown: 0, stmt: 0, drawer: false, vote: '', ev: '', fx: '', voted: false, g: {} }); }, onUnstuck: () => { const n = TroemereiNPC.dispatch(TN_WORLD, state, { type: 'UNSTUCK' }); setState(n); setSheet(''); setToast((n.logs[n.logs.length - 1] || {}).text || ''); }, pick, setPick,
         onWait: sec => { act({ type: 'WAIT', seconds: sec }); setSheet(''); }, codeText, setCodeText,
         onRestore: () => { try { const v = TroemereiCodec.unpack(TN_WORLD, codeText.trim()); setState(TroemereiNPC.applyTalk(TN_WORLD, v, 0)); setSheet(''); setToast('상태 코드를 복원했습니다'); } catch (e) { setToast('복원 실패: ' + e.message); } },
         onFree: () => { setSheet('free'); setText(''); }, text, setText, send, sent }) : null}
@@ -1261,8 +1265,46 @@ function trGallery(g, setG, badImg, setBadImg) {
     <div className="tr-dbgrw"><button onClick={() => setG(null)}>닫기</button></div>
   </div>;
 }
-function trSheet({ onDbg, onGal, ev, heard, free, tab, setTab, state, debug, setDebug, busy, onSkip, onUnstuck, onTrial, onTrialAt, onRel, onLook, pick, setPick, rest, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
-  const tabs = [['note', '수첩'], ['scene', '목격'], ['item', '증거'], ['clue', '단서'], ['rest', '휴식'], ['set', '설정']];
+// ---------- 팔찌 ----------
+const trDur = sec => { const m = Math.max(0, Math.floor(sec / 60)), h = Math.floor(m / 60); return h ? h + '시간' + (m % 60 ? ' ' + (m % 60) + '분' : '') : (m % 60) + '분'; };
+function trBatPill(state, onClick) {
+  const b = TroemereiNPC.battery(TN_WORLD, state); if (!b) return null;
+  const low = b.left < 3600, pct = Math.max(0, Math.min(1, b.left / b.cap));
+  return <button className={'tr-pill tr-bat' + (low ? ' low' : '')} onClick={onClick} title="팔찌 전지">
+    <span className="tr-batbar"><i style={{ width: (pct * 100).toFixed(0) + '%' }} /></span>{b.left > 0 ? Math.floor(b.left / 3600) + ':' + String(Math.floor(b.left % 3600 / 60)).padStart(2, '0') : '0:00'}<small>×{b.cells}</small></button>;
+}
+// 층 축약 지도: 그 층의 칸을 줄여서 그리고, 대상 위치에 빛나는 빨간 점 + 얼굴 말풍선.
+function trFloorMap(x, y, id, W0) {
+  const M = TN_WORLD.map, L = (M.levels || []).find(l => x >= l.x0 && x <= l.x1 && y >= l.y0 && y <= l.y1) || { name: '', x0: 0, y0: 0, x1: M.width - 1, y1: M.height - 1 };
+  const cols = L.x1 - L.x0 + 1, rows = L.y1 - L.y0 + 1, k = Math.min(W0 / cols, 220 / rows), cells = [];
+  for (let yy = L.y0; yy <= L.y1; yy++) for (let xx = L.x0; xx <= L.x1; xx++) { if (M.rows[yy][xx] === '#') continue; const i = TroemereiNPC.areaOf(TN_WORLD, xx, yy);
+    cells.push(<rect key={xx + '-' + yy} x={(xx - L.x0) * k} y={(yy - L.y0) * k} width={k + .3} height={k + .3} fill={i >= 0 ? ((M.areas[i] || {}).color || '#3a4656') : '#4a5260'} />); }
+  const px = (x - L.x0 + .5) * k, py = (y - L.y0 + .5) * k, area = trArea(x, y);
+  return <div className="tr-fmap"><div className="tr-mut">{L.name} · {area}</div>
+    <div style={{ position: 'relative', width: cols * k, height: rows * k, margin: '4px auto' }}>
+      <svg width={cols * k} height={rows * k} style={{ display: 'block', background: '#0f1a27', borderRadius: 4 }}>{cells}
+        <circle cx={px} cy={py} r={k * 1.6 + 3} fill="#ff3b3b" opacity=".25" className="tr-ping" /><circle cx={px} cy={py} r={Math.max(3, k * .7)} fill="#ff3b3b" stroke="#fff" strokeWidth="1" /></svg>
+      <div className="tr-fbub" style={{ left: px + 8, top: py - 52 }}>{trPortrait(id, 34, 40)}</div></div></div>;
+}
+function trDevice(state, busy, onDev, pick, setPick) {
+  const b = TroemereiNPC.battery(TN_WORLD, state), C = (TN_WORLD.device || {}).cost || {}; if (!b) return <div className="tr-mut">팔찌가 없다.</div>;
+  const ppl = state.npcs.filter(n => !(TN_WORLD.npcs.find(s => s.id === n.id) || {}).hidden), L = state.player.lastLocate;
+  return <div style={{ display: 'grid', gap: 6, paddingTop: 4 }}>
+    <div className="tr-devhead"><b>남은 전지</b> {b.left > 0 ? trDur(b.left) : '없음'} <span className="tr-mut">· 예비 {b.cells}개 · 1개 = {trDur(b.cap)}</span></div>
+    {b.empty ? <div className="tr-devwarn">전지가 다 됐다. 1분 안에 갈아 끼우지 않으면 위험하다.</div> : b.left < 3600 ? <div className="tr-devwarn">전지가 1시간도 남지 않았다.</div> : null}
+    <div className="tr-dbgrw">
+      <button disabled={busy || b.cells <= 0} onClick={() => onDev({ op: 'swap' })}>전지 교체 (1분)</button>
+      <button disabled={busy || b.empty} onClick={() => onDev({ op: 'photo' })}>사진 찍기 (−{trDur(C.photo || 300)})</button>
+    </div>
+    <div className="tr-mut">위치 조회 (1회 −{trDur(C.locate || 10800)})</div>
+    <div className="tr-dbgrw">{ppl.map(n => <button key={n.id} disabled={busy || b.empty} className={pick === 'loc:' + n.id ? 'on' : ''} onClick={() => setPick(pick === 'loc:' + n.id ? null : 'loc:' + n.id)}>{trNpc(n.id).name}</button>)}</div>
+    {pick && pick.startsWith('loc:') ? <button className="tr-tbtn gold" disabled={busy || b.empty} onClick={() => { onDev({ op: 'locate', npcId: pick.slice(4) }); setPick(null); }}>{trNpc(pick.slice(4)).name}의 위치 조회하기</button> : null}
+    {L ? <div><div className="tr-mut">마지막 조회: {trNpc(L.id).name} · {Math.floor(L.at / 86400) + 1}일 {trHM(L.at)}</div>{trFloorMap(L.x, L.y, L.id, 320)}</div> : null}
+    <div className="tr-mut">통화는 사건 대본이 정해진 뒤 연결한다.</div>
+  </div>;
+}
+function trSheet({ onDev, onDbg, onGal, ev, heard, free, tab, setTab, state, debug, setDebug, busy, onSkip, onUnstuck, onTrial, onTrialAt, onRel, onLook, pick, setPick, rest, onWait, codeText, setCodeText, onRestore, onFree, text, setText, send, sent }) {
+  const tabs = [...(TN_WORLD.device ? [['dev', '팔찌']] : []), ['note', '수첩'], ['scene', '목격'], ['item', '증거'], ['clue', '단서'], ['rest', '휴식'], ['set', '설정']];
   const mem = (state.player.mem || []).slice().reverse();
   return <div className="tr-sheet">
     <div className="tr-tabs">{tabs.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => { setTab(k); setPick(null); }}>{l}</button>)}<button style={{ flex: 'none', width: 34 }} onClick={() => setTab('')}>✕</button></div>
@@ -1270,6 +1312,7 @@ function trSheet({ onDbg, onGal, ev, heard, free, tab, setTab, state, debug, set
       {tab === 'clue' ? (mem.length ? mem.map((m, i) => <div className="tr-row" key={i}><time>{trHM(m[2])}</time>{trFact(m[0], m[1], 'player')}</div>) : <div className="tr-mut">아직 직접 보거나 들은 단서가 없다.</div>) : null}
       {tab === 'item' ? (() => { const its = (TN_WORLD.items || []).filter(it => (state.player.items || {})[it.id] !== undefined).sort((a, b) => state.player.items[b.id] - state.player.items[a.id]);
         return its.length ? its.map(it => { const l = TN_WORLD.map.landmarks.find(x => x.id === it.at); return <div className="tr-row" key={it.id}><b>{it.name}</b> <span className="tr-mut">{Math.floor(state.player.items[it.id] / 86400) + 1}일 {trHM(state.player.items[it.id])} · {(state.player.given || {})[it.id] ? '지배인에게서 받음' : (l ? l.name : '') + '에서 발견'}</span><div className="tr-mut">{it.desc}</div></div>; }) : <div className="tr-mut">아직 찾은 증거가 없다. 물건을 눌러 「조사」하면 찾을 수 있다.</div>; })() : null}
+      {tab === 'dev' ? trDevice(state, busy, onDev, pick, setPick) : null}
       {tab === 'rest' ? trRest({ state, busy, onSkip, ...rest }) : null}
       {tab === 'note' ? trNotebook(state, pick, setPick, debug ? onRel : null) : null}
       {tab === 'scene' ? trScenes(state, pick, setPick) : null}

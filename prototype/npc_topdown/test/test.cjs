@@ -500,6 +500,20 @@ test('1장 지도: 모든 방이 이어지고(잠긴 옥상·재판장·지배�
   const lv = w.map.levels.map(l => l.name); assert.deepEqual(lv, ['외부', '1층', '2층', '옥상', '지하']);
   assert.equal(C.pack(w, C.unpack(w, C.pack(w, s))), C.pack(w, s), '1장 세계 상태 코드 왕복');
 });
+
+test('팔찌 전지: 시간·기능으로 줄고, 교체하면 새로, 0 뒤 1분이면 사망, 상태 코드에 남음', () => {
+  const w = require('../src/world_ch1.json'); let s = E.createWorld(w);
+  let b = E.battery(w, s); assert.equal(b.left, 43200); assert.equal(b.cells, 7);
+  s = E.advance(w, s, 3600); assert.equal(E.battery(w, s).left, 43200 - 3600);
+  s = E.dispatch(w, s, { type: 'DEVICE', op: 'locate', npcId: 'justin' }); assert.equal(E.battery(w, s).left, 43200 - 3600 - 10800);
+  assert.ok(s.player.lastLocate && s.player.lastLocate.id === 'justin');
+  s = E.dispatch(w, s, { type: 'DEVICE', op: 'photo' }); s = E.dispatch(w, s, { type: 'DEVICE', op: 'call', minutes: 2 });
+  assert.equal(E.battery(w, s).left, 43200 - 3600 - 10800 - 300 - 1200);
+  const back = C.unpack(w, C.pack(w, s)); assert.equal(E.battery(w, back).left, E.battery(w, s).left); assert.equal(E.battery(w, back).cells, 7);
+  s = E.dispatch(w, s, { type: 'DEVICE', op: 'swap' }); s = E.advance(w, s, 60); assert.equal(E.battery(w, s).left, 43200); assert.equal(E.battery(w, s).cells, 6);
+  let d = JSON.parse(JSON.stringify(s)); d.player.batUsed = 43200; d = E.advance(w, d, 59); assert.equal(E.battery(w, d).dead, false);
+  d = E.advance(w, d, 2); assert.equal(E.battery(w, d).dead, true);
+});
 for (const [name, fn] of tests) { try { fn(); pass++; console.log('✓', name); } catch (e) { console.log('✗', name, '\n  ', e.message); } }
 console.log(`${pass}/${tests.length} 통과`);
 process.exit(pass === tests.length ? 0 : 1);
